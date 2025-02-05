@@ -33,7 +33,7 @@ if [ "$(id -u)" -eq 0 ]; then
 fi
 
 # Install yay-bin if not installed
-if ! command -v yay &>/dev/null; then
+if ! command -v yay &>/dev/null && ! command -v paru &>/dev/null; then
     echo "Installing yay-bin..."
     tmpdir=$(mktemp -d)
     git clone https://aur.archlinux.org/yay-bin.git "$tmpdir/yay-bin"
