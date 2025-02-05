@@ -64,7 +64,7 @@ yay -S --needed --noconfirm "${PACKAGES[@]}" || true
 else 
 paru -S --needed --noconfirm gray-git 
 
-# Install required packages using yay
+# Install required packages using paru
 echo "Installing required packages..."
 paru -S --needed --noconfirm "${PACKAGES[@]}" 
 
