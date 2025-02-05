@@ -53,11 +53,23 @@ else
 fi
 
 echo "Installing gray-git..."
+
+if ! command -v yay &>/dev/null; then
 yes | yay -S --needed --noconfirm gray-git || true
 
 # Install required packages using yay
 echo "Installing required packages..."
 yay -S --needed --noconfirm "${PACKAGES[@]}" || true
+
+else 
+paru -S --needed --noconfirm gray-git 
+
+# Install required packages using yay
+echo "Installing required packages..."
+paru -S --needed --noconfirm "${PACKAGES[@]}" 
+
+fi
+
 
 # Launch Ax-Shell without terminal output
 echo "Starting Ax-Shell..."
