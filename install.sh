@@ -54,7 +54,7 @@ fi
 
 echo "Installing gray-git..."
 
-if ! command -v yay &>/dev/null; then
+if  command -v yay &>/dev/null; then
 yes | yay -S --needed --noconfirm gray-git || true
 
 # Install required packages using yay
