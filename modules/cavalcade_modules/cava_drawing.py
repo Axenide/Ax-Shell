@@ -51,7 +51,7 @@ class Spectrum:
 		cr.set_source_rgba(*self.color)
 		#cr.set_source_rgba(170/255, 170/255, 1, 1)
 
-		dx = 0
+		dx = 3
 
 		center_y = self.sizes.area.height / 2  # Centro vertical del área de dibujo
 		for i, value in enumerate(self.audio_sample):
@@ -80,7 +80,7 @@ class Spectrum:
 	def size_update(self, *args):
 		"""Update drawing geometry"""
 		self.sizes.number = 20
-		self.sizes.padding = 5
+		self.sizes.padding = 1
 		self.sizes.zero = 2
 
 		self.sizes.area.width = self.area.get_allocated_width() 
