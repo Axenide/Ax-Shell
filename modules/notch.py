@@ -1,4 +1,5 @@
 from os import truncate
+from fabric.utils import invoke_repeater
 from fabric.widgets.box import Box
 from fabric.widgets.label import Label
 from fabric.widgets.centerbox import CenterBox
@@ -15,9 +16,11 @@ from modules.notifications import NotificationContainer
 from modules.power import PowerMenu
 from modules.overview import Overview
 from modules.bluetooth import BluetoothConnections
+from modules.mpris import Mpris
 from modules.corners import MyCorner
 import modules.icons as icons
 import modules.data as data
+
 
 class Notch(Window):
     def __init__(self, **kwargs):
@@ -38,6 +41,7 @@ class Notch(Window):
         self.notification = NotificationContainer(notch=self)
         self.overview = Overview()
         self.power = PowerMenu(notch=self)
+        self.mpris = Mpris()
 
         self.bluetooth = BluetoothConnections()
 
@@ -53,7 +57,7 @@ class Notch(Window):
         self.compact = Button(
             name="notch-compact",
             h_expand=True,
-            on_clicked=lambda *_: self.open_notch("dashboard"),
+            on_clicked=lambda *_: self.activate_mpris(), #self.open_notch("mpris"),
             child=self.active_window,
         )
 
@@ -72,6 +76,7 @@ class Notch(Window):
                 self.overview,
                 self.power,
                 self.bluetooth,
+                self.mpris,
             ]
         )
 
@@ -117,9 +122,20 @@ class Notch(Window):
         self.show_all()
         self.wallpapers.viewport.hide()
 
+        invoke_repeater(180000, self.deactivate_mpris)
+        self.mpris.connect("playback-started", lambda *_: self.activate_mpris())
+
         self.add_keybinding("Escape", lambda *_: self.close_notch())
         self.add_keybinding("Ctrl Tab", lambda *_: self.dashboard.go_to_next_child())
         self.add_keybinding("Ctrl Shift ISO_Left_Tab", lambda *_: self.dashboard.go_to_previous_child())
+
+    def activate_mpris(self):
+        self.mpris.persistent = True
+        self.open_notch("mpris")
+
+    def deactivate_mpris(self):
+        self.mpris.persistent = False
+        
 
     def on_button_enter(self, widget, event):
         window = widget.get_window()
@@ -146,6 +162,8 @@ class Notch(Window):
         for style in ["launcher", "dashboard", "wallpapers", "notification", "overview", "power", "bluetooth"]:
             self.stack.remove_style_class(style)
         self.stack.set_visible_child(self.compact)
+        if self.mpris.persistent:
+            self.activate_mpris()
 
     def open_notch(self, widget):
         self.set_keyboard_mode("exclusive")
@@ -161,7 +179,8 @@ class Notch(Window):
             "notification": self.notification,
             "overview": self.overview,
             "power": self.power,
-            "bluetooth": self.bluetooth
+            "bluetooth": self.bluetooth,
+            "mpris": self.mpris,
         }
 
         # Limpiar clases y estados previos
@@ -182,7 +201,7 @@ class Notch(Window):
                 self.launcher.search_entry.set_text("")
                 self.launcher.search_entry.grab_focus()
 
-            if widget == "notification":
+            if widget == "notification" or widget == "mpris":
                 self.set_keyboard_mode("none")
 
             if widget == "wallpapers":
