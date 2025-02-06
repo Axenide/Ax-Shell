@@ -80,7 +80,7 @@ class Spectrum:
 	def size_update(self, *args):
 		"""Update drawing geometry"""
 		self.sizes.number = 20
-		self.sizes.padding = 1
+		self.sizes.padding = 5
 		self.sizes.zero = 2
 
 		self.sizes.area.width = self.area.get_allocated_width() 
