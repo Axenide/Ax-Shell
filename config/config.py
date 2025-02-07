@@ -84,7 +84,7 @@ def ensure_matugen_config():
                 'input_path': '~/.config/Ax-Shell/config/matugen/templates/ax-shell.css',
                 'output_path': '~/.config/Ax-Shell/styles/colors.css',
                 'post_hook': (
-                    "fabric-cli exec ax-shell 'app.set_stylesheet_from_file(get_relative_path(\"main.css\"))' &"
+                    "fabric-cli exec ax-shell 'app.set_css()' &"
                 )
             }
         }

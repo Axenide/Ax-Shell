@@ -154,7 +154,7 @@ class WorkspaceEventBox(EventBox):
 class Overview(Box):
     def __init__(self, **kwargs):
         # Initialize as a Box instead of a PopupWindow.
-        super().__init__(name="overview", orientation="v", spacing=0)
+        super().__init__(name="overview", orientation="v")
         self.workspace_boxes: dict[int, Box] = {}
         self.clients: dict[str, HyprlandWindowButton] = {}
 
