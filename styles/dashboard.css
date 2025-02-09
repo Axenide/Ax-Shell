@@ -74,11 +74,32 @@
   padding: 0 8px;
 }
 
+#network-status-button.disabled,
+#network-menu-button.disabled,
+#bluetooth-status-button.disabled,
+#bluetooth-menu-button.disabled {
+  background-color: var(--surface);
+}
+
+#bluetooth-icon.disabled,
+#bluetooth-label.disabled,
+#bluetooth-status.disabled,
+#bluetooth-menu-label.disabled {
+  color: var(--outline);
+}
+
 #network-status-button:hover,
 #network-menu-button:hover,
 #bluetooth-status-button:hover,
 #bluetooth-menu-button:hover {
   background-color: var(--foreground);
+}
+
+#network-status-button.disabled:hover,
+#network-menu-button.disabled:hover,
+#bluetooth-status-button.disabled:hover,
+#bluetooth-menu-button.disabled:hover {
+  background-color: var(--surface-bright);
 }
 
 #network-status-button,
