@@ -61,15 +61,23 @@ class BluetoothConnections(Box):
             **kwargs,
         )
 
+        self.notch = kwargs["notch"]
+
+        self.buttons = self.notch.dashboard.widgets.buttons.bluetooth_button
+        self.bt_status_text = self.buttons.bluetooth_status_text
+        self.bt_status_button = self.buttons.bluetooth_status_button
+        self.bt_icon = self.buttons.bluetooth_icon
+        self.bt_label = self.buttons.bluetooth_label
+        self.bt_menu_button = self.buttons.bluetooth_menu_button
+        self.bt_menu_label = self.buttons.bluetooth_menu_label
+
         self.client = BluetoothClient(on_device_added=self.on_device_added)
         self.scan_button = Button(name="bluetooth-scan", label="Scan", on_clicked=lambda *_: self.client.toggle_scan())
         self.toggle_button = Button(name="bluetooth-toggle", label="OFF", on_clicked=lambda *_: self.client.toggle_power())
 
         self.client.connect(
             "notify::enabled",
-            lambda *_: self.toggle_button.set_label(
-                "Enabled" if self.client.enabled else "Disabled"
-            ),
+            lambda *_: self.status_label(),
         )
         self.client.connect(
             "notify::scanning",
@@ -82,17 +90,32 @@ class BluetoothConnections(Box):
         self.available_box = Box(spacing=2, orientation="vertical")
 
         self.children = [
-            CenterBox(start_children=self.scan_button, center_children=Label(name="bluetooth-text", label="Bluetooth Devices"), end_children=self.toggle_button),
-            Label(name="bluetooth-text", label="Paired"),
-            ScrolledWindow(min_content_size=(-1, -1), child=self.paired_box),
-            Label(name="bluetooth-text", label="Available"),
-            ScrolledWindow(min_content_size=(-1, -1), child=self.available_box),
+            CenterBox(name="bluetooth-header", start_children=self.scan_button, center_children=Label(name="bluetooth-text", label="Bluetooth Devices"), end_children=self.toggle_button),
+            Label(name="bluetooth-section", label="Paired"),
+            ScrolledWindow(name="bluetooth-paired", min_content_size=(590, 160), child=self.paired_box, v_expand=True),
+            Label(name="bluetooth-section", label="Available"),
+            ScrolledWindow(name="bluetooth-available", min_content_size=(590, 160), child=self.available_box, v_expand=True),
         ]
 
         # to run notify closures thus display the status
         # without having to wait until an actual change
         self.client.notify("scanning")
         self.client.notify("enabled")
+
+    def status_label(self):
+        print(self.client.enabled)
+        if self.client.enabled:
+            self.toggle_button.set_label("Enabled")
+            self.bt_status_text.set_label("Enabled")
+            for i in [self.bt_status_button, self.bt_status_text, self.bt_icon, self.bt_label, self.bt_menu_button, self.bt_menu_label]:
+                i.remove_style_class("disabled")
+            self.bt_icon.set_markup(icons.bluetooth)
+        else:
+            self.toggle_button.set_label("Disabled")
+            self.bt_status_text.set_label("Disabled")
+            for i in [self.bt_status_button, self.bt_status_text, self.bt_icon, self.bt_label, self.bt_menu_button, self.bt_menu_label]:
+                i.add_style_class("disabled")
+            self.bt_icon.set_markup(icons.bluetooth_off)
 
     def on_device_added(self, client: BluetoothClient, address: str):
         if not (device := client.get_device(address)):

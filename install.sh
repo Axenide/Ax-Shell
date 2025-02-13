@@ -22,7 +22,6 @@ PACKAGES=(
     python-toml
     python-watchdog
     swww
-    ttf-tabler-icons
     uwsm
     vte3
 )

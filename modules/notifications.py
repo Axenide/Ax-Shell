@@ -205,8 +205,8 @@ class NotificationBox(Box):
         self.stop_timeout()
         super().destroy()
 
-    @staticmethod
-    def set_pointer_cursor(widget, cursor_name):
+    # @staticmethod
+    def set_pointer_cursor(self, widget, cursor_name):
         """Cambia el cursor sobre un widget."""
         window = widget.get_window()
         if window:
@@ -227,6 +227,13 @@ class NotificationContainer(Box):
         self.notch = kwargs["notch"]
         self._server = Notifications()
         self._server.connect("notification-added", self.on_new_notification)
+
+    def set_pointer_cursor(self, widget, cursor_name):
+        """Cambia el cursor sobre un widget."""
+        window = widget.get_window()
+        if window:
+            cursor = Gdk.Cursor.new_from_name(widget.get_display(), cursor_name)
+            window.set_cursor(cursor)
 
     def on_new_notification(self, fabric_notif, id):
         for child in self.get_children():

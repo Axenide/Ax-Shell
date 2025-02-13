@@ -38,7 +38,8 @@
 }
 
 #overview-workspace-box {
-  padding: 2px;
+  /*padding: 2px;*/
+  /*background-color: var(--primary);*/
 }
 
 #overview-add-label {

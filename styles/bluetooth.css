@@ -1,5 +1,11 @@
-#bluetooth-device {
+#bluetooth-header {
   background-color: var(--surface);
+  padding: 4px;
+  border-radius: 20px;
+}
+
+#bluetooth-device {
+  background-color: var(--shadow);
   border-radius: 16px;
   padding: 4px;
   margin-bottom: 4px;
@@ -7,7 +13,7 @@
 
 #bluetooth-scan,
 #bluetooth-toggle {
-  background-color: var(--surface);
+  background-color: var(--shadow);
   border-radius: 16px;
   padding: 8px 16px;
   min-width: 96px;
@@ -23,8 +29,12 @@
   font-weight: bold;
 }
 
-#bluetooth-text {
+#bluetooth-text,
+#bluetooth-section {
   font-weight: bold;
+}
+
+#bluetooth-text {
   color: var(--primary);
 }
 
@@ -33,11 +43,18 @@
 }
 
 #bluetooth-connect {
-  background-color: var(--shadow);
-  border-radius: 16px;
+  background-color: var(--surface);
+  border-radius: 12px;
   padding: 8px 16px;
 }
 
 #bluetooth-connect:hover {
   background-color: var(--surface-bright);
+}
+
+#bluetooth-paired,
+#bluetooth-available {
+  background-color: var(--surface);
+  border-radius: 20px;
+  padding: 4px;
 }
