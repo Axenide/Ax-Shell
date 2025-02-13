@@ -15,9 +15,8 @@ import modules.icons as icons
 from gi.repository import Gtk, Gdk
 from fabric.widgets.box import Box
 
-from modules.cavalcade_modules.cava_drawing import Spectrum
-from modules.cavalcade_modules.cava import Cava
-from modules.cavalcade_modules.mpris import MprisPlayer, MprisPlayerManager
+from modules.cavalcade import Cava, Spectrum
+from services.mpris import MprisPlayer, MprisPlayerManager
 
 
 
@@ -125,8 +124,8 @@ class Mpris(Box, GObject.GObject):
             
             if self.player.title is not None:
                 title = self.paused_icon + ' ' + self.player.title
-                if len(self.player.title) > 30:
-                    title = self.paused_icon + ' ' + self.player.title[:30] + '...'
+                if len(self.player.title) > 24:
+                    title = self.paused_icon + ' ' + self.player.title[:24] + '...'
                 
             self.paused_button.get_child().set_markup(title)
             self.center_box.set_center_widget(self.paused_revealer)
