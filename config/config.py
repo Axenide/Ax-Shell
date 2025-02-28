@@ -151,7 +151,7 @@ exec = uwsm app -- swww-daemon
 $fabricSend = fabric-cli exec ax-shell
 $axMessage = notify-send "Axenide" "What are you doing?" -i "{home}/.config/Ax-Shell/assets/ax.png" -a "Source Code" -A "Be patient. 🍙"
 
-bind = {bind_vars['prefix_restart']}, {bind_vars['suffix_restart']}, exec, killall ax-shell; uwsm app -- python {home}/.config/Ax-Shell/main.py # Reload Ax-Shell | Default: SUPER ALT + B
+bind = {bind_vars['prefix_restart']}, {bind_vars['suffix_restart']}, exec, killall ax-shell cava; uwsm app -- python {home}/.config/Ax-Shell/main.py # Reload Ax-Shell | Default: SUPER ALT + B
 bind = {bind_vars['prefix_axmsg']}, {bind_vars['suffix_axmsg']}, exec, $axMessage # Message | Default: SUPER + A
 bind = {bind_vars['prefix_dash']}, {bind_vars['suffix_dash']}, exec, $fabricSend 'notch.open_notch("dashboard")' # Dashboard | Default: SUPER + D
 bind = {bind_vars['prefix_bluetooth']}, {bind_vars['suffix_bluetooth']}, exec, $fabricSend 'notch.open_notch("bluetooth")' # Bluetooth | Default: SUPER + B
