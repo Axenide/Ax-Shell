@@ -1,175 +1,3 @@
-<<<<<<< HEAD
-/* Button Styles */
-
-#network-button,
-#bluetooth-button,
-#light-button,
-#caffeine-button {
-    background-color: var(--primary);
-    border-radius: 20px;
-    min-width: 150px;
-    min-height: 52px;
-    padding: 0 10px;
-}
-
-#caffeine-button {
-    min-width: 130px;
-}
-
-#light-button,
-#network-button,
-#bluetooth-button {
-    background-color: unset;
-    padding: unset;
-}
-
-/* Button Hover Styles */
-
-#light-status-button:hover,
-#light-menu-button:hover,
-#network-status-button:hover,
-#network-menu-button:hover,
-#bluetooth-status-button:hover,
-#bluetooth-menu-button:hover {
-    background-color: var(--foreground);
-}
-
-#network-status-button:hover,
-#bluetooth-button:hover,
-#light-button:hover,
-#caffeine-button:hover {
-    background-color: var(--foreground);
-}
-
-/* Icon Styles */
-
-#network-icon,
-#bluetooth-icon,
-#light-icon,
-#caffeine-icon {
-    color: var(--shadow);
-    font-size: 24px;
-}
-
-/* Label Styles */
-#light-menu-label,
-#network-menu-label,
-#bluetooth-menu-label {
-    color: var(--shadow);
-    font-size: 16px;
-}
-
-/* Status Styles */
-
-#network-ssid,
-#bluetooth-status,
-#light-status,
-#caffeine-status {
-    color: var(--surface-bright);
-    font-size: 12px;
-}
-
-#light-status-button,
-#light-menu-button,
-#network-status-button,
-#network-menu-button,
-#bluetooth-status-button,
-#bluetooth-menu-button {
-    background-color: var(--primary);
-    padding: 0 8px;
-}
-
-#light-status-button.disabled,
-#light-menu-button.disabled,
-#network-status-button.disabled,
-#network-menu-button.disabled,
-#bluetooth-status-button.disabled,
-#bluetooth-menu-button.disabled {
-    background-color: var(--surface);
-}
-
-#light-icon.disabled,
-#light-label.disabled,
-#light-status.disabled,
-#light-menu-label.disabled,
-#bluetooth-icon.disabled,
-#bluetooth-label.disabled,
-#bluetooth-status.disabled,
-#bluetooth-menu-label.disabled {
-    color: var(--outline);
-}
-
-#light-status-button:hover,
-#light-menu-button:hover,
-#network-status-button:hover,
-#network-menu-button:hover,
-#bluetooth-status-button:hover,
-#bluetooth-menu-button:hover {
-    background-color: var(--foreground);
-}
-
-#light-status-button.disabled:hover,
-#light-menu-button.disabled:hover,
-#network-status-button.disabled:hover,
-#network-menu-button.disabled:hover,
-#bluetooth-status-button.disabled:hover,
-#bluetooth-menu-button.disabled:hover {
-    background-color: var(--surface-bright);
-}
-
-#light-status-button,
-#network-status-button,
-#bluetooth-status-button {
-    border-radius: 20px 0 0 20px;
-}
-
-#light-menu-button,
-#network-menu-button,
-#bluetooth-menu-button {
-    border-radius: 0 20px 20px 0;
-}
-
-#network-status-button:hover,
-#bluetooth-button:hover,
-#light-button:hover,
-#caffeine-button:hover {
-    background-color: var(--foreground);
-}
-
-#network-icon,
-#bluetooth-icon,
-#light-icon,
-#caffeine-icon {
-    color: var(--shadow);
-    font-size: 24px;
-}
-
-#light-menu-label,
-#network-menu-label,
-#bluetooth-menu-label {
-    color: var(--shadow);
-    font-size: 16px;
-}
-
-#network-label,
-#bluetooth-label,
-#light-label,
-#caffeine-label {
-    color: var(--shadow);
-    font-size: 14px;
-    font-weight: bold;
-    margin-bottom: -4px;
-}
-
-#light-menu-status,
-#network-ssid,
-#bluetooth-status {
-    color: var(--surface-bright);
-    font-size: 12px;
-}
-
-=======
->>>>>>> 360cd6ffe982d56c29e2e74aa82646d197c34c92
 #box-1,
 #box-2,
 #box-3,
@@ -184,7 +12,6 @@
     border-radius: 20px;
 }
 
-<<<<<<< HEAD
 #box-1 {
     min-width: 196px;
 }
@@ -197,15 +24,15 @@
 #box-3 {
     min-width: 88px;
     min-height: 226px;
-=======
+}
+
 #container-sub-1 {
-  min-width: 750px;
+    min-width: 750px;
 }
 
 #box-3 {
-  min-width: 88px;
-  /*min-height: 226px;*/
->>>>>>> 360cd6ffe982d56c29e2e74aa82646d197c34c92
+    min-width: 88px;
+    /*min-height: 226px;*/
 }
 
 #box-x {
@@ -241,91 +68,91 @@
 }
 
 #coming-soon-label {
-  font-size: 20px;
-  font-weight: bold;
-  font-style: italic;
+    font-size: 20px;
+    font-weight: bold;
+    font-style: italic;
 }
 
 #metrics {
-  border-radius: 16px;
-  border: 4px solid var(--surface);
-  padding: 8px;
+    border-radius: 16px;
+    border: 4px solid var(--surface);
+    padding: 8px;
 }
 
 #cpu-usage {
-  background-color: var(--surface);
+    background-color: var(--surface);
 }
 
 #cpu-usage trough {
-  min-height: 16px;
+    min-height: 16px;
 }
 
 #cpu-usage trough highlight {
-  border-radius: 20px;
-  min-height: 16px;
-  background-color: var(--primary);
+    border-radius: 20px;
+    min-height: 16px;
+    background-color: var(--primary);
 }
 
 #cpu-usage slider {
-  border-radius: 100%;
-  min-width: 16px;
-  min-height: 16px;
-  background-color: transparent;
+    border-radius: 100%;
+    min-width: 16px;
+    min-height: 16px;
+    background-color: transparent;
 }
 
 #cpu-label {
-  color: var(--primary);
-  font-size: 20px;
+    color: var(--primary);
+    font-size: 20px;
 }
 
 #ram-usage {
-  background-color: var(--surface);
+    background-color: var(--surface);
 }
 
 #ram-usage trough {
-  min-height: 16px;
+    min-height: 16px;
 }
 
 #ram-usage trough highlight {
-  border-radius: 20px;
-  min-height: 16px;
-  background-color: var(--secondary);
+    border-radius: 20px;
+    min-height: 16px;
+    background-color: var(--secondary);
 }
 
 #ram-usage slider {
-  border-radius: 100%;
-  min-width: 16px;
-  min-height: 16px;
-  background-color: transparent;
+    border-radius: 100%;
+    min-width: 16px;
+    min-height: 16px;
+    background-color: transparent;
 }
 
 #ram-label {
-  color: var(--secondary);
-  font-size: 20px;
+    color: var(--secondary);
+    font-size: 20px;
 }
 
 #disk-usage {
-  background-color: var(--surface);
+    background-color: var(--surface);
 }
 
 #disk-usage trough {
-  min-height: 16px;
+    min-height: 16px;
 }
 
 #disk-usage trough highlight {
-  border-radius: 20px;
-  min-height: 16px;
-  background-color: var(--tertiary);
+    border-radius: 20px;
+    min-height: 16px;
+    background-color: var(--tertiary);
 }
 
 #disk-usage slider {
-  border-radius: 100%;
-  min-width: 16px;
-  min-height: 16px;
-  background-color: transparent;
+    border-radius: 100%;
+    min-width: 16px;
+    min-height: 16px;
+    background-color: transparent;
 }
 
 #disk-label {
-  color: var(--tertiary);
-  font-size: 20px;
+    color: var(--tertiary);
+    font-size: 20px;
 }

@@ -40,7 +40,7 @@ class PlayerBox(Box):
 
         self.cover = CircleImage(
             name="player-cover",
-            image_file=f"{data.HOME_DIR}/.current.wall",
+            image_file=f"{data.HOME_DIR}/.face.icon",
             size=162,
             h_align="center",
             v_align="center",
@@ -165,7 +165,7 @@ class PlayerBox(Box):
             else:
                 self._set_cover_image(mp.arturl)
         else:
-            fallback = os.path.expanduser("~/.current.wall")
+            fallback = os.path.expanduser("~/.face.icon")
             self._set_cover_image(fallback)
             file_obj = Gio.File.new_for_path(fallback)
             monitor = file_obj.monitor_file(Gio.FileMonitorFlags.NONE, None)
@@ -188,7 +188,7 @@ class PlayerBox(Box):
         if image_path and os.path.isfile(image_path):
             self.cover.set_image_from_file(image_path)
         else:
-            fallback = os.path.expanduser("~/.current.wall")
+            fallback = os.path.expanduser("~/.face.icon")
             self.cover.set_image_from_file(fallback)
             file_obj = Gio.File.new_for_path(fallback)
             monitor = file_obj.monitor_file(Gio.FileMonitorFlags.NONE, None)
@@ -210,7 +210,7 @@ class PlayerBox(Box):
             temp_file.close()
             local_arturl = temp_file.name
         except Exception:
-            local_arturl = os.path.expanduser("~/.current.wall")
+            local_arturl = os.path.expanduser("~/.face.icon")
         GLib.idle_add(self._set_cover_image, local_arturl)
         return None
 
@@ -221,7 +221,7 @@ class PlayerBox(Box):
             self.play_pause.get_child().set_markup(icons.play)
 
     def on_wallpaper_changed(self, monitor, file, other_file, event):
-        self.cover.set_image_from_file(os.path.expanduser("~/.current.wall"))
+        self.cover.set_image_from_file(os.path.expanduser("~/.face.icon"))
 
     # --- Control methods, defined only once each ---
     def _on_prev_clicked(self, button):
@@ -379,7 +379,7 @@ class Player(Box):
                         btn.add(new_label)
                         new_label.show_all()
         return False
-    
+
 
 class PlayerSmall(CenterBox):
     def __init__(self):

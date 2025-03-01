@@ -68,12 +68,9 @@ notifications: str = "&#xea35;"
 wifi_off: str = "&#xecfa;"
 bluetooth_off: str = "&#xeceb;"
 night_off: str = "&#xf162;"
-<<<<<<< HEAD
 bulb_off: str = "&#xea50;"
 dnd_off: str = "&#xece9;"
-=======
 notifications_off: str = "&#xece9;"
->>>>>>> 360cd6ffe982d56c29e2e74aa82646d197c34c92
 
 # Bluetooth
 bluetooth_connected: str = "&#xecea;"
@@ -90,13 +87,10 @@ next: str = "&#xf696;"
 shuffle: str = "&#xf000;"
 repeat: str = "&#xeb72;"
 music: str = "&#xeafc;"
-<<<<<<< HEAD
 firefox: str = "&#xecfd;"
 spotify: str = "&#xed03;"
-=======
 rewind_backward_5: str = "&#xfabf;"
 rewind_forward_5: str = "&#xfac7;"
->>>>>>> 360cd6ffe982d56c29e2e74aa82646d197c34c92
 
 # Volume
 vol_off: str = "&#xf1c3;"

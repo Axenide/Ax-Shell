@@ -187,24 +187,19 @@ class Notch(Window):
             window.set_cursor(None)
 
     def close_notch(self):
-        self.set_keyboard_mode("none")
+            self.set_keyboard_mode("none")
 
-        self.bar.revealer.set_reveal_child(True)
+            self.bar.revealer.set_reveal_child(True)
 
-        if self.hidden:
-            self.notch_box.remove_style_class("hideshow")
-            self.notch_box.add_style_class("hidden")
+            if self.hidden:
+                self.notch_box.remove_style_class("hideshow")
+                self.notch_box.add_style_class("hidden")
 
-        for widget in [self.launcher, self.dashboard, self.wallpapers, self.notification, self.overview, self.power, self.bluetooth, self.hue]:
-            widget.remove_style_class("open")
-            if widget == self.wallpapers:
-                self.wallpapers.viewport.hide()
-                self.wallpapers.viewport.set_property("name", None)
-        for widget in [self.launcher, self.dashboard, self.notification, self.overview, self.power, self.bluetooth]:
-            widget.remove_style_class("open")
-        for style in ["launcher", "dashboard", "notification", "overview", "power", "bluetooth"]:
-            self.stack.remove_style_class(style)
-        self.stack.set_visible_child(self.compact)
+            for widget in [self.launcher, self.dashboard, self.notification, self.overview, self.power, self.bluetooth, self.hue]:
+                widget.remove_style_class("open")
+            for style in ["launcher", "dashboard", "notification", "overview", "power", "bluetooth"]:
+                self.stack.remove_style_class(style)
+            self.stack.set_visible_child(self.compact)
 
     def open_notch(self, widget):
         self.set_keyboard_mode("exclusive")

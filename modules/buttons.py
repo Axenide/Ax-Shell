@@ -25,7 +25,7 @@ class NetworkButton(Box):
         self._animation_timeout_id = None
         self._animation_step = 0
         self._animation_direction = 1
-        
+
         self.network_icon = Label(
             name="network-icon",
             markup=None,
@@ -52,7 +52,7 @@ class NetworkButton(Box):
             h_align="start",
             v_align="center",
             spacing=10,
-            
+
             children=[self.network_icon, self.network_text],
         )
         self.network_status_button = Button(
@@ -84,13 +84,13 @@ class NetworkButton(Box):
             children=[self.network_status_button, self.network_menu_button],
         )
 
-        self.widgets = [self, self.network_icon, self.network_label, 
-                       self.network_ssid, self.network_status_button, 
+        self.widgets = [self, self.network_icon, self.network_label,
+                       self.network_ssid, self.network_status_button,
                        self.network_menu_button, self.network_menu_label]
 
         # Connect to wifi device signals when ready
         self.network_client.connect('device-ready', self._on_wifi_ready)
-        
+
         # Check initial state if wifi device is already available
         if self.network_client.wifi_device:
             self.update_state()
@@ -104,23 +104,23 @@ class NetworkButton(Box):
     def _animate_searching(self):
         """Animate wifi icon when searching for networks"""
         wifi_icons = [icons.wifi_0, icons.wifi_1, icons.wifi_2, icons.wifi_3, icons.wifi_2, icons.wifi_1]
-        
+
         # Si el widget no existe o el WiFi está desactivado, detener la animación
         wifi = self.network_client.wifi_device
         if not self.network_icon or not wifi or not wifi.enabled:
             self._stop_animation()
             return False
-            
+
         # Si estamos conectados, detener la animación
         if wifi.state == "activated" and wifi.ssid != "Disconnected":
             self._stop_animation()
             return False
-            
+
         GLib.idle_add(self.network_icon.set_markup, wifi_icons[self._animation_step])
-        
+
         # Reiniciar al principio cuando llegamos al final
         self._animation_step = (self._animation_step + 1) % len(wifi_icons)
-            
+
         return True  # Mantener la animación activa
 
     def _start_animation(self):
@@ -262,80 +262,65 @@ class BluetoothButton(Box):
         self.add(self.bluetooth_menu_button)
 
 
-class NightModeButton(Button):
-    def __init__(self):
-        self.night_mode_icon = Label(
-            name="night-mode-icon",
-            markup=icons.night,
+class LightButton(Box):
+    def __init__(self, notch):
+        super().__init__(
+            name="light-button",
+            orientation="h",
+            h_align="fill",
+            v_align="center",
+            h_expand=True,
+            v_expand=True,
         )
-        self.night_mode_label = Label(
-            name="night-mode-label",
-            label="Night Mode",
+        self.notch = notch
+
+        self.light_icon = Label(
+            name="light-icon",
+            markup=icons.bulb,
+        )
+        self.light_label = Label(
+            name="light-label",
+            label="Light",
             justification="left",
         )
-        self.night_mode_label_box = Box(children=[self.night_mode_label, Box(h_expand=True)])
-        self.night_mode_status = Label(
-            name="night-mode-status",
-            label="Enabled",
+        self.light_label_box = Box(children=[self.light_label, Box(h_expand=True)])
+        self.light_status_text = Label(
+            name="light-status",
+            label="on",
             justification="left",
         )
-        self.night_mode_status_box = Box(children=[self.night_mode_status, Box(h_expand=True)])
-        self.night_mode_text = Box(
-            name="night-mode-text",
+        self.light_status_box = Box(children=[self.light_status_text, Box(h_expand=True)])
+        self.light_text = Box(
             orientation="v",
             h_align="start",
             v_align="center",
-            children=[self.night_mode_label_box, self.night_mode_status_box],
+            children=[self.light_label_box, self.light_status_box],
         )
-        self.night_mode_box = Box(
+        self.light_status_container = Box(
             h_align="start",
             v_align="center",
             spacing=10,
-            children=[self.night_mode_icon, self.night_mode_text],
+            children=[self.light_icon, self.light_text],
         )
-
-        super().__init__(
-            name="night-mode-button",
+        self.light_status_button = Button(
+            name="light-status-button",
             h_expand=True,
-            child=self.night_mode_box,
-            on_clicked=self.toggle_hyprsunset,
+            child=self.light_status_container,
+            on_clicked=lambda *_: self.notch.hue.switch(),
         )
-        add_hover_cursor(self)  # <-- Added hover
+        self.light_menu_label = Label(
+            name="light-menu-label",
+            markup=icons.chevron_right,
+        )
+        self.light_menu_button = Button(
+            name="light-menu-button",
+            on_clicked=lambda *_: self.notch.open_notch("hue"),
+            child=self.light_menu_label,
+        )
+        add_hover_cursor(self.light_menu_button)
 
-        self.widgets = [self, self.night_mode_label, self.night_mode_status, self.night_mode_icon]
-        self.check_hyprsunset()
-
-    def toggle_hyprsunset(self, *args):
-        """
-        Toggle the 'hyprsunset' process:
-          - If running, kill it and mark as 'Disabled'.
-          - If not running, start it and mark as 'Enabled'.
-        """
-        try:
-            subprocess.check_output(["pgrep", "hyprsunset"])
-            exec_shell_command_async("pkill hyprsunset")
-            self.night_mode_status.set_label("Disabled")
-            for widget in self.widgets:
-                widget.add_style_class("disabled")
-        except subprocess.CalledProcessError:
-            exec_shell_command_async("hyprsunset -t 3500")
-            self.night_mode_status.set_label("Enabled")
-            for widget in self.widgets:
-                widget.remove_style_class("disabled")
-
-    def check_hyprsunset(self, *args):
-        """
-        Update the button state based on whether hyprsunset is running.
-        """
-        try:
-            subprocess.check_output(["pgrep", "hyprsunset"])
-            self.night_mode_status.set_label("Enabled")
-            for widget in self.widgets:
-                widget.remove_style_class("disabled")
-        except subprocess.CalledProcessError:
-            self.night_mode_status.set_label("Disabled")
-            for widget in self.widgets:
-                widget.add_style_class("disabled")
+        self.add(self.light_status_button)
+        self.add(self.light_menu_button)
 
 
 class CaffeineButton(Button):
@@ -424,13 +409,13 @@ class Buttons(Gtk.Grid):
         # Instantiate each button
         self.network_button = NetworkButton()
         self.bluetooth_button = BluetoothButton(self.notch)
-        self.night_mode_button = NightModeButton()
+        self.light_button = LightButton(self.notch)
         self.caffeine_button = CaffeineButton()
 
         # Attach buttons into the grid (one row, four columns)
         self.attach(self.network_button, 0, 0, 1, 1)
         self.attach(self.bluetooth_button, 1, 0, 1, 1)
-        self.attach(self.night_mode_button, 2, 0, 1, 1)
+        self.attach(self.light_button, 2, 0, 1, 1)
         self.attach(self.caffeine_button, 3, 0, 1, 1)
 
         self.show_all()

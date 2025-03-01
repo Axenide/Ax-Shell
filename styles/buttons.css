@@ -1,150 +1,166 @@
-#buttons-grid {
-  min-height: 52px;
-}
-
-/* === Botones Base === */
 #network-button,
 #bluetooth-button,
-#night-mode-button,
+#light-button,
 #caffeine-button {
-  border-radius: 20px;
+    background-color: var(--primary);
+    border-radius: 20px;
+    min-width: 150px;
+    min-height: 52px;
+    padding: 0 10px;
 }
 
-/* Tamaños y estilos específicos */
+#caffeine-button {
+    min-width: 130px;
+}
+
+#light-button,
 #network-button,
 #bluetooth-button {
-  background-color: unset;
-  padding: 0;
+    background-color: unset;
+    padding: unset;
 }
 
-#night-mode-button,
-#caffeine-button {
-  background-color: var(--primary);
-  padding: 0 10px;
+/* Button Hover Styles */
+
+#light-status-button:hover,
+#light-menu-button:hover,
+#network-status-button:hover,
+#network-menu-button:hover,
+#bluetooth-status-button:hover,
+#bluetooth-menu-button:hover {
+    background-color: var(--foreground);
 }
 
-#night-mode-button.disabled,
-#caffeine-button.disabled {
-  background-color: var(--surface);
+#network-status-button:hover,
+#bluetooth-button:hover,
+#light-button:hover,
+#caffeine-button:hover {
+    background-color: var(--foreground);
 }
 
-/* Botones internos (status y menú) */
+/* Icon Styles */
+
+#network-icon,
+#bluetooth-icon,
+#light-icon,
+#caffeine-icon {
+    color: var(--shadow);
+    font-size: 24px;
+}
+
+/* Label Styles */
+#light-menu-label,
+#network-menu-label,
+#bluetooth-menu-label {
+    color: var(--shadow);
+    font-size: 16px;
+}
+
+/* Status Styles */
+
+#network-ssid,
+#bluetooth-status,
+#light-status,
+#caffeine-status {
+    color: var(--surface-bright);
+    font-size: 12px;
+}
+
+#light-status-button,
+#light-menu-button,
 #network-status-button,
 #network-menu-button,
 #bluetooth-status-button,
 #bluetooth-menu-button {
-  background-color: var(--primary);
-  padding: 0 8px;
+    background-color: var(--primary);
+    padding: 0 8px;
 }
 
-#network-menu-button,
-#bluetooth-menu-button {
-  border-left: 1px solid var(--outline);
-  min-width: 24px;
-}
-
-/* Estados Hover para todos los botones relevantes */
-#network-status-button:hover,
-#network-menu-button:hover,
-#bluetooth-status-button:hover,
-#bluetooth-menu-button:hover,
-#bluetooth-button:hover,
-#night-mode-button:hover,
-#caffeine-button:hover {
-  background-color: var(--foreground);
-}
-
-/* Estados Disabled */
+#light-status-button.disabled,
+#light-menu-button.disabled,
 #network-status-button.disabled,
 #network-menu-button.disabled,
 #bluetooth-status-button.disabled,
 #bluetooth-menu-button.disabled {
-  background-color: var(--surface);
+    background-color: var(--surface);
 }
 
-#network-menu-button.disabled,
-#bluetooth-menu-button.disabled {
-  border-left: 1px solid var(--surface-bright);
+#light-icon.disabled,
+#light-label.disabled,
+#light-status.disabled,
+#light-menu-label.disabled,
+#bluetooth-icon.disabled,
+#bluetooth-label.disabled,
+#bluetooth-status.disabled,
+#bluetooth-menu-label.disabled {
+    color: var(--outline);
 }
 
+#light-status-button:hover,
+#light-menu-button:hover,
+#network-status-button:hover,
+#network-menu-button:hover,
+#bluetooth-status-button:hover,
+#bluetooth-menu-button:hover {
+    background-color: var(--foreground);
+}
+
+#light-status-button.disabled:hover,
+#light-menu-button.disabled:hover,
 #network-status-button.disabled:hover,
 #network-menu-button.disabled:hover,
 #bluetooth-status-button.disabled:hover,
-#bluetooth-menu-button.disabled:hover,
-#night-mode-button.disabled:hover,
-#caffeine-button.disabled:hover {
-  background-color: var(--surface-bright);
+#bluetooth-menu-button.disabled:hover {
+    background-color: var(--surface-bright);
 }
 
-/* Bordes diferenciados para botones compuestos */
+#light-status-button,
 #network-status-button,
 #bluetooth-status-button {
-  border-radius: 20px 0 0 20px;
+    border-radius: 20px 0 0 20px;
 }
 
+#light-menu-button,
 #network-menu-button,
 #bluetooth-menu-button {
-  border-radius: 0 20px 20px 0;
+    border-radius: 0 20px 20px 0;
 }
 
-/* === Estilos de Iconos === */
+#network-status-button:hover,
+#bluetooth-button:hover,
+#light-button:hover,
+#caffeine-button:hover {
+    background-color: var(--foreground);
+}
+
 #network-icon,
 #bluetooth-icon,
-#night-mode-icon,
+#light-icon,
 #caffeine-icon {
-  color: var(--shadow);
-  font-size: 24px;
+    color: var(--shadow);
+    font-size: 24px;
 }
 
-#network-icon.disabled,
-#bluetooth-icon.disabled,
-#night-mode-icon.disabled,
-#caffeine-icon.disabled {
-  color: var(--outline);
-}
-
-/* === Estilos de Etiquetas de Menú === */
+#light-menu-label,
 #network-menu-label,
 #bluetooth-menu-label {
-  color: var(--shadow);
-  font-size: 16px;
+    color: var(--shadow);
+    font-size: 16px;
 }
 
-#network-menu-label.disabled,
-#bluetooth-menu-label.disabled {
-  color: var(--outline);
-}
-
-/* === Estilos de Etiquetas Principales === */
 #network-label,
 #bluetooth-label,
-#night-mode-label,
+#light-label,
 #caffeine-label {
-  color: var(--shadow);
-  font-size: 14px;
-  font-weight: bold;
-  margin-bottom: -4px;
+    color: var(--shadow);
+    font-size: 14px;
+    font-weight: bold;
+    margin-bottom: -4px;
 }
 
-#network-label.disabled,
-#bluetooth-label.disabled,
-#night-mode-label.disabled,
-#caffeine-label.disabled {
-  color: var(--outline);
-}
-
-/* === Estilos de Texto de Estado === */
+#light-menu-status,
 #network-ssid,
-#bluetooth-status,
-#night-mode-status,
-#caffeine-status {
-  color: var(--surface-bright);
-  font-size: 12px;
-}
-
-#network-ssid.disabled,
-#bluetooth-status.disabled,
-#night-mode-status.disabled,
-#caffeine-status.disabled {
-  color: var(--outline);
+#bluetooth-status {
+    color: var(--surface-bright);
+    font-size: 12px;
 }

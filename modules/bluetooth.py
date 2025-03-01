@@ -95,7 +95,7 @@ class BluetoothConnections(Box):
             ScrolledWindow(name="bluetooth-paired", min_content_size=(-1, -1), child=self.paired_box, v_expand=True),
             Label(name="bluetooth-section", label="Available"),
             ScrolledWindow(name="bluetooth-available", min_content_size=(590, 90), child=self.available_box, v_expand=True),
-
+        ]
         # to run notify closures thus display the status
         # without having to wait until an actual change
         self.client.notify("scanning")

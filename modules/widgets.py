@@ -9,7 +9,7 @@ from gi.repository import GLib, Gtk, Vte, Pango
 import modules.icons as icons
 from modules.buttons import Buttons
 from modules.calendar import Calendar
-from modules.media import Media
+#from modules.media import Media
 from modules.cgmsugar import MyCgm
 from modules.kanban import Kanban
 from modules.player import Player

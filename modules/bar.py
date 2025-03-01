@@ -12,12 +12,9 @@ from gi.repository import Gdk
 from modules.systemtray import SystemTray
 import modules.icons as icons
 import modules.data as data
-<<<<<<< HEAD
 import nightscout
-=======
 from modules.metrics import MetricsSmall
 from modules.controls import ControlSmall
->>>>>>> 360cd6ffe982d56c29e2e74aa82646d197c34c92
 
 class Bar(Window):
     def __init__(self, **kwargs):
@@ -96,7 +93,7 @@ class Bar(Window):
 
         self.control = ControlSmall()
         self.metrics = MetricsSmall()
-        
+
         self.revealer = Revealer(
             name="bar-revealer",
             transition_type="slide-left",

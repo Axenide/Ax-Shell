@@ -91,7 +91,6 @@ class Light(Box):
         self.status_light()
 
     def status_light(self):
-        print("yes")
         if self.bulb.on:
             self.light_status_text.set_label("on")
             for i in [self.light_status_button, self.light_status_text, self.light_icon, self.light_label, self.light_menu_button, self.light_menu_label]:
