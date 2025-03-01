@@ -15,6 +15,7 @@ from modules.notifications import NotificationContainer
 from modules.power import PowerMenu
 from modules.overview import Overview
 from modules.bluetooth import BluetoothConnections
+from modules.hue import Light
 from modules.corners import MyCorner
 import modules.icons as icons
 import modules.data as data
@@ -40,6 +41,7 @@ class Notch(Window):
         self.power = PowerMenu(notch=self)
 
         self.bluetooth = BluetoothConnections(notch=self)
+        self.hue = Light(notch=self)
 
         self.active_window = ActiveWindow(
             name="hyprland-window",
@@ -72,6 +74,7 @@ class Notch(Window):
                 self.overview,
                 self.power,
                 self.bluetooth,
+                self.hue,
             ]
         )
 
@@ -138,12 +141,12 @@ class Notch(Window):
             self.notch_box.remove_style_class("hideshow")
             self.notch_box.add_style_class("hidden")
 
-        for widget in [self.launcher, self.dashboard, self.wallpapers, self.notification, self.overview, self.power, self.bluetooth]:
+        for widget in [self.launcher, self.dashboard, self.wallpapers, self.notification, self.overview, self.power, self.bluetooth, self.hue]:
             widget.remove_style_class("open")
             if widget == self.wallpapers:
                 self.wallpapers.viewport.hide()
                 self.wallpapers.viewport.set_property("name", None)
-        for style in ["launcher", "dashboard", "wallpapers", "notification", "overview", "power", "bluetooth"]:
+        for style in ["launcher", "dashboard", "wallpapers", "notification", "overview", "power", "bluetooth", "hue"]:
             self.stack.remove_style_class(style)
         self.stack.set_visible_child(self.compact)
 
@@ -161,7 +164,8 @@ class Notch(Window):
             "notification": self.notification,
             "overview": self.overview,
             "power": self.power,
-            "bluetooth": self.bluetooth
+            "bluetooth": self.bluetooth,
+            "hue": self.hue
         }
 
         # Limpiar clases y estados previos
@@ -169,13 +173,13 @@ class Notch(Window):
             self.stack.remove_style_class(style)
         for w in widgets.values():
             w.remove_style_class("open")
-        
+
         # Configurar según el widget solicitado
         if widget in widgets:
             self.stack.add_style_class(widget)
             self.stack.set_visible_child(widgets[widget])
             widgets[widget].add_style_class("open")
-            
+
             # Acciones específicas para el launcher
             if widget == "launcher":
                 self.launcher.open_launcher()
@@ -189,9 +193,9 @@ class Notch(Window):
                 self.wallpapers.search_entry.set_text("")
                 self.wallpapers.search_entry.grab_focus()
                 GLib.timeout_add(
-                    500, 
+                    500,
                     lambda: (
-                        self.wallpapers.viewport.show(), 
+                        self.wallpapers.viewport.show(),
                         self.wallpapers.viewport.set_property("name", "wallpaper-icons")
                     )
                 )

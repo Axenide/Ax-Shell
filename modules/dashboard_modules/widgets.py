@@ -9,6 +9,8 @@ from gi.repository import GLib, Gtk, Vte, Pango
 import modules.icons as icons
 from modules.dashboard_modules.buttons import Buttons
 from modules.calendar import Calendar
+from modules.media import Media
+from modules.cgmsugar import MyCgm
 from modules.kanban import Kanban
 
 class Widgets(Box):
@@ -27,38 +29,10 @@ class Widgets(Box):
 
         self.buttons = Buttons(notch=self.notch)
 
-        self.box_1 = Box(
-            name="box-1",
-        )
+        self.box_1 = Media()
 
-        self.box_2 = Box(
-            name="box-2",
-            h_expand=True,
-        )
+        self.box_2 = MyCgm()
 
-        self.box_3 = Box(
-            name="box-3",
-        )
-
-        self.box_4 = Box(
-            name="box-4",
-            orientation="h",
-            spacing=4,
-            children=[
-                Box(
-                    name="box-x",
-                    h_expand=True,
-                ),
-                Box(
-                    name="box-x",
-                    h_expand=True,
-                ),
-                Box(
-                    name="box-x",
-                    h_expand=True,
-                ),
-            ]
-        )
 
         self.container_1 = Box(
             name="container-1",
@@ -66,7 +40,6 @@ class Widgets(Box):
             spacing=8,
             children=[
                 self.box_2,
-                self.box_3,
             ]
         )
 
@@ -76,7 +49,6 @@ class Widgets(Box):
             spacing=8,
             children=[
                 self.buttons,
-                self.box_4,
                 self.container_1,
             ]
         )

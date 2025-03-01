@@ -2,208 +2,227 @@
 
 #network-button,
 #bluetooth-button,
-#night-mode-button,
+#light-button,
 #caffeine-button {
-  background-color: var(--primary);
-  border-radius: 20px;
-  min-width: 150px;
-  min-height: 52px;
-  padding: 0 10px;
+    background-color: var(--primary);
+    border-radius: 20px;
+    min-width: 150px;
+    min-height: 52px;
+    padding: 0 10px;
 }
 
-#night-mode-button,
 #caffeine-button {
-  min-width: 130px;
+    min-width: 130px;
 }
 
+#light-button,
 #network-button,
 #bluetooth-button {
-  background-color: unset;
-  padding: unset;
+    background-color: unset;
+    padding: unset;
 }
 
 /* Button Hover Styles */
 
+#light-status-button:hover,
+#light-menu-button:hover,
 #network-status-button:hover,
 #network-menu-button:hover,
 #bluetooth-status-button:hover,
 #bluetooth-menu-button:hover {
-  background-color: var(--foreground);
+    background-color: var(--foreground);
 }
 
 #network-status-button:hover,
 #bluetooth-button:hover,
-#night-mode-button:hover,
+#light-button:hover,
 #caffeine-button:hover {
-  background-color: var(--foreground);
+    background-color: var(--foreground);
 }
 
 /* Icon Styles */
 
 #network-icon,
 #bluetooth-icon,
-#night-mode-icon,
+#light-icon,
 #caffeine-icon {
-  color: var(--shadow);
-  font-size: 24px;
+    color: var(--shadow);
+    font-size: 24px;
 }
 
 /* Label Styles */
-
+#light-menu-label,
 #network-menu-label,
 #bluetooth-menu-label {
-  color: var(--shadow);
-  font-size: 16px;
+    color: var(--shadow);
+    font-size: 16px;
 }
 
 /* Status Styles */
 
 #network-ssid,
 #bluetooth-status,
-#night-mode-status,
+#light-status,
 #caffeine-status {
-  color: var(--surface-bright);
-  font-size: 12px;
+    color: var(--surface-bright);
+    font-size: 12px;
 }
 
+#light-status-button,
+#light-menu-button,
 #network-status-button,
 #network-menu-button,
 #bluetooth-status-button,
 #bluetooth-menu-button {
-  background-color: var(--primary);
-  padding: 0 8px;
+    background-color: var(--primary);
+    padding: 0 8px;
 }
 
+#light-status-button.disabled,
+#light-menu-button.disabled,
 #network-status-button.disabled,
 #network-menu-button.disabled,
 #bluetooth-status-button.disabled,
 #bluetooth-menu-button.disabled {
-  background-color: var(--surface);
+    background-color: var(--surface);
 }
 
+#light-icon.disabled,
+#light-label.disabled,
+#light-status.disabled,
+#light-menu-label.disabled,
 #bluetooth-icon.disabled,
 #bluetooth-label.disabled,
 #bluetooth-status.disabled,
 #bluetooth-menu-label.disabled {
-  color: var(--outline);
+    color: var(--outline);
 }
 
+#light-status-button:hover,
+#light-menu-button:hover,
 #network-status-button:hover,
 #network-menu-button:hover,
 #bluetooth-status-button:hover,
 #bluetooth-menu-button:hover {
-  background-color: var(--foreground);
+    background-color: var(--foreground);
 }
 
+#light-status-button.disabled:hover,
+#light-menu-button.disabled:hover,
 #network-status-button.disabled:hover,
 #network-menu-button.disabled:hover,
 #bluetooth-status-button.disabled:hover,
 #bluetooth-menu-button.disabled:hover {
-  background-color: var(--surface-bright);
+    background-color: var(--surface-bright);
 }
 
+#light-status-button,
 #network-status-button,
 #bluetooth-status-button {
-  border-radius: 20px 0 0 20px;
+    border-radius: 20px 0 0 20px;
 }
 
+#light-menu-button,
 #network-menu-button,
 #bluetooth-menu-button {
-  border-radius: 0 20px 20px 0;
+    border-radius: 0 20px 20px 0;
 }
 
 #network-status-button:hover,
 #bluetooth-button:hover,
-#night-mode-button:hover,
+#light-button:hover,
 #caffeine-button:hover {
-  background-color: var(--foreground);
+    background-color: var(--foreground);
 }
 
 #network-icon,
 #bluetooth-icon,
-#night-mode-icon,
+#light-icon,
 #caffeine-icon {
-  color: var(--shadow);
-  font-size: 24px;
+    color: var(--shadow);
+    font-size: 24px;
 }
 
+#light-menu-label,
 #network-menu-label,
 #bluetooth-menu-label {
-  color: var(--shadow);
-  font-size: 16px;
+    color: var(--shadow);
+    font-size: 16px;
 }
 
 #network-label,
 #bluetooth-label,
-#night-mode-label,
+#light-label,
 #caffeine-label {
-  color: var(--shadow);
-  font-size: 14px;
-  font-weight: bold;
-  margin-bottom: -4px;
+    color: var(--shadow);
+    font-size: 14px;
+    font-weight: bold;
+    margin-bottom: -4px;
 }
 
+#light-menu-status,
 #network-ssid,
 #bluetooth-status {
-  color: var(--surface-bright);
-  font-size: 12px;
+    color: var(--surface-bright);
+    font-size: 12px;
 }
 
 #box-1,
 #box-2,
 #box-3,
 #box-x {
-  border-radius: 20px;
-  background-color: var(--surface);
+    border-radius: 20px;
+    background-color: var(--surface);
 }
 
 #container-1,
 #container-2,
 #container-3 {
-  border-radius: 20px;
+    border-radius: 20px;
 }
 
 #box-1 {
-  min-width: 196px;
+    min-width: 196px;
 }
 
 #box-2 {
-  min-width: 518px;
+    min-width: 518px;
+    border-radius: 20px;
 }
 
 #box-3 {
-  min-width: 88px;
-  min-height: 226px;
+    min-width: 88px;
+    min-height: 226px;
 }
 
 #box-x {
-  min-height: 28px;
+    min-height: 28px;
 }
 
 #switcher.stack-switcher > * {
-  background-color: var(--shadow);
-  padding: 4px;
-  border-radius: 20px;
-  transition: all 0.1s ease;
+    background-color: var(--shadow);
+    padding: 4px;
+    border-radius: 20px;
+    transition: all 0.1s ease;
 }
 
 #switcher.stack-switcher > *:checked {
-  background-color: var(--surface);
+    background-color: var(--surface);
 }
 
 #switcher.stack-switcher > *:active,
 #switcher.stack-switcher > *:hover {
-  background-color: var(--surface-bright);
+    background-color: var(--surface-bright);
 }
 
 #switcher.stack-switcher > *:focus {
-  background-color: var(--surface-bright);
+    background-color: var(--surface-bright);
 }
 
 #switcher.stack-switcher button label {
-  font-weight: bold;
+    font-weight: bold;
 }
 
 #switcher.stack-switcher > *:checked label {
-  color: var(--primary);
+    color: var(--primary);
 }

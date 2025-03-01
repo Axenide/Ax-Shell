@@ -1,3 +1,4 @@
+from fabric import Fabricator
 from fabric.widgets.box import Box
 from fabric.widgets.label import Label
 from fabric.widgets.datetime import DateTime
@@ -11,6 +12,7 @@ from modules.systemtray import SystemTray
 from config.config import open_config
 import modules.icons as icons
 import modules.data as data
+import nightscout
 
 class Bar(Window):
     def __init__(self, **kwargs):
@@ -25,7 +27,7 @@ class Bar(Window):
         )
 
         self.notch = kwargs.get("notch", None)
-        
+
         self.workspaces = Workspaces(
             name="workspaces",
             invert_scroll=True,
@@ -51,7 +53,7 @@ class Bar(Window):
         )
         self.button_apps.connect("enter_notify_event", self.on_button_enter)
         self.button_apps.connect("leave_notify_event", self.on_button_leave)
-        
+
         self.button_power = Button(
             name="button-bar",
             on_clicked=lambda *_: self.power_menu(),
@@ -76,7 +78,7 @@ class Bar(Window):
 
         self.button_color = Button(
             name="button-bar",
-            tooltip_text="Color Picker\nLeft Click: HEX\nMiddle Click: HSV\nRight Click: RGB",
+            tooltip_text="Color Picker\nLeft Click: RGB\nMiddle Click: HSV\nRight Click: HEX",
             v_expand=False,
             child=Label(
                 name="button-bar-label",
@@ -156,11 +158,11 @@ class Bar(Window):
 
     def colorpicker(self, button, event):
         if event.button == 1:
-            exec_shell_command_async(f"bash {get_relative_path('../scripts/hyprpicker-hex.sh')}")
+            exec_shell_command_async(f"bash {get_relative_path('../scripts/hyprpicker-rgb.sh')}")
         elif event.button == 2:
             exec_shell_command_async(f"bash {get_relative_path('../scripts/hyprpicker-hsv.sh')}")
         elif event.button == 3:
-            exec_shell_command_async(f"bash {get_relative_path('../scripts/hyprpicker-rgb.sh')}")
+            exec_shell_command_async(f"bash {get_relative_path('../scripts/hyprpicker-hex.sh')}")
 
     def toggle_hidden(self):
         self.hidden = not self.hidden

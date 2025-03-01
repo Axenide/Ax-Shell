@@ -94,7 +94,7 @@ class BluetoothConnections(Box):
             Label(name="bluetooth-section", label="Paired"),
             ScrolledWindow(name="bluetooth-paired", min_content_size=(590, 160), child=self.paired_box, v_expand=True),
             Label(name="bluetooth-section", label="Available"),
-            ScrolledWindow(name="bluetooth-available", min_content_size=(590, 160), child=self.available_box, v_expand=True),
+            ScrolledWindow(name="bluetooth-available", min_content_size=(590, 90), child=self.available_box, v_expand=True),
         ]
 
         # to run notify closures thus display the status

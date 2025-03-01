@@ -1,0 +1,28 @@
+#brightness-bar {
+    min-height: 100px;
+    min-width: 66px;
+    color: var(--primary);
+    padding: 5px;
+    transition: all 0.2s ease;
+}
+
+#brightness-bar trough {
+    margin-top: 8px;
+    min-width: 66px;
+    min-height: 24px;
+    background-color: var(--surface);
+    border-radius: 24px;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+#brightness-bar trough:hover {
+    background-color: var(--surface-bright);
+}
+
+#brightness-bar trough highlight {
+    background-color: var(--primary);
+    border-radius: 24px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s ease;
+    min-width: 1px; /* Added to prevent the highlight from looking squished at value 0 */
+}

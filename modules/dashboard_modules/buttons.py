@@ -30,7 +30,7 @@ class NetworkButton(Box):
         self.network_label_box = Box(children=[self.network_label, Box(h_expand=True)])
         self.network_ssid = Label(
             name="network-ssid",
-            label="ARGOS_5GHz",
+            label="Ethernet",
             justification="left",
         )
         self.network_ssid_box = Box(children=[self.network_ssid, Box(h_expand=True)])
@@ -125,41 +125,64 @@ class BluetoothButton(Box):
         self.add(self.bluetooth_menu_button)
 
 
-class NightModeButton(Button):
-    def __init__(self):
-        night_mode_icon = Label(
-            name="night-mode-icon",
-            markup=icons.night,
+class LightButton(Box):
+    def __init__(self, notch):
+        super().__init__(
+            name="light-button",
+            orientation="h",
+            h_align="fill",
+            v_align="center",
+            h_expand=True,
+            v_expand=True,
         )
-        night_mode_label = Label(
-            name="night-mode-label",
-            label="Night Mode",
+        self.notch = notch
+
+        self.light_icon = Label(
+            name="light-icon",
+            markup=icons.bulb,
+        )
+        self.light_label = Label(
+            name="light-label",
+            label="Light",
             justification="left",
         )
-        night_mode_label_box = Box(children=[night_mode_label, Box(h_expand=True)])
-        night_mode_status = Label(
-            name="night-mode-status",
-            label="Enabled",
+        self.light_label_box = Box(children=[self.light_label, Box(h_expand=True)])
+        self.light_status_text = Label(
+            name="light-status",
+            label="on",
             justification="left",
         )
-        night_mode_status_box = Box(children=[night_mode_status, Box(h_expand=True)])
-        night_mode_text = Box(
-            name="night-mode-text",
+        self.light_status_box = Box(children=[self.light_status_text, Box(h_expand=True)])
+        self.light_text = Box(
             orientation="v",
             h_align="start",
             v_align="center",
-            children=[night_mode_label_box, night_mode_status_box],
+            children=[self.light_label_box, self.light_status_box],
         )
-        night_mode_box = Box(
+        self.light_status_container = Box(
             h_align="start",
             v_align="center",
             spacing=10,
-            children=[night_mode_icon, night_mode_text],
+            children=[self.light_icon, self.light_text],
         )
-        super().__init__(
-            name="night-mode-button",
-            child=night_mode_box,
+        self.light_status_button = Button(
+            name="light-status-button",
+            h_expand=True,
+            child=self.light_status_container,
+            on_clicked=lambda *_: self.notch.hue.switch(),
         )
+        self.light_menu_label = Label(
+            name="light-menu-label",
+            markup=icons.chevron_right,
+        )
+        self.light_menu_button = Button(
+            name="light-menu-button",
+            on_clicked=lambda *_: self.notch.open_notch("hue"),
+            child=self.light_menu_label,
+        )
+
+        self.add(self.light_status_button)
+        self.add(self.light_menu_button)
 
 
 class CaffeineButton(Button):
@@ -216,13 +239,13 @@ class Buttons(Box):
         # Instanciar cada botón
         self.network_button = NetworkButton()
         self.bluetooth_button = BluetoothButton(self.notch)
-        self.night_mode_button = NightModeButton()
+        self.light_button = LightButton(self.notch)
         self.caffeine_button = CaffeineButton()
 
         # Agregar botones al contenedor
         self.add(self.network_button)
         self.add(self.bluetooth_button)
-        self.add(self.night_mode_button)
+        self.add(self.light_button)
         self.add(self.caffeine_button)
 
         self.show_all()

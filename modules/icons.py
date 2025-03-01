@@ -48,12 +48,14 @@ shutdown: str = "&#xeb0d;"
 wifi: str = "&#xeb52;"
 bluetooth: str = "&#xea37;"
 night: str = "&#xeaf8;"
+bulb: str = "&#xea51;"
 coffee: str = "&#xef0e;"
 dnd: str = "&#xea35;"
 
 wifi_off: str = "&#xecfa;"
 bluetooth_off: str = "&#xeceb;"
 night_off: str = "&#xf162;"
+bulb_off: str = "&#xea50;"
 dnd_off: str = "&#xece9;"
 
 # Bluetooth
@@ -71,6 +73,8 @@ next: str = "&#xed4b;"
 shuffle: str = "&#xf000;"
 repeat: str = "&#xeb72;"
 music: str = "&#xeafc;"
+firefox: str = "&#xecfd;"
+spotify: str = "&#xed03;"
 
 # Volume
 vol_off: str = "&#xf1c3;"

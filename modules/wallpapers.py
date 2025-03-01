@@ -24,7 +24,7 @@ class WallpaperSelector(Box):
         self.thumbnails = []
         self.thumbnail_queue = []
         self.executor = ThreadPoolExecutor(max_workers=4)  # Shared executor
-        
+
         # Initialize UI components
         self.viewport = Gtk.IconView()
         self.viewport.set_model(Gtk.ListStore(GdkPixbuf.Pixbuf, str))
@@ -65,7 +65,7 @@ class WallpaperSelector(Box):
         self.scheme_dropdown.set_tooltip_text("Select color scheme")
         for key, display_name in self.schemes.items():
             self.scheme_dropdown.append(key, display_name)
-        self.scheme_dropdown.set_active_id("scheme-tonal-spot")
+        self.scheme_dropdown.set_active_id("scheme-monochrome")
         self.scheme_dropdown.connect("changed", self.on_scheme_changed)
 
         self.dropdown_box = Box(

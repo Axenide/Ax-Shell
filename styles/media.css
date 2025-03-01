@@ -1,0 +1,95 @@
+#media-menu-button {
+    border-radius: 18px;
+    padding: 14px;
+}
+
+#media-title {
+    font-weight: bold;
+    min-height: 25px;
+}
+
+#player-spotify label,
+#player-firefox label {
+    font-size: 25px;
+}
+
+#media-menu-button label {
+    font-size: 22px;
+    color: var(--foreground);
+}
+
+#media-menu-button:hover {
+    background-color: var(--surface-bright);
+}
+
+#media-menu-button:hover label {
+    color: var(--primary);
+}
+
+#media-menu-button:active {
+    background-color: var(--primary);
+}
+
+#media-menu-button:active label {
+    color: var(--shadow);
+}
+
+#media-image-box {
+    margin: 17px;
+    margin-bottom: 0px;
+}
+#media-image {
+    border-radius: 10px;
+}
+
+#media-bar-box {
+    margin-left: 10px;
+    margin-right: 10px;
+}
+
+#media-bar {
+    min-height: 4px;
+    min-width: 200px;
+    color: var(--primary);
+}
+
+#media-bar trough {
+    margin-top: 5px;
+    padding-right: 10px;
+    min-height: 20px;
+    background-color: var(--shadow);
+    border-radius: 20px;
+}
+
+#media-bar trough:hover {
+    background-color: var(--surface-bright);
+}
+
+#media-bar trough highlight {
+    background-color: var(--primary);
+    margin-right: -10px;
+}
+
+#player-spotify label,
+#player-firefox label,
+#song-time,
+#song-length {
+    font-weight: bold;
+    margin-top: 10px;
+}
+
+#player-spotify label {
+    margin-right: 4px;
+}
+
+#player-firefox label {
+    margin-left: 4px;
+}
+
+#song-time {
+    margin-right: 10px;
+}
+
+#song-length {
+    margin-left: 10px;
+}

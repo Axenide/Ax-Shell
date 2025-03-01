@@ -1,73 +1,80 @@
 #notch-box {
-  margin: 10px;
-  margin-top: 0px;
-  transition: all 0.5s cubic-bezier(0.5, 0.25, 0, 1);
+    margin: 10px;
+    margin-top: 0px;
+    transition: all 0.5s cubic-bezier(0.5, 0.25, 0, 1);
 }
 
 #notch-box.hidden {
-  opacity: 0;
+    opacity: 0;
 }
 
 #notch-box.hideshow {
-  opacity: 1;
-  margin-top: 40px;
+    opacity: 1;
+    margin-top: 40px;
 }
 
 #notch-content {
-  background-color: var(--shadow);
-  min-height: 40px;
-  min-width: 256px;
-  border-radius: 0 0 20px 20px;
-  transition: all 0.5s cubic-bezier(0.5, 0.25, 0, 1.25);
+    background-color: var(--shadow);
+    min-height: 40px;
+    min-width: 256px;
+    border-radius: 0 0 20px 20px;
+    transition: all 0.5s cubic-bezier(0.5, 0.25, 0, 1.25);
 }
 
 #notch-content.launcher {
-  padding: 16px;
-  min-height: 220px;
-  min-width: 480px;
-  border-radius: 0 0 36px 36px;
+    padding: 16px;
+    min-height: 220px;
+    min-width: 480px;
+    border-radius: 0 0 36px 36px;
 }
 
 #notch-content.dashboard {
-  padding: 16px;
-  min-height: 358px;
-  min-width: 820px;
-  border-radius: 0 0 36px 36px;
+    padding: 16px;
+    min-height: 380px;
+    min-width: 820px;
+    border-radius: 0 0 36px 36px;
 }
 
 #notch-content.wallpapers {
-  padding: 16px;
-  min-height: 420px;
-  min-width: 620px;
-  border-radius: 0 0 36px 36px;
+    padding: 16px;
+    min-height: 420px;
+    min-width: 620px;
+    border-radius: 0 0 36px 36px;
 }
 
 #notch-content.notification {
-  padding: 16px;
-  min-height: 45px;
-  min-width: 360px;
-  border-radius: 0 0 36px 36px;
+    padding: 16px;
+    min-height: 45px;
+    min-width: 360px;
+    border-radius: 0 0 36px 36px;
 }
 
 #notch-content.overview {
-  padding: 16px;
-  @apply overview_width();
-  @apply overview_height();
-  border-radius: 0 0 36px 36px;
+    padding: 16px;
+    @apply overview_width();
+    @apply overview_height();
+    border-radius: 0 0 36px 36px;
 }
 
 #notch-content.power {
-  padding: 16px;
-  min-height: 52px;
-  min-width: 276px;
-  border-radius: 0 0 36px 36px;
+    padding: 16px;
+    min-height: 52px;
+    min-width: 276px;
+    border-radius: 0 0 36px 36px;
+}
+
+#notch-content.hue {
+    padding: 16px;
+    min-height: 310px;
+    min-width: 410px;
+    border-radius: 0 0 36px 36px;
 }
 
 #notch-content.bluetooth {
-  padding: 16px;
-  min-height: 464px;
-  min-width: 604px;
-  border-radius: 0 0 36px 36px;
+    padding: 16px;
+    min-height: 464px;
+    min-width: 604px;
+    border-radius: 0 0 36px 36px;
 }
 
 #app-launcher,
@@ -76,10 +83,11 @@
 #notification,
 #overview,
 #power-menu,
+#hue,
 #bluetooth {
-  opacity: 1;
-  margin: -800px;
-  transition: all 0.25s cubic-bezier(0.5, 0.25, 0, 1);
+    opacity: 1;
+    margin: -1150px;
+    transition: all 0.25s cubic-bezier(0.5, 0.25, 0, 1);
 }
 
 #app-launcher.open,
@@ -89,30 +97,31 @@
 #notification.open,
 #overview.open,
 #power-menu.open,
+#hue.open,
 #bluetooth.open {
-  opacity: 1;
-  margin: 0px;
+    opacity: 1;
+    margin: 0px;
 }
 
 #notch-compact {
-  font-weight: bold;
-  border-radius: 0 0 20px 20px;
-  transition: all 0.1s ease;
+    font-weight: bold;
+    border-radius: 0 0 20px 20px;
+    transition: all 0.1s ease;
 }
 
 #notch-compact:hover {
-  background: linear-gradient(
-    to bottom,
-    var(--shadow) 50%,
-    var(--surface) 95%,
-    var(--primary) 95%
-  );
+    background: linear-gradient(
+        to bottom,
+        var(--shadow) 50%,
+        var(--surface) 95%,
+        var(--primary) 95%
+    );
 }
 
 #notch-corner-left {
-  margin-left: -16px;
+    margin-left: -16px;
 }
 
 #notch-corner-right {
-  margin-right: -16px;
+    margin-right: -16px;
 }
