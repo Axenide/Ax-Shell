@@ -8,6 +8,11 @@ from fabric.widgets.scrolledwindow import ScrolledWindow
 from fabric.utils import DesktopApp, get_desktop_applications, idle_add, remove_handler
 from gi.repository import GLib, Gdk
 import modules.icons as icons
+import json
+import os
+import re
+import math
+import subprocess
 
 class AppLauncher(Box):
     def __init__(self, **kwargs):
@@ -24,12 +29,23 @@ class AppLauncher(Box):
         self._arranger_handler: int = 0
         self._all_apps = get_desktop_applications()
 
+        # Calculator history initialization
+        self.calc_history_path = os.path.expanduser("~/.cache/ax-shell/calc.json")
+        if os.path.exists(self.calc_history_path):
+            with open(self.calc_history_path, "r") as f:
+                self.calc_history = json.load(f)
+        else:
+            self.calc_history = []
+        
         self.viewport = Box(name="viewport", spacing=4, orientation="v")
         self.search_entry = Entry(
             name="search-entry",
             placeholder="Search Applications...",
             h_expand=True,
-            notify_text=lambda entry, *_: self.arrange_viewport(entry.get_text()),
+            notify_text=lambda entry, *_: (
+                self.update_calculator_viewport() if entry.get_text().startswith("=")
+                else self.arrange_viewport(entry.get_text())
+            ),
             on_activate=lambda entry, *_: self.on_search_entry_activate(entry.get_text()),
             on_key_press_event=self.on_search_entry_key_press,  # Handle key presses
         )
@@ -83,6 +99,10 @@ class AppLauncher(Box):
         self.arrange_viewport()
 
     def arrange_viewport(self, query: str = ""):
+        if query.startswith("="):
+            # In calculator mode, update history view once (not per keystroke)
+            self.update_calculator_viewport()
+            return
         remove_handler(self._arranger_handler) if self._arranger_handler else None
         self.viewport.children = []
         self.selected_index = -1  # Clear selection when viewport changes
@@ -195,6 +215,11 @@ class AppLauncher(Box):
         GLib.idle_add(scroll)
 
     def on_search_entry_activate(self, text):
+        if text.startswith("="):
+            # If in calculator mode and no history item is selected, evaluate new expression.
+            if self.selected_index == -1:
+                self.evaluate_calculator_expression(text)
+            return
         match text:
             case ":w":
                 self.notch.open_notch("wallpapers")
@@ -213,17 +238,43 @@ class AppLauncher(Box):
                         children[selected_index].clicked()
 
     def on_search_entry_key_press(self, widget, event):
-        keyval = event.keyval
-        if keyval == Gdk.KEY_Down:
-            self.move_selection(1)
-            return True
-        elif keyval == Gdk.KEY_Up:
-            self.move_selection(-1)
-            return True
-        elif keyval == Gdk.KEY_Escape:
-            self.close_launcher()
-            return True
-        return False
+        text = widget.get_text()
+        if text.startswith("="):
+            if event.keyval == Gdk.KEY_Down:
+                self.move_selection(1)
+                return True
+            elif event.keyval == Gdk.KEY_Up:
+                self.move_selection(-1)
+                return True
+            elif event.keyval in (Gdk.KEY_Return, Gdk.KEY_KP_Enter):
+                # In calculator mode, if a history item is highlighted, copy it.
+                if self.selected_index != -1:
+                    if event.state & Gdk.ModifierType.SHIFT_MASK:
+                        self.delete_selected_calc_history()
+                    else:
+                        selected_text = self.calc_history[self.selected_index]
+                        self.copy_text_to_clipboard(selected_text)
+                        # Clear selection so new expressions are evaluated on further Return presses.
+                        self.selected_index = -1
+                else:
+                    self.evaluate_calculator_expression(text)
+                return True
+            elif event.keyval == Gdk.KEY_Escape:
+                self.close_launcher()
+                return True
+            return False
+        else:
+            # Normal app mode behavior
+            if event.keyval == Gdk.KEY_Down:
+                self.move_selection(1)
+                return True
+            elif event.keyval == Gdk.KEY_Up:
+                self.move_selection(-1)
+                return True
+            elif event.keyval == Gdk.KEY_Escape:
+                self.close_launcher()
+                return True
+            return False
 
     def move_selection(self, delta: int):
         children = self.viewport.get_children()
@@ -236,3 +287,75 @@ class AppLauncher(Box):
             new_index = self.selected_index + delta
         new_index = max(0, min(new_index, len(children) - 1))
         self.update_selection(new_index)
+
+    def save_calc_history(self):
+        with open(self.calc_history_path, "w") as f:
+            json.dump(self.calc_history, f)
+
+    def evaluate_calculator_expression(self, text: str):
+        # Remove the '=' prefix and extra spaces
+        expr = text.lstrip("=").strip()
+        if not expr:
+            return
+        # Replace operators: '^' -> '**', and '×' -> '*'
+        expr = expr.replace("^", "**").replace("×", "*")
+        # Replace factorial: e.g. 5! -> math.factorial(5)
+        expr = re.sub(r'(\d+)!', r'math.factorial(\1)', expr)
+        # Replace brackets: allow [] and {} as ()
+        for old, new in [("[", "("), ("]", ")"), ("{", "("), ("}", ")")]:
+            expr = expr.replace(old, new)
+        try:
+            result = eval(expr, {"__builtins__": None, "math": math})
+        except Exception as e:
+            result = f"Error: {e}"
+        # Prepend to history (newest first)
+        self.calc_history.insert(0, f"{text} => {result}")
+        self.save_calc_history()
+        self.update_calculator_viewport()
+
+    def update_calculator_viewport(self):
+        self.viewport.children = []
+        for item in self.calc_history:
+            btn = self.create_calc_history_button(item)
+            self.viewport.add(btn)
+        # Remove resetting selected_index unconditionally so that a highlighted result isn't lost.
+        # Optionally, only reset if the input is not more than "=".
+        # if self.search_entry.get_text().strip() != "=":
+        #     self.selected_index = -1
+
+    def create_calc_history_button(self, text: str) -> Button:
+        btn = Button(
+            name="app-slot-button",  # reuse existing CSS styling
+            child=Box(
+                name="calc-slot-box",
+                orientation="h",
+                spacing=10,
+                children=[
+                    Label(
+                        name="calc-label",
+                        label=text,
+                        ellipsization="end",
+                        v_align="center",
+                        h_align="center",
+                    ),
+                ],
+            ),
+            tooltip_text=text,
+            on_clicked=lambda *_: self.copy_text_to_clipboard(text),
+        )
+        return btn
+
+    def copy_text_to_clipboard(self, text: str):
+        # Split the text on "=>" and copy only the result part if available
+        parts = text.split("=>", 1)
+        copy_text = parts[1].strip() if len(parts) > 1 else text
+        try:
+            subprocess.run(["wl-copy"], input=copy_text.encode(), check=True)
+        except subprocess.CalledProcessError as e:
+            print(f"Clipboard copy failed: {e}")
+
+    def delete_selected_calc_history(self):
+        if self.selected_index != -1 and self.selected_index < len(self.calc_history):
+            del self.calc_history[self.selected_index]
+            self.save_calc_history()
+            self.update_calculator_viewport()

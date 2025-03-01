@@ -1,7 +1,11 @@
 #notch-box {
+<<<<<<< HEAD
     margin: 10px;
     margin-top: 0px;
     transition: all 0.5s cubic-bezier(0.5, 0.25, 0, 1);
+=======
+  margin: 0 60px 10px 60px;
+>>>>>>> 360cd6ffe982d56c29e2e74aa82646d197c34c92
 }
 
 #notch-box.hidden {
@@ -14,11 +18,19 @@
 }
 
 #notch-content {
+<<<<<<< HEAD
     background-color: var(--shadow);
     min-height: 40px;
     min-width: 256px;
     border-radius: 0 0 20px 20px;
     transition: all 0.5s cubic-bezier(0.5, 0.25, 0, 1.25);
+=======
+  background-color: var(--shadow);
+  min-height: 40px;
+  min-width: 256px;
+  border-radius: 0 0 20px 20px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+>>>>>>> 360cd6ffe982d56c29e2e74aa82646d197c34c92
 }
 
 #notch-content.launcher {
@@ -29,6 +41,7 @@
 }
 
 #notch-content.dashboard {
+<<<<<<< HEAD
     padding: 16px;
     min-height: 380px;
     min-width: 820px;
@@ -40,6 +53,12 @@
     min-height: 420px;
     min-width: 620px;
     border-radius: 0 0 36px 36px;
+=======
+  padding: 16px;
+  min-height: 430px;
+  min-width: 1070px;
+  border-radius: 0 0 36px 36px;
+>>>>>>> 360cd6ffe982d56c29e2e74aa82646d197c34c92
 }
 
 #notch-content.notification {
@@ -57,6 +76,7 @@
 }
 
 #notch-content.power {
+<<<<<<< HEAD
     padding: 16px;
     min-height: 52px;
     min-width: 276px;
@@ -75,11 +95,22 @@
     min-height: 464px;
     min-width: 604px;
     border-radius: 0 0 36px 36px;
+=======
+  min-height: 84px;
+  min-width: 308px;
+  border-radius: 0 0 36px 36px;
+}
+
+#notch-content.bluetooth {
+  padding: 16px;
+  min-height: 400px;
+  min-width: 512px;
+  border-radius: 0 0 36px 36px;
+>>>>>>> 360cd6ffe982d56c29e2e74aa82646d197c34c92
 }
 
 #app-launcher,
 #dashboard,
-#wallpapers,
 #notification,
 #overview,
 #power-menu,
@@ -92,8 +123,6 @@
 
 #app-launcher.open,
 #dashboard.open,
-#wallpapers.open,
-#wallpapers-viewport.open,
 #notification.open,
 #overview.open,
 #power-menu.open,
@@ -104,6 +133,7 @@
 }
 
 #notch-compact {
+<<<<<<< HEAD
     font-weight: bold;
     border-radius: 0 0 20px 20px;
     transition: all 0.1s ease;
@@ -116,6 +146,11 @@
         var(--surface) 95%,
         var(--primary) 95%
     );
+=======
+  font-weight: bold;
+  transition: all 0.5s cubic-bezier(0.5, 0.25, 0, 1.25);
+  padding: 0 10px;
+>>>>>>> 360cd6ffe982d56c29e2e74aa82646d197c34c92
 }
 
 #notch-corner-left {
@@ -124,4 +159,33 @@
 
 #notch-corner-right {
     margin-right: -16px;
+}
+
+#compact-mpris-icon-label {
+  color: var(--primary);
+}
+
+#compact-mpris-icon-label,
+#compact-mpris-button-label {
+  font-size: 20px;
+}
+
+#compact-mpris-icon,
+#compact-mpris-button {
+  margin: 0 10px;
+}
+
+#compact-mpris-icon:hover,
+#compact-mpris-button:hover {
+  background-color: var(--primary);
+}
+
+#compact-mpris-icon:active,
+#compact-mpris-button:active {
+  background-color: var(--primary);
+}
+
+#compact-mpris-icon:hover #compact-mpris-icon-label,
+#compact-mpris-button:hover #compact-mpris-button-label {
+  color: var(--background);
 }

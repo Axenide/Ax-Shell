@@ -1,23 +1,9 @@
-#wallpaper-icons {
-  opacity: 1;
-  animation: fade-in 0.25s ease-in-out;
-}
-
-@keyframes fade-in {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
 #wallpaper-icons:selected {
-  background-color: var(--surface-bright);
-  border-radius: 8px;
+  background-color: var(--outline);
+  border-radius: 0px;
 }
 
-#dropdown-box {
+#scheme-dropdown {
   background-color: var(--surface);
   padding: 8px;
 }
@@ -33,4 +19,42 @@
 
 #scheme-dropdown.box button.box.cellview:selected {
   background-color: var(--surface-bright);
+}
+
+#search-entry-walls {
+  min-width: 512px;
+}
+
+/* Customize the overall switch appearance */
+#matugen-switcher {
+  min-width: 40px;
+  min-height: 20px;
+  background-color: var(--surface);
+  border-radius: 15px;
+  padding: 2px;
+  transition: background-color 0.3s ease;
+}
+
+/* Style the switch's slider */
+#matugen-switcher slider {
+  background-color: var(--primary);
+  border-radius: 16px;
+  min-width: 20px;
+  min-height: 20px;
+  transition: background-color 0.1s cubic-bezier(0.5, 0.25, 0, 1.25), transform 0.25s cubic-bezier(0.5, 0.25, 0, 1.25);
+}
+
+/* When the switch is active (checked) */
+#matugen-switcher:checked {
+  background-color: var(--primary);
+}
+
+/* Optional: additional styling for the slider when active */
+#matugen-switcher:checked slider {
+  background-color: var(--shadow);
+}
+
+#mat-label {
+  font-size: 24px;
+  margin-left: 4px;
 }

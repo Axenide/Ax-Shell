@@ -1,0 +1,91 @@
+#player {
+  min-width: 172px;
+  border-radius: 20px;
+  border: 4px solid var(--surface);
+  background-color: var(--shadow);
+  padding: 8px;
+}
+
+#player-progress {
+  color: var(--surface-bright);
+  border: 8px solid var(--foreground);
+}
+
+#player-title,
+#player-album,
+#player-artist {
+  font-weight: bold;
+}
+
+#player-title {
+  margin-top: -10px;
+  font-size: 18px;
+}
+
+#player-album {
+  margin-top: -5px;
+  color: var(--outline);
+}
+
+#player-artist {
+  font-size: 14px;
+  color: var(--primary);
+}
+
+#player-btn-label {
+  font-size: 24px;
+  color: var(--foreground);
+}
+
+#player-btn {
+  padding: 4px;
+}
+
+#player-btn:hover {
+  background-color: var(--foreground);
+}
+
+#player-btn:hover #player-btn-label {
+  color: var(--shadow);
+}
+
+#player-btn:active {
+  background-color: var(--primary);
+}
+
+#player-btn:active #player-btn-label {
+  color: var(--foreground);
+}
+
+#player-time {
+  font-weight: bold;
+  color: var(--outline);
+}
+
+#player-switcher {
+  margin: 0 24px;
+}
+
+#player-switcher.stack-switcher > *:focus {
+  background-color: var(--surface-bright);
+}
+
+#player-switcher.stack-switcher button label {
+  font-size: 20px;
+  color: var(--surface-bright);
+}
+
+#player-switcher.stack-switcher button:hover label {
+  font-size: 20px;
+  color: var(--outline);
+}
+
+#player-switcher.stack-switcher > *:checked label {
+  font-size: 24px;
+  color: var(--foreground);
+}
+
+#player-switcher.stack-switcher > *:checked:hover label {
+  font-size: 24px;
+  color: var(--foreground);
+}

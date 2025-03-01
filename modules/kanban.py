@@ -5,6 +5,8 @@ from pathlib import Path
 import cairo  # For rendering the drag preview
 
 from fabric.widgets.label import Label
+from fabric.widgets.box import Box
+from fabric.widgets.centerbox import CenterBox
 import modules.icons as icons
 
 gi.require_version('Gtk', '3.0')
@@ -37,11 +39,11 @@ class InlineEditor(Gtk.Box):
         # Connect key press events to handle Return and SHIFT+Return.
         self.text_view.connect("key-press-event", self.on_key_press)
         
-        confirm_btn = Gtk.Button.new_from_icon_name("object-select-symbolic", Gtk.IconSize.BUTTON)
+        confirm_btn = Gtk.Button(name="kanban-btn", child=Label(name="kanban-btn-label", markup=icons.accept))
         confirm_btn.connect("clicked", self.on_confirm)
         confirm_btn.get_style_context().add_class("flat")
         
-        cancel_btn = Gtk.Button.new_from_icon_name("window-close-symbolic", Gtk.IconSize.BUTTON)
+        cancel_btn = Gtk.Button(name="kanban-btn", child=Label(name="kanban-btn-neg", markup=icons.cancel))
         cancel_btn.connect("clicked", self.on_cancel)
         cancel_btn.get_style_context().add_class("flat")
         
@@ -51,9 +53,11 @@ class InlineEditor(Gtk.Box):
         sw.set_min_content_height(50)
         sw.add(self.text_view)
 
+        self.button_box = Box(children=[confirm_btn, cancel_btn], spacing=4)
+        self.center_box = CenterBox(center_children=[self.button_box], orientation="v")
+
         self.pack_start(sw, True, True, 0)
-        self.pack_start(confirm_btn, False, False, 0)
-        self.pack_start(cancel_btn, False, False, 0)
+        self.pack_start(self.center_box, False, False, 0)
         self.show_all()
 
     def on_confirm(self, widget):
@@ -109,12 +113,13 @@ class KanbanNote(Gtk.EventBox):
         # Wrap long lines.
         self.label.set_line_wrap_mode(Gtk.WrapMode.WORD)
         
-        self.delete_btn = Gtk.Button.new_from_icon_name("window-close-symbolic", Gtk.IconSize.BUTTON)
-        self.delete_btn.get_style_context().add_class("flat")
+        self.delete_btn = Gtk.Button(name="kanban-btn", child=Label(name="kanban-btn-neg", markup=icons.trash))
         self.delete_btn.connect("clicked", self.on_delete_clicked)
+
+        self.center_btn = CenterBox(orientation="v", start_children=[self.delete_btn])
         
         self.box.pack_start(self.label, True, True, 0)
-        self.box.pack_start(self.delete_btn, False, False, 0)
+        self.box.pack_start(self.center_btn, False, False, 0)
         self.add(self.box)
         self.show_all()
 
@@ -193,10 +198,10 @@ class KanbanColumn(Gtk.Frame):
         self.listbox = Gtk.ListBox()
         self.listbox.set_selection_mode(Gtk.SelectionMode.NONE)
         
-        header = Label(name="column-header", label=self.title)
+        self.add_btn = Gtk.Button(name="kanban-btn-add", child=Label(name="kanban-btn-label", markup=icons.add))
+        header = CenterBox(name="kanban-header", center_children=[Label(name="column-header", label=self.title)], end_children=[self.add_btn])
         self.box.pack_start(header, False, False, 0)
         
-        self.add_btn = Gtk.Button(name="add-btn", child=Label(name="add-note", markup=icons.add))
         self.add_btn.connect("clicked", self.on_add_clicked)
         
         scrolled = Gtk.ScrolledWindow(name="kanban-scroll")
@@ -222,7 +227,7 @@ class KanbanColumn(Gtk.Frame):
 
     def on_add_clicked(self, button):
         editor = InlineEditor()
-        row = Gtk.ListBoxRow()
+        row = Gtk.ListBoxRow(name="kanban-row")
         row.add(editor)
         self.listbox.add(row)
         self.listbox.show_all()
@@ -245,7 +250,7 @@ class KanbanColumn(Gtk.Frame):
     def add_note(self, text, suppress_signal=False):
         note = KanbanNote(text)
         note.connect('changed', lambda x: self.emit('changed'))
-        row = Gtk.ListBoxRow()
+        row = Gtk.ListBoxRow(name="kanban-row")
         row.add(note)
         row.connect('destroy', lambda x: self.emit('changed'))
         self.listbox.add(row)
@@ -272,7 +277,7 @@ class KanbanColumn(Gtk.Frame):
             row = self.listbox.get_row_at_y(y)
             new_note = KanbanNote(text)
             new_note.connect('changed', lambda x: self.emit('changed'))
-            new_row = Gtk.ListBoxRow()
+            new_row = Gtk.ListBoxRow(name="kanban-row")
             new_row.add(new_note)
             new_row.connect('destroy', lambda x: self.emit('changed'))
             

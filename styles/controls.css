@@ -1,29 +1,65 @@
-#controls {
-  background-color: var(--shadow);
-  border-radius: 16px;
-  margin-top: 4px;
-  padding: 4px;
-  box-shadow: 0 0 4px alpha(black, 0.5);
-}
-
-#controls-button {
-  background-color: var(--shadow);
-  transition: all 0.1s ease;
-}
-
-#controls-button-label {
-  color: var(--primary);
-  font-size: 20px;
-  padding: 4px;
-  border-radius: 12px;
-  transition: all 0.1s ease;
-}
-
-#controls-button:hover #controls-button-label {
+#control-slider {
   background-color: var(--surface-bright);
+  margin: 12px 14px;
 }
 
-#controls-button:active #controls-button-label {
-  color: var(--shadow);
+#control-slider trough {
+  min-height: 4px;
+  padding: 0 14px;
+  margin: -12px -14px;
+}
+
+#control-slider trough highlight {
+  border-radius: 20px;
+  min-width: 28px;
+  min-height: 28px;
+  margin: 0 -14px;
   background-color: var(--primary);
+}
+
+#control-slider slider {
+  border-radius: 100%;
+  min-width: 20px;
+  min-height: 20px;
+  border: 4px solid transparent;
+}
+
+#control-slider.vol slider {
+  background-image: url("./.config/Ax-Shell/assets/icons/volume.png");
+  background-size: contain;
+}
+
+#control-slider.mic slider {
+  background-image: url("./.config/Ax-Shell/assets/icons/microphone.png");
+  background-size: contain;
+}
+
+#control-slider.brightness slider {
+  background-image: url("./.config/Ax-Shell/assets/icons/brightness.png");
+  background-size: contain;
+}
+
+#control-small {
+  padding: 4px;
+  margin-top: 4px;
+  border-radius: 16px;
+  background-color: var(--shadow);
+}
+
+#button-volume, #button-mic, #button-brightness {
+  color: var(--surface-bright);
+  border: 3px solid var(--primary);
+}
+
+#button-volume.muted, #button-mic.muted {
+  color: var(--surface-bright);
+  border: 3px solid var(--outline);
+}
+
+#vol-label, #mic-label, #brightness-label {
+  font-size: 20px;
+}
+
+#vol-label.muted, #mic-label.muted {
+  color: var(--outline);
 }

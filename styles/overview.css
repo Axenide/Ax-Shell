@@ -16,7 +16,7 @@
 
 #overview-client-box {
   background-color: var(--shadow);
-  border: 4px solid var(--surface);
+  border: 3px solid var(--surface);
 }
 
 #overview-client-box:hover {
@@ -25,12 +25,12 @@
 
 #overview-client-box:focus {
   background-color: var(--surface);
-  border: 4px solid var(--primary);
+  border: 3px solid var(--primary);
 }
 
 #overview-client-box:active {
   background-color: var(--surface-bright);
-  border: 4px solid var(--surface-bright);
+  border: 3px solid var(--surface-bright);
 }
 
 #overview-workspace-bg {

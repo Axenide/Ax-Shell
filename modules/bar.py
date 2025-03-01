@@ -4,15 +4,20 @@ from fabric.widgets.label import Label
 from fabric.widgets.datetime import DateTime
 from fabric.widgets.centerbox import CenterBox
 from fabric.widgets.button import Button
+from fabric.widgets.revealer import Revealer
 from fabric.widgets.wayland import WaylandWindow as Window
 from fabric.hyprland.widgets import Workspaces, WorkspaceButton
 from fabric.utils.helpers import get_relative_path, exec_shell_command_async
-from gi.repository import GLib, Gdk
+from gi.repository import Gdk
 from modules.systemtray import SystemTray
-from config.config import open_config
 import modules.icons as icons
 import modules.data as data
+<<<<<<< HEAD
 import nightscout
+=======
+from modules.metrics import MetricsSmall
+from modules.controls import ControlSmall
+>>>>>>> 360cd6ffe982d56c29e2e74aa82646d197c34c92
 
 class Bar(Window):
     def __init__(self, **kwargs):
@@ -89,13 +94,29 @@ class Bar(Window):
         self.button_color.connect("leave-notify-event", self.on_button_leave)
         self.button_color.connect("button-press-event", self.colorpicker)
 
-        self.button_config = Button(
-            name="button-bar",
-            on_clicked=lambda *_: exec_shell_command_async(f"python {data.HOME_DIR}/.config/Ax-Shell/config/config.py"),
-            child=Label(
-                name="button-bar-label",
-                markup=icons.config
-            )
+        self.control = ControlSmall()
+        self.metrics = MetricsSmall()
+        
+        self.revealer = Revealer(
+            name="bar-revealer",
+            transition_type="slide-left",
+            child_revealed=True,
+            child=Box(
+                name="bar-revealer-box",
+                orientation="h",
+                spacing=4,
+                children=[
+                    self.control,
+                    self.metrics,
+                ],
+            ),
+        )
+
+        self.boxed_revealer = Box(
+            name="boxed-revealer",
+            children=[
+                self.revealer,
+            ],
         )
 
         self.bar_inner = CenterBox(
@@ -118,11 +139,11 @@ class Bar(Window):
                 spacing=4,
                 orientation="h",
                 children=[
+                    self.boxed_revealer,
                     self.button_color,
                     self.systray,
-                    self.button_config,
-                    self.date_time,
                     self.button_power,
+                    self.date_time,
                 ],
             ),
         )
@@ -132,6 +153,7 @@ class Bar(Window):
         self.hidden = False
 
         self.show_all()
+        self.systray._update_visibility()
 
     def on_button_enter(self, widget, event):
         window = widget.get_window()

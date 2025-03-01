@@ -27,8 +27,6 @@ bind_vars = {
     'suffix_dash': "D",
     'prefix_bluetooth': "SUPER",
     'suffix_bluetooth': "B",
-    'prefix_walls': "SUPER",
-    'suffix_walls': "COMMA",
     'prefix_launcher': "SUPER",
     'suffix_launcher': "R",
     'prefix_overview': "SUPER",
@@ -106,9 +104,11 @@ def ensure_matugen_config():
     with open(config_path, 'w') as f:
         toml.dump(merged_config, f)
 
-    # Trigger image generation
-    image_path = os.path.expanduser("~/.config/Ax-Shell/assets/wallpapers_example/example-1.jpg")
-    os.system(f"matugen image {image_path}")
+    # Trigger image generation if "~/.current.wall" does not exist
+    current_wall = os.path.expanduser("~/.current.wall")
+    if not os.path.exists(current_wall):
+        image_path = os.path.expanduser("~/.config/Ax-Shell/assets/wallpapers_example/example-1.jpg")
+        os.system(f"matugen image {image_path}")
 
 
 def ensure_fonts():
@@ -155,17 +155,20 @@ bind = {bind_vars['prefix_restart']}, {bind_vars['suffix_restart']}, exec, killa
 bind = {bind_vars['prefix_axmsg']}, {bind_vars['suffix_axmsg']}, exec, $axMessage # Message | Default: SUPER + A
 bind = {bind_vars['prefix_dash']}, {bind_vars['suffix_dash']}, exec, $fabricSend 'notch.open_notch("dashboard")' # Dashboard | Default: SUPER + D
 bind = {bind_vars['prefix_bluetooth']}, {bind_vars['suffix_bluetooth']}, exec, $fabricSend 'notch.open_notch("bluetooth")' # Bluetooth | Default: SUPER + B
-bind = {bind_vars['prefix_walls']}, {bind_vars['suffix_walls']}, exec, $fabricSend 'notch.open_notch("wallpapers")' # Wallpaper Selector | Default: SUPER + COMMA
 bind = {bind_vars['prefix_launcher']}, {bind_vars['suffix_launcher']}, exec, $fabricSend 'notch.open_notch("launcher")' # App Launcher | Default: SUPER + R
 bind = {bind_vars['prefix_overview']}, {bind_vars['suffix_overview']}, exec, $fabricSend 'notch.open_notch("overview")' # Overview | Default: SUPER + TAB
 bind = {bind_vars['prefix_power']}, {bind_vars['suffix_power']}, exec, $fabricSend 'notch.open_notch("power")' # Power Menu | Default: SUPER + ESCAPE
 bind = {bind_vars['prefix_toggle']}, {bind_vars['suffix_toggle']}, exec, $fabricSend 'bar.toggle_hidden()' # Toggle Bar | Default: SUPER CTRL + B
 bind = {bind_vars['prefix_toggle']}, {bind_vars['suffix_toggle']}, exec, $fabricSend 'notch.toggle_hidden()' # Toggle Notch | Default: SUPER CTRL + B
-bind = {bind_vars['prefix_css']}, {bind_vars['suffix_css']}, exec, $fabricSend 'app.set_stylesheet_from_file(get_relative_path("main.css"))' # Reload CSS | Default: SUPER SHIFT + B
+bind = {bind_vars['prefix_css']}, {bind_vars['suffix_css']}, exec, $fabricSend 'app.set_css()' # Reload CSS | Default: SUPER SHIFT + B
 
 # Wallpapers directory: {bind_vars['wallpapers_dir']}
 
 source = {home}/.config/Ax-Shell/config/hypr/colors.conf
+
+layerrule = noanim, fabric
+
+exec = cp $wallpaper ~/.current.wall
 
 general {{
     col.active_border = 0xff$primary
@@ -236,18 +239,25 @@ class HyprConfGUI(Gtk.Window):
 
         self.selected_face_icon = None
 
-        # Main container
-        main_vbox = Gtk.VBox(spacing=10)
-        self.add(main_vbox)
+        # Use a grid for a more homogeneous layout
+        grid = Gtk.Grid(column_spacing=10, row_spacing=10)
+        grid.set_margin_top(10)
+        grid.set_margin_bottom(10)
+        grid.set_margin_start(10)
+        grid.set_margin_end(10)
+        self.add(grid)
 
-        # Create input entries for key bindings
+        # Header label spanning across columns
+        header = Gtk.Label(label="Configure Key Bindings")
+        header.set_halign(Gtk.Align.CENTER)
+        grid.attach(header, 0, 0, 4, 1)
+
         self.entries = []
         bindings = [
             ("Reload Ax-Shell", 'prefix_restart', 'suffix_restart'),
             ("Message", 'prefix_axmsg', 'suffix_axmsg'),
             ("Dashboard", 'prefix_dash', 'suffix_dash'),
             ("Bluetooth", 'prefix_bluetooth', 'suffix_bluetooth'),
-            ("Wallpaper Selector", 'prefix_walls', 'suffix_walls'),
             ("App Launcher", 'prefix_launcher', 'suffix_launcher'),
             ("Overview", 'prefix_overview', 'suffix_overview'),
             ("Power Menu", 'prefix_power', 'suffix_power'),
@@ -255,66 +265,70 @@ class HyprConfGUI(Gtk.Window):
             ("Reload CSS", 'prefix_css', 'suffix_css'),
         ]
 
+        # Populate grid with key binding rows, starting at row 1
+        row = 1
         for label_text, prefix_key, suffix_key in bindings:
-            entry_box = Gtk.HBox(spacing=10)
+            # Binding description
+            binding_label = Gtk.Label(label=label_text)
+            binding_label.set_halign(Gtk.Align.START)
+            grid.attach(binding_label, 0, row, 1, 1)
 
-            label = Gtk.Label(label=label_text)
-            entry_box.pack_start(label, False, False, 0)
-
+            # Prefix entry
             prefix_entry = Gtk.Entry()
             prefix_entry.set_text(bind_vars[prefix_key])
-            entry_box.pack_start(prefix_entry, True, True, 0)
+            grid.attach(prefix_entry, 1, row, 1, 1)
 
+            # Plus label between entries
             plus_label = Gtk.Label(label=" + ")
-            entry_box.pack_start(plus_label, False, False, 0)
+            grid.attach(plus_label, 2, row, 1, 1)
 
+            # Suffix entry
             suffix_entry = Gtk.Entry()
             suffix_entry.set_text(bind_vars[suffix_key])
-            entry_box.pack_start(suffix_entry, True, True, 0)
+            grid.attach(suffix_entry, 3, row, 1, 1)
 
-            main_vbox.pack_start(entry_box, False, False, 0)
             self.entries.append((prefix_key, suffix_key, prefix_entry, suffix_entry))
+            row += 1
 
-        # Wallpaper directory chooser
-        wall_box = Gtk.HBox(spacing=10)
+        # Row for Wallpapers Directory chooser
         wall_label = Gtk.Label(label="Wallpapers Directory")
-        wall_box.pack_start(wall_label, False, False, 0)
+        wall_label.set_halign(Gtk.Align.START)
+        grid.attach(wall_label, 0, row, 1, 1)
         self.wall_dir_chooser = Gtk.FileChooserButton(
             title="Select a folder",
             action=Gtk.FileChooserAction.SELECT_FOLDER
         )
         self.wall_dir_chooser.set_filename(bind_vars['wallpapers_dir'])
-        wall_box.pack_start(self.wall_dir_chooser, True, True, 0)
-        main_vbox.pack_start(wall_box, False, False, 0)
+        grid.attach(self.wall_dir_chooser, 1, row, 3, 1)
+        row += 1
 
-        # Face icon selection button
-        face_box = Gtk.HBox(spacing=10)
+        # Row for Profile Icon selection
         face_label = Gtk.Label(label="Profile Icon")
-        face_box.pack_start(face_label, False, False, 0)
+        face_label.set_halign(Gtk.Align.START)
+        grid.attach(face_label, 0, row, 1, 1)
         face_btn = Gtk.Button(label="Select Image")
         face_btn.connect("clicked", self.on_select_face_icon)
-        face_box.pack_start(face_btn, True, True, 0)
-        main_vbox.pack_start(face_box, False, False, 0)
+        grid.attach(face_btn, 1, row, 3, 1)
+        row += 1
 
-        # Optional checkboxes for replacing configs
+        # Row for optional checkboxes
         if show_lock_checkbox:
             self.lock_checkbox = Gtk.CheckButton(label="Replace Hyprlock config")
             self.lock_checkbox.set_active(False)
-            main_vbox.pack_start(self.lock_checkbox, False, False, 0)
+            grid.attach(self.lock_checkbox, 0, row, 2, 1)
         if show_idle_checkbox:
             self.idle_checkbox = Gtk.CheckButton(label="Replace Hypridle config")
             self.idle_checkbox.set_active(False)
-            main_vbox.pack_start(self.idle_checkbox, False, False, 0)
+            grid.attach(self.idle_checkbox, 2, row, 2, 1)
+        row += 1
 
-        # Accept and Cancel buttons
-        button_box = Gtk.HBox(spacing=10)
+        # Row for Cancel and Accept buttons, aligned to the right
         cancel_btn = Gtk.Button(label="Cancel")
         cancel_btn.connect("clicked", self.on_cancel)
         accept_btn = Gtk.Button(label="Accept")
         accept_btn.connect("clicked", self.on_accept)
-        button_box.pack_end(accept_btn, False, False, 0)
-        button_box.pack_end(cancel_btn, False, False, 0)
-        main_vbox.pack_start(button_box, False, False, 0)
+        grid.attach(cancel_btn, 2, row, 1, 1)
+        grid.attach(accept_btn, 3, row, 1, 1)
 
     def on_select_face_icon(self, widget):
         """

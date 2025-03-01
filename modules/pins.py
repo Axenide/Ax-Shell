@@ -11,6 +11,7 @@ from watchdog.events import FileSystemEventHandler
 
 from fabric.widgets.box import Box
 from fabric.widgets.label import Label
+from fabric.widgets.scrolledwindow import ScrolledWindow  # <-- new import
 
 import modules.icons as icons
 
@@ -92,7 +93,7 @@ class Cell(Gtk.EventBox):
         for child in self.box.get_children():
             self.box.remove(child)
         if self.content is None:
-            label = Label(name="pin-add", markup=icons.copy_plus)
+            label = Label(name="pin-add", markup=icons.paperclip)
             self.box.pack_start(label, True, True, 0)
         else:
             if self.content_type == 'file':
@@ -115,20 +116,32 @@ class Cell(Gtk.EventBox):
         except Exception:
             content_type = None
 
+        icon_theme = Gtk.IconTheme.get_default()
+
         if content_type == "inode/directory":
-            return Gtk.Image.new_from_icon_name("default-folder", Gtk.IconSize.DIALOG)
+            try:
+                pixbuf = icon_theme.load_icon("default-folder", 80, 0)
+                return Gtk.Image.new_from_pixbuf(pixbuf)
+            except Exception:
+                print("Error loading folder icon")
+                return Gtk.Image.new_from_icon_name("default-folder", Gtk.IconSize.DIALOG)
         
         if content_type and content_type.startswith("image/"):
             try:
                 pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(
-                    filepath, width=48, height=48, preserve_aspect_ratio=True)
+                    filepath, width=80, height=80, preserve_aspect_ratio=True)
                 return Gtk.Image.new_from_pixbuf(pixbuf)
             except Exception as e:
                 print("Error loading image preview:", e)
+        
         elif content_type and content_type.startswith("video/"):
-            return Gtk.Image.new_from_icon_name("video-x-generic", Gtk.IconSize.DIALOG)
+            try:
+                pixbuf = icon_theme.load_icon("video-x-generic", 80, 0)
+                return Gtk.Image.new_from_pixbuf(pixbuf)
+            except Exception:
+                print("Error loading video icon")
+                return Gtk.Image.new_from_icon_name("video-x-generic", Gtk.IconSize.DIALOG)
         else:
-            icon_theme = Gtk.IconTheme.get_default()
             icon_name = "text-x-generic"
             if content_type:
                 themed_icon = Gio.content_type_get_icon(content_type)
@@ -136,7 +149,12 @@ class Cell(Gtk.EventBox):
                     names = themed_icon.get_names()
                     if names:
                         icon_name = names[0]
-            return Gtk.Image.new_from_icon_name(icon_name, Gtk.IconSize.DIALOG)
+            try:
+                pixbuf = icon_theme.load_icon(icon_name, 80, 0)
+                return Gtk.Image.new_from_pixbuf(pixbuf)
+            except Exception:
+                print("Error loading icon", icon_name)
+                return Gtk.Image.new_from_icon_name(icon_name, Gtk.IconSize.DIALOG)
 
     def on_drag_data_received(self, widget, drag_context, x, y, data, info, time):
         if self.content is None and data.get_length() >= 0:
@@ -221,17 +239,28 @@ class Pins(Gtk.Box):
         self.event_handler = FileChangeHandler(self)
 
         self.cells = []
-        grid = Gtk.Grid(row_spacing=10, column_spacing=10)
-        self.pack_start(grid, True, True, 0)
 
-        for row in range(2):
+        # Create a grid with 5 rows and 5 columns
+        grid = Gtk.Grid(row_spacing=10, column_spacing=10)
+        grid.set_column_homogeneous(True)
+        grid.set_row_homogeneous(True)
+
+        # Replace this:
+        # scrolled_window = Gtk.ScrolledWindow()
+        # scrolled_window.set_name("scrolled-window")
+        # scrolled_window.add(grid)
+        # self.pack_start(scrolled_window, True, True, 0)
+
+        # With the Fabric ScrolledWindow:
+        scrolled_window = ScrolledWindow(child=grid, name="scrolled-window")
+        self.pack_start(scrolled_window, True, True, 0)
+
+        # Create 25 cells (5x5)
+        for row in range(5):
             for col in range(5):
                 cell = Cell(self)
                 self.cells.append(cell)
                 grid.attach(cell, col, row, 1, 1)
-
-        grid.set_column_homogeneous(True)
-        grid.set_row_homogeneous(True)
 
         self.load_state()
         self.loading_state = False

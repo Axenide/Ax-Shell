@@ -4,13 +4,13 @@ from fabric.widgets.label import Label
 from fabric.widgets.centerbox import CenterBox
 from fabric.widgets.button import Button
 from fabric.widgets.stack import Stack
+from fabric.widgets.revealer import Revealer
 from fabric.widgets.wayland import WaylandWindow as Window
 from fabric.hyprland.widgets import ActiveWindow
 from fabric.utils.helpers import FormattedString, truncate
-from gi.repository import GLib, Gdk
+from gi.repository import GLib, Gdk, Gtk
 from modules.launcher import AppLauncher
 from modules.dashboard import Dashboard
-from modules.wallpapers import WallpaperSelector
 from modules.notifications import NotificationContainer
 from modules.power import PowerMenu
 from modules.overview import Overview
@@ -19,6 +19,7 @@ from modules.hue import Light
 from modules.corners import MyCorner
 import modules.icons as icons
 import modules.data as data
+from modules.player import PlayerSmall
 
 class Notch(Window):
     def __init__(self, **kwargs):
@@ -26,20 +27,24 @@ class Notch(Window):
             name="notch",
             layer="top",
             anchor="top",
-            margin="-40px 10px 10px 10px",
+            margin="-40px 40px 10px 10px",
             keyboard_mode="none",
             exclusivity="normal",
             visible=True,
             all_visible=True,
         )
 
+        self.bar = kwargs.get("bar", None)
+
+        # Primero inicializamos NotificationContainer
+        self.notification = NotificationContainer(notch=self)
+        self.notification_history = self.notification.history
+
+        # Luego inicializamos el resto de componentes que dependen de notification_history
         self.dashboard = Dashboard(notch=self)
         self.launcher = AppLauncher(notch=self)
-        self.wallpapers = WallpaperSelector(notch=self)
-        self.notification = NotificationContainer(notch=self)
         self.overview = Overview()
         self.power = PowerMenu(notch=self)
-
         self.bluetooth = BluetoothConnections(notch=self)
         self.hue = Light(notch=self)
 
@@ -47,17 +52,43 @@ class Notch(Window):
             name="hyprland-window",
             h_expand=True,
             formatter=FormattedString(
-                f"{{'{data.USERNAME}@{data.HOSTNAME}' if not win_class or win_class == 'unknown' else truncate(win_class, 32)}}",
+                f"{{'Desktop' if not win_class or win_class == 'unknown' else truncate(win_class, 32)}}",
                 truncate=truncate,
             ),
         )
+        # Add the click connection for active_window.
+        self.active_window.connect("button-press-event", lambda widget, event: (self.open_notch("dashboard"), False)[1])
 
-        self.compact = Button(
-            name="notch-compact",
+        # Create additional compact views:
+        self.player_small = PlayerSmall()
+
+        self.user_label = Label(name="compact-user", label=f"{data.USERNAME}@{data.HOSTNAME}")
+
+        # Create a stack to hold the three views:
+        self.compact_stack = Stack(
+            name="notch-compact-stack",
+            v_expand=True,
             h_expand=True,
-            on_clicked=lambda *_: self.open_notch("dashboard"),
-            child=self.active_window,
+            transition_type="slide-up-down",
+            transition_duration=100,
+            children=[
+                self.user_label,
+                self.active_window,
+                self.player_small,
+            ]
         )
+        self.compact_stack.set_visible_child(self.active_window)
+
+        # Create the compact button and set the stack as its child
+        self.compact = Gtk.EventBox(name="notch-compact")
+        self.compact.set_visible(True)
+        self.compact.add(self.compact_stack)
+        self.compact.add_events(Gdk.EventMask.SCROLL_MASK | Gdk.EventMask.BUTTON_PRESS_MASK)
+        self.compact.connect("scroll-event", self._on_compact_scroll)
+        self.compact.connect("button-press-event", lambda widget, event: (self.open_notch("dashboard"), False)[1])
+        # Add cursor change on hover.
+        self.compact.connect("enter-notify-event", self.on_button_enter)
+        self.compact.connect("leave-notify-event", self.on_button_leave)
 
         self.stack = Stack(
             name="notch-content",
@@ -69,8 +100,6 @@ class Notch(Window):
                 self.compact,
                 self.launcher,
                 self.dashboard,
-                self.wallpapers,
-                self.notification,
                 self.overview,
                 self.power,
                 self.bluetooth,
@@ -114,11 +143,34 @@ class Notch(Window):
             )
         )
 
+        self.notification_revealer = Revealer(
+            name="notification-revealer",
+            transition_type="slide-down",
+            transition_duration=250,
+            child_revealed=False,
+        )
+
+        self.boxed_notification_revealer = Box(
+            name="boxed-notification-revealer",
+            orientation="v",
+            children=[
+                self.notification_revealer,
+            ]
+        )
+
+        self.notch_complete = Box(
+            name="notch-complete",
+            orientation="v",
+            children=[
+                self.notch_box,
+                self.boxed_notification_revealer,
+            ]
+        )
+
         self.hidden = False
 
-        self.add(self.notch_box)
+        self.add(self.notch_complete)
         self.show_all()
-        self.wallpapers.viewport.hide()
 
         self.add_keybinding("Escape", lambda *_: self.close_notch())
         self.add_keybinding("Ctrl Tab", lambda *_: self.dashboard.go_to_next_child())
@@ -137,6 +189,8 @@ class Notch(Window):
     def close_notch(self):
         self.set_keyboard_mode("none")
 
+        self.bar.revealer.set_reveal_child(True)
+
         if self.hidden:
             self.notch_box.remove_style_class("hideshow")
             self.notch_box.add_style_class("hidden")
@@ -146,7 +200,9 @@ class Notch(Window):
             if widget == self.wallpapers:
                 self.wallpapers.viewport.hide()
                 self.wallpapers.viewport.set_property("name", None)
-        for style in ["launcher", "dashboard", "wallpapers", "notification", "overview", "power", "bluetooth", "hue"]:
+        for widget in [self.launcher, self.dashboard, self.notification, self.overview, self.power, self.bluetooth]:
+            widget.remove_style_class("open")
+        for style in ["launcher", "dashboard", "notification", "overview", "power", "bluetooth"]:
             self.stack.remove_style_class(style)
         self.stack.set_visible_child(self.compact)
 
@@ -160,8 +216,6 @@ class Notch(Window):
         widgets = {
             "launcher": self.launcher,
             "dashboard": self.dashboard,
-            "wallpapers": self.wallpapers,
-            "notification": self.notification,
             "overview": self.overview,
             "power": self.power,
             "bluetooth": self.bluetooth,
@@ -210,9 +264,27 @@ class Notch(Window):
         else:
             self.stack.set_visible_child(self.dashboard)
 
+        if widget == "dashboard" or widget == "overview":
+            self.bar.revealer.set_reveal_child(False)
+        else:
+            self.bar.revealer.set_reveal_child(True)
+
     def toggle_hidden(self):
         self.hidden = not self.hidden
         if self.hidden:
             self.notch_box.add_style_class("hidden")
         else:
             self.notch_box.remove_style_class("hidden")
+
+    def _on_compact_scroll(self, widget, event):
+        from gi.repository import Gdk
+        children = self.compact_stack.get_children()
+        current = children.index(self.compact_stack.get_visible_child())
+        if event.direction == Gdk.ScrollDirection.UP:
+            new_index = (current - 1) % len(children)
+        elif event.direction == Gdk.ScrollDirection.DOWN:
+            new_index = (current + 1) % len(children)
+        else:
+            return False
+        self.compact_stack.set_visible_child(children[new_index])
+        return True

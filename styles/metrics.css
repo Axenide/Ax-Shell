@@ -1,0 +1,29 @@
+#metrics-small {
+    background-color: var(--shadow);
+    padding: 4px;
+    border-radius: 16px;
+    margin-top: 4px;
+}
+
+#metrics-circle {
+    color: var(--surface-bright);
+    border: 3px solid var(--primary);
+}
+
+#metrics-circle.alert {
+    border: 2px solid var(--error-dim);
+}
+
+#metrics-icon {
+    font-size: 20px;
+}
+
+#metrics-icon.alert {
+    color: var(--error-dim);
+}
+
+#metrics-level {
+    color: var(--primary);
+    font-weight: bold;
+    margin: 0 4px;
+}
