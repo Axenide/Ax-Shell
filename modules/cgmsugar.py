@@ -8,7 +8,7 @@ from fabric.widgets.box import Box
 class MyCgm(Box):
     def __init__(self, **kwargs):
         super().__init__(
-            name="box-2",
+            name="cgm",
             spacing=4,
             h_align="center",
             v_align="center"
@@ -25,6 +25,6 @@ class MyCgm(Box):
         print("$USER")
         self.web = WebView(
             url=self.url,
-            size=[610,285]
+            size=[450,290]
         )
         self.add(self.web)

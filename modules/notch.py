@@ -197,7 +197,7 @@ class Notch(Window):
 
             for widget in [self.launcher, self.dashboard, self.notification, self.overview, self.power, self.bluetooth, self.hue]:
                 widget.remove_style_class("open")
-            for style in ["launcher", "dashboard", "notification", "overview", "power", "bluetooth"]:
+            for style in ["launcher", "dashboard", "notification", "overview", "power", "bluetooth", "hue"]:
                 self.stack.remove_style_class(style)
             self.stack.set_visible_child(self.compact)
 

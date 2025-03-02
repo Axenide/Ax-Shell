@@ -12,20 +12,6 @@
     border-radius: 20px;
 }
 
-#box-1 {
-    min-width: 196px;
-}
-
-#box-2 {
-    min-width: 518px;
-    border-radius: 20px;
-}
-
-#box-3 {
-    min-width: 88px;
-    min-height: 226px;
-}
-
 #container-sub-1 {
     min-width: 750px;
 }

@@ -56,6 +56,8 @@ class Widgets(Box):
 
         self.metrics = Metrics()
 
+        self.cgm = MyCgm()
+
         self.notification_history = self.notch.notification_history
 
         self.container_1 = Box(
@@ -73,7 +75,7 @@ class Widgets(Box):
                     spacing=8,
                     children=[
                         Calendar(),
-                        self.notification_history,
+                        self.cgm,
                     ]
                 ),
                 self.metrics,
