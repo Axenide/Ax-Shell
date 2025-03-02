@@ -106,7 +106,7 @@ class BrightnessSlider(Scale):
         self.connect("value-changed", self.on_value_changed)
         self.on_brightness_changed()
         self.add_style_class("brightness")
-        
+
         # Variables for debouncing
         self.timeout_id = None
         self.pending_value = None
@@ -114,14 +114,16 @@ class BrightnessSlider(Scale):
     def on_value_changed(self, _):
         if self.brightness.max_screen != -1:
             new_brightness = int(self.value * self.brightness.max_screen)
-            
+
             # Cancel any pending timeout
-            if self.timeout_id:
-                GLib.source_remove(self.timeout_id)
-            
+            try:
+                if self.timeout_id:
+                    GLib.source_remove(self.timeout_id)
+            except Exception as e:
+                pass
             # Store the pending value
             self.pending_value = new_brightness
-            
+
             # Set a timeout to update brightness after 100ms
             self.timeout_id = GLib.timeout_add(100, self._update_brightness)
 
@@ -130,7 +132,7 @@ class BrightnessSlider(Scale):
         if self.pending_value is not None:
             self.brightness.screen_brightness = self.pending_value
             self.pending_value = None
-        
+
         # Return False to ensure the timeout doesn't repeat
         self.timeout_id = None
         return False
@@ -271,7 +273,7 @@ class MicSmall(Box):
         if not self.audio.microphone:
             return
         if self.audio.microphone.muted:
-            self.mic_button.get_child().set_markup(icons.mic_off)
+            self.mic_button.get_child().set_markup(icons.mic_mute)
             self.progress_bar.add_style_class("muted")
             self.mic_label.add_style_class("muted")
             return

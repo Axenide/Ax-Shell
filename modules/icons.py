@@ -131,6 +131,8 @@ brightness_high: str = "&#xeb30;"
 # Misc
 dot: str = "&#xf698;"
 palette: str = "&#xeb01;"
+cloud_off: str = "&#xed3e;"
+loader: str = "&#xeca3;"
 
 exceptions: list[str] = ['font_family', 'font_weight', 'span']
 

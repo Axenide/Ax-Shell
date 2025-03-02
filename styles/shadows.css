@@ -8,7 +8,8 @@
 #control-small,
 #notification-stack-box,
 #nav-button,
-#metrics-small {
+#metrics-small,
+#weather {
   box-shadow: 0 0 4px alpha(black, 0.5);
 }
 
