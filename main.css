@@ -89,6 +89,17 @@ menu > menuitem > label,
     font-weight: bold;
 }
 
+#weather {
+  background-color: var(--shadow);
+  padding: 8px;
+  border-radius: 16px;
+  margin-top: 4px;
+}
+
+#weather-label {
+  font-weight: bold;
+}
+
 #systray {
     background-color: var(--shadow);
     padding: 8px;

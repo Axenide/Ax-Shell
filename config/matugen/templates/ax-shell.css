@@ -16,4 +16,11 @@
   --error-container: {{colors.error_container.default.hex}};
   --outline: {{colors.outline.default.hex}};
   --shadow: {{colors.shadow.default.hex}};
+  --red: {{colors.red.default.hex}};
+  --green: {{colors.green.default.hex}};
+  --yellow: {{colors.yellow.default.hex}};
+  --blue: {{colors.blue.default.hex}};
+  --magenta: {{colors.magenta.default.hex}};
+  --cyan: {{colors.cyan.default.hex}};
+  --white: {{colors.white.default.hex}};
 }

@@ -146,3 +146,7 @@
     background-color: var(--surface);
     margin: 0 16px;
 }
+
+#notification-timestamp {
+    color: var(--surface-bright);
+}

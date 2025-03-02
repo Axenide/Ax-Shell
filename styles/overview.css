@@ -10,7 +10,7 @@
 #overview-client-box,
 #overview-workspace-bg,
 #overview-frame {
-  border-radius: 20px;
+  border-radius: 12px;
   transition: all 0.1s ease;
 }
 
@@ -38,8 +38,8 @@
 }
 
 #overview-workspace-box {
-  /*padding: 2px;*/
-  /*background-color: var(--primary);*/
+  padding: 4px;
+  border: 2px solid var(--surface);
 }
 
 #overview-add-label {

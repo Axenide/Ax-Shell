@@ -154,7 +154,7 @@ class WorkspaceEventBox(EventBox):
 class Overview(Box):
     def __init__(self, **kwargs):
         # Initialize as a Box instead of a PopupWindow.
-        super().__init__(name="overview", orientation="v")
+        super().__init__(name="overview", orientation="v", spacing=8, **kwargs)
         self.workspace_boxes: dict[int, Box] = {}
         self.clients: dict[str, HyprlandWindowButton] = {}
 
@@ -174,7 +174,7 @@ class Overview(Box):
         self.workspace_boxes.clear()
 
         # Create two rows in this Box.
-        self.children = [Box(), Box()]
+        self.children = [Box(spacing=8), Box(spacing=8)]
 
         monitors = {
             monitor["id"]: (monitor["x"], monitor["y"], monitor["transform"])

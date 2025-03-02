@@ -37,7 +37,9 @@ bind_vars = {
     'suffix_toggle': "B",
     'prefix_css': "SUPER SHIFT",
     'suffix_css': "B",
-    'wallpapers_dir': WALLPAPERS_DIR_DEFAULT
+    'wallpapers_dir': WALLPAPERS_DIR_DEFAULT,
+    'prefix_restart_inspector': "SUPER CTRL ALT",
+    'suffix_restart_inspector': "B",
 }
 
 
@@ -71,6 +73,36 @@ def ensure_matugen_config():
                     '-f', 'Nearest'
                 ],
                 'set': True
+            },
+            'custom_colors': {
+                'red': {
+                    'color': "#FF0000",
+                    'blend': True
+                },
+                'green': {
+                    'color': "#00FF00",
+                    'blend': True
+                },
+                'yellow': {
+                    'color': "#FFFF00",
+                    'blend': True
+                },
+                'blue': {
+                    'color': "#0000FF",
+                    'blend': True
+                },
+                'magenta': {
+                    'color': "#FF00FF",
+                    'blend': True
+                },
+                'cyan': {
+                    'color': "#00FFFF",
+                    'blend': True
+                },
+                'white': {
+                    'color': "#FFFFFF",
+                    'blend': True
+                }
             }
         },
         'templates': {
@@ -81,9 +113,7 @@ def ensure_matugen_config():
             'ax-shell': {
                 'input_path': '~/.config/Ax-Shell/config/matugen/templates/ax-shell.css',
                 'output_path': '~/.config/Ax-Shell/styles/colors.css',
-                'post_hook': (
-                    "fabric-cli exec ax-shell 'app.set_css()' &"
-                )
+                'post_hook': "fabric-cli exec ax-shell 'app.set_css()' &"
             }
         }
     }
@@ -161,6 +191,7 @@ bind = {bind_vars['prefix_power']}, {bind_vars['suffix_power']}, exec, $fabricSe
 bind = {bind_vars['prefix_toggle']}, {bind_vars['suffix_toggle']}, exec, $fabricSend 'bar.toggle_hidden()' # Toggle Bar | Default: SUPER CTRL + B
 bind = {bind_vars['prefix_toggle']}, {bind_vars['suffix_toggle']}, exec, $fabricSend 'notch.toggle_hidden()' # Toggle Notch | Default: SUPER CTRL + B
 bind = {bind_vars['prefix_css']}, {bind_vars['suffix_css']}, exec, $fabricSend 'app.set_css()' # Reload CSS | Default: SUPER SHIFT + B
+bind = {bind_vars['prefix_restart_inspector']}, {bind_vars['suffix_restart_inspector']}, exec, killall ax-shell; GTK_DEBUG=interactive uwsm app -- python {home}/.config/Ax-Shell/main.py # Restart with inspector | Default: SUPER CTRL ALT + B
 
 # Wallpapers directory: {bind_vars['wallpapers_dir']}
 
@@ -263,6 +294,7 @@ class HyprConfGUI(Gtk.Window):
             ("Power Menu", 'prefix_power', 'suffix_power'),
             ("Toggle Bar and Notch", 'prefix_toggle', 'suffix_toggle'),
             ("Reload CSS", 'prefix_css', 'suffix_css'),
+            ("Restart with inspector", 'prefix_restart_inspector', 'suffix_restart_inspector'),
         ]
 
         # Populate grid with key binding rows, starting at row 1

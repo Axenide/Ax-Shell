@@ -10,8 +10,24 @@
     border: 3px solid var(--primary);
 }
 
+#metrics-circle.cpu {
+    border: 3px solid var(--primary);
+}
+
+#metrics-circle.ram {
+    border: 3px solid var(--secondary);
+}
+
+#metrics-circle.disk {
+    border: 3px solid var(--tertiary);
+}
+
+#metrics-circle.bat {
+    border: 3px solid var(--green);
+}
+
 #metrics-circle.alert {
-    border: 2px solid var(--error-dim);
+    border: 3px solid var(--error-dim);
 }
 
 #metrics-icon {
