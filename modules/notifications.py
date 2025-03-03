@@ -23,7 +23,7 @@ PERSISTENT_DIR = "/tmp/ax-shell"
 PERSISTENT_HISTORY_FILE = os.path.join(PERSISTENT_DIR, "notification_history.json")
 
 # Directorio de caché para imágenes
-CACHE_DIR = os.path.expanduser("~/.cache/ax-shell")
+CACHE_DIR = os.path.expanduser("~/.cache/ax-shell/")
 
 def cache_notification_pixbuf(notification):
     """
@@ -83,7 +83,7 @@ class NotificationBox(Box):
         self._timeout_id = None
         self._container = None
         self.start_timeout()
-        
+
         self.connect("enter-notify-event", self.on_hover_enter)
         self.connect("leave-notify-event", self.on_hover_leave)
 
@@ -224,7 +224,7 @@ class NotificationBox(Box):
     def on_hover_enter(self, *args):
         if self._container:
             self._container.pause_and_reset_all_timeouts()
-            
+
     def on_hover_leave(self, *args):
         if self._container:
             self._container.resume_all_timeouts()
@@ -240,8 +240,11 @@ class NotificationBox(Box):
 
     def close_notification(self):
         if not self._destroyed:
-            self.notification.close("expired")
-            self.stop_timeout()
+            try:
+                self.notification.close("expired")
+                self.stop_timeout()
+            except Exception as e:
+                pass
         return False
 
     def destroy(self):
@@ -378,7 +381,7 @@ class NotificationHistory(ScrolledWindow):
                 return f" | {minutes} min" if minutes == 1 else f" | {minutes} mins"
             else:
                 return arrival_time.strftime(" | %H:%M")
-        
+
         time_label = Label(name="notification-timestamp", markup=compute_time_label(container.arrival_time))
         content_box = Box(
             name="notification-box-hist",
@@ -575,7 +578,7 @@ class NotificationHistory(ScrolledWindow):
         )
         hist_box.add(content_box)
         content_box.get_children()[2].get_children()[0].connect(
-            "clicked", 
+            "clicked",
             lambda *_: on_container_destroy(container)
         )
         container.add(hist_box)
@@ -603,7 +606,7 @@ class NotificationHistory(ScrolledWindow):
         if icon_path.startswith("file://"):
             icon_path = icon_path[7:]
         if not os.path.exists(icon_path):
-            logger.warning(f"Icon path does not exist: {icon_path}")
+            # logger.warning(f"Icon path does not exist: {icon_path}")
             return None
         try:
             pixbuf = GdkPixbuf.Pixbuf.new_from_file(icon_path)
@@ -661,7 +664,7 @@ class NotificationContainer(Box):
             on_clicked=self.close_all_notifications,
         )
         self.next_button = Button(
-            name="nav-button", 
+            name="nav-button",
             child=Label(name="nav-button-label", markup=icons.chevron_right),
             on_clicked=self.show_next,
         )
@@ -743,7 +746,7 @@ class NotificationContainer(Box):
                 return
             i, notif_box = notif_to_remove
             reason_str = str(reason)
-            if (reason_str == "NotificationCloseReason.EXPIRED" or 
+            if (reason_str == "NotificationCloseReason.EXPIRED" or
                 reason_str == "NotificationCloseReason.CLOSED" or
                 reason_str == "NotificationCloseReason.UNDEFINED"):
                 logger.info(f"Adding notification {notification.id} to history")
@@ -812,3 +815,4 @@ class NotificationContainer(Box):
         notifications_to_close = self.notifications.copy()
         for notification_box in notifications_to_close:
             notification_box.notification.close("dismissed-by-user")
+

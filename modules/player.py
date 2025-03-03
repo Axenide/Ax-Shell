@@ -16,6 +16,8 @@ import modules.icons as icons
 import modules.data as data
 from services.mpris import MprisPlayerManager, MprisPlayer
 
+from modules.cavalcade import SpectrumRender
+
 def get_player_icon_markup_by_name(player_name):
     if player_name:
         pn = player_name.lower()
@@ -414,6 +416,22 @@ class PlayerSmall(CenterBox):
         # Add hover effect
         add_hover_cursor(self.mpris_button)
 
+        self.cavalcade = SpectrumRender()
+        self.cavalcade_box = self.cavalcade.get_spectrum_box()
+
+        self.center_stack = Stack(
+            name="compact-mpris",
+            transition_type="crossfade",
+            transition_duration=100,
+            v_align="center",
+            v_expand=False,
+            children=[
+                self.mpris_label,
+                self.cavalcade_box,
+            ]
+        )
+        self.center_stack.set_visible_child(self.cavalcade_box)
+     
         # Create additional compact view.
         self.mpris_small = CenterBox(
             name="compact-mpris",
@@ -421,11 +439,18 @@ class PlayerSmall(CenterBox):
             h_expand=True,
             h_align="fill",
             v_align="center",
+            v_expand=False,
             start_children=self.mpris_icon,
             center_children=self.mpris_label,
             end_children=self.mpris_button,
         )
-        self.add(self.mpris_small)
+        
+        self.mpris_small_overlay = Overlay()
+        self.mpris_small_overlay.add(self.center_stack)
+        self.mpris_small_overlay.add_overlay(self.mpris_small)
+        
+        
+        self.add(self.mpris_small_overlay)
 
         self.mpris_manager = MprisPlayerManager()
         self.mpris_player = None
@@ -469,17 +494,23 @@ class PlayerSmall(CenterBox):
     def _on_icon_button_press(self, widget, event):
         from gi.repository import Gdk
         if event.type == Gdk.EventType.BUTTON_PRESS:
+            if event.button == 3:
+                self.center_stack.set_visible_child(self.cavalcade_box)
+            if event.button == 2:
+                self.center_stack.set_visible_child(self.mpris_label)
             players = self.mpris_manager.players
             if not players:
                 return True
 
             # Cambiar de reproductor según el botón presionado.
             if event.button == 1:  # Left-click: reproductor anterior
-                self.current_index = (self.current_index - 1) % len(players)
-            elif event.button == 3:  # Right-click: reproductor siguiente
                 self.current_index = (self.current_index + 1) % len(players)
+            elif event.button == 3:  # Right-click: reproductor siguiente
+                #self.current_index = (self.current_index + 1) % len(players)
+                self.center_stack.set_visible_child(self.cavalcade_box)
             elif event.button == 2:  # Middle-click: toggle entre title y artist
                 self._on_icon_clicked(widget)
+                self.center_stack.set_visible_child(self.mpris_label)
                 return True
 
             mp_new = MprisPlayer(players[self.current_index])
@@ -523,6 +554,8 @@ class PlayerSmall(CenterBox):
                 else (self.mpris_player.title if self.mpris_player.title and self.mpris_player.title.strip()
                       else "Nothing Playing"))
         self.mpris_label.set_text(text)
+
+        self.center_stack.set_visible_child(self.mpris_label)
 
     def update_play_pause_icon(self):
         if self.mpris_player and self.mpris_player.playback_status == "playing":

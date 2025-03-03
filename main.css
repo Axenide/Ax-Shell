@@ -17,7 +17,7 @@
 @import url("./styles/media.css");
 @import url("./styles/hue.css");
 @import url("./styles/metrics.css");
-
+@import url("./styles/tools.css");
 * {
     all: unset;
     color: var(--foreground);

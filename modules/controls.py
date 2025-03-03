@@ -202,10 +202,12 @@ class VolumeSmall(Box):
             self.vol_button.get_child().set_markup(icons.vol_off)
             self.progress_bar.add_style_class("muted")
             self.vol_label.add_style_class("muted")
+            self.set_tooltip_text("0%")
             return
         else:
             self.progress_bar.remove_style_class("muted")
             self.vol_label.remove_style_class("muted")
+        self.set_tooltip_text(f"{round(self.audio.speaker.volume)}%")
         self.progress_bar.value = self.audio.speaker.volume / 100
         if self.audio.speaker.volume > 74:
             self.vol_button.get_child().set_markup(icons.vol_high)
@@ -217,6 +219,7 @@ class VolumeSmall(Box):
 class MicSmall(Box):
     def __init__(self, **kwargs):
         super().__init__(name="button-bar-mic", **kwargs)
+
         self.audio = Audio()
         self.progress_bar = CircularProgressBar(
             name="button-mic", size=28, line_width=2,
@@ -276,11 +279,14 @@ class MicSmall(Box):
             self.mic_button.get_child().set_markup(icons.mic_mute)
             self.progress_bar.add_style_class("muted")
             self.mic_label.add_style_class("muted")
+            self.set_tooltip_text("0%")
             return
         else:
             self.progress_bar.remove_style_class("muted")
             self.mic_label.remove_style_class("muted")
         self.progress_bar.value = self.audio.microphone.volume / 100
+        self.set_tooltip_text(f"{round(self.audio.microphone.volume)}%")
+
         if self.audio.microphone.volume >= 1:
             self.mic_button.get_child().set_markup(icons.mic)
         else:
@@ -334,6 +340,7 @@ class BrightnessSmall(Box):
         else:
             self.brightness_label.set_markup(icons.brightness_low)
 
+        self.set_tooltip_text(f"{round(brightness_percentage)}%")
 # ControlSliders now only includes the brightness slider if supported.
 class ControlSliders(Box):
     def __init__(self, **kwargs):
@@ -371,3 +378,4 @@ class ControlSmall(Box):
             **kwargs,
         )
         self.show_all()
+

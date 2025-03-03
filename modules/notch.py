@@ -20,6 +20,8 @@ from modules.corners import MyCorner
 import modules.icons as icons
 import modules.data as data
 from modules.player import PlayerSmall
+from modules.tools import Toolbox
+
 
 class Notch(Window):
     def __init__(self, **kwargs):
@@ -52,7 +54,7 @@ class Notch(Window):
             name="hyprland-window",
             h_expand=True,
             formatter=FormattedString(
-                f"{{'Desktop' if not win_class or win_class == 'unknown' else truncate(win_class, 32)}}",
+                f"{{'Desktop' if not win_title or win_title == 'unknown' else truncate(win_title, 32)}}",
                 truncate=truncate,
             ),
         )
@@ -61,8 +63,10 @@ class Notch(Window):
 
         # Create additional compact views:
         self.player_small = PlayerSmall()
-
         self.user_label = Label(name="compact-user", label=f"{data.USERNAME}@{data.HOSTNAME}")
+
+        self.player_small.mpris_manager.connect("player-appeared", lambda *_: self.compact_stack.set_visible_child(self.player_small))
+        self.player_small.mpris_manager.connect("player-vanished", self.on_player_vanished)
 
         # Create a stack to hold the three views:
         self.compact_stack = Stack(
@@ -83,13 +87,19 @@ class Notch(Window):
         self.compact = Gtk.EventBox(name="notch-compact")
         self.compact.set_visible(True)
         self.compact.add(self.compact_stack)
-        self.compact.add_events(Gdk.EventMask.SCROLL_MASK | Gdk.EventMask.BUTTON_PRESS_MASK)
+        # Se agrega el mask de smooth scroll junto a scroll y button press.
+        self.compact.add_events(
+            Gdk.EventMask.SCROLL_MASK |
+            Gdk.EventMask.BUTTON_PRESS_MASK |
+            Gdk.EventMask.SMOOTH_SCROLL_MASK
+        )
         self.compact.connect("scroll-event", self._on_compact_scroll)
         self.compact.connect("button-press-event", lambda widget, event: (self.open_notch("dashboard"), False)[1])
         # Add cursor change on hover.
         self.compact.connect("enter-notify-event", self.on_button_enter)
         self.compact.connect("leave-notify-event", self.on_button_leave)
 
+        self.tools = Toolbox(notch=self)
         self.stack = Stack(
             name="notch-content",
             v_expand=True,
@@ -104,6 +114,7 @@ class Notch(Window):
                 self.power,
                 self.bluetooth,
                 self.hue,
+                self.tools,
             ]
         )
 
@@ -169,6 +180,9 @@ class Notch(Window):
 
         self.hidden = False
 
+        self._scrolling = False
+
+        self.add(self.notch_box)
         self.add(self.notch_complete)
         self.show_all()
 
@@ -187,19 +201,19 @@ class Notch(Window):
             window.set_cursor(None)
 
     def close_notch(self):
-            self.set_keyboard_mode("none")
+        self.set_keyboard_mode("none")
 
-            self.bar.revealer.set_reveal_child(True)
+        self.bar.revealer.set_reveal_child(True)
 
-            if self.hidden:
-                self.notch_box.remove_style_class("hideshow")
-                self.notch_box.add_style_class("hidden")
+        if self.hidden:
+            self.notch_box.remove_style_class("hideshow")
+            self.notch_box.add_style_class("hidden")
 
-            for widget in [self.launcher, self.dashboard, self.notification, self.overview, self.power, self.bluetooth, self.hue]:
-                widget.remove_style_class("open")
-            for style in ["launcher", "dashboard", "notification", "overview", "power", "bluetooth", "hue"]:
-                self.stack.remove_style_class(style)
-            self.stack.set_visible_child(self.compact)
+        for widget in [self.launcher, self.dashboard, self.notification, self.overview, self.power, self.bluetooth, self.hue, self.tools]:
+            widget.remove_style_class("open")
+        for style in ["launcher", "dashboard", "notification", "overview", "power", "bluetooth", "hue", "tools"]:
+            self.stack.remove_style_class(style)
+        self.stack.set_visible_child(self.compact)
 
     def open_notch(self, widget):
         self.set_keyboard_mode("exclusive")
@@ -214,7 +228,8 @@ class Notch(Window):
             "overview": self.overview,
             "power": self.power,
             "bluetooth": self.bluetooth,
-            "hue": self.hue
+            "hue": self.hue,
+            "tools": self.tools
         }
 
         # Limpiar clases y estados previos
@@ -272,14 +287,37 @@ class Notch(Window):
             self.notch_box.remove_style_class("hidden")
 
     def _on_compact_scroll(self, widget, event):
-        from gi.repository import Gdk
+        if self._scrolling:
+            return True
+
         children = self.compact_stack.get_children()
         current = children.index(self.compact_stack.get_visible_child())
-        if event.direction == Gdk.ScrollDirection.UP:
+        new_index = current
+
+        if event.direction == Gdk.ScrollDirection.SMOOTH:
+            if event.delta_y < -0.1:
+                new_index = (current - 1) % len(children)
+            elif event.delta_y > 0.1:
+                new_index = (current + 1) % len(children)
+            else:
+                return False
+        elif event.direction == Gdk.ScrollDirection.UP:
             new_index = (current - 1) % len(children)
         elif event.direction == Gdk.ScrollDirection.DOWN:
             new_index = (current + 1) % len(children)
         else:
             return False
+
         self.compact_stack.set_visible_child(children[new_index])
+        self._scrolling = True
+        GLib.timeout_add(250, self._reset_scrolling)
         return True
+
+    def _reset_scrolling(self):
+        self._scrolling = False
+        return False
+
+
+    def on_player_vanished(self, *args):
+        if self.player_small.mpris_label.get_label() == "Nothing Playing":
+            self.compact_stack.set_visible_child(self.active_window)

@@ -5,9 +5,10 @@ from fabric.widgets.label import Label
 from fabric.widgets.button import Button
 from fabric.widgets.entry import Entry
 from fabric.widgets.scrolledwindow import ScrolledWindow
-from fabric.utils import DesktopApp, get_desktop_applications, idle_add, remove_handler
+from fabric.utils import DesktopApp, get_desktop_applications, idle_add, remove_handler, exec_shell_command_async
 from gi.repository import GLib, Gdk
 import modules.icons as icons
+import modules.data as data
 import json
 import os
 import re
@@ -63,6 +64,11 @@ class AppLauncher(Box):
             spacing=10,
             orientation="h",
             children=[
+                Button(
+                    name="config-button",
+                    child=Label(name="config-label", markup=icons.config),
+                    on_clicked=lambda *_: (exec_shell_command_async(f"python {data.HOME_DIR}/.config/Ax-Shell/config/config.py"), self.close_launcher()),
+                ),
                 self.search_entry,
                 Button(
                     name="close-button",

@@ -179,7 +179,7 @@ class MetricsSmall(Overlay):
             child=self.cpu_circle,
             overlays=[self.cpu_icon],
         )
-        self.cpu_level = Label(name="metrics-level", label="0%")
+        self.cpu_level = Label(name="metrics-level", style_classes="cpu", label="0%")
         self.cpu_revealer = Revealer(
             name="metrics-cpu-revealer",
             transition_duration=250,
@@ -210,7 +210,7 @@ class MetricsSmall(Overlay):
             child=self.ram_circle,
             overlays=[self.ram_icon],
         )
-        self.ram_level = Label(name="metrics-level", label="0%")
+        self.ram_level = Label(name="metrics-level", style_classes="ram", label="0%")
         self.ram_revealer = Revealer(
             name="metrics-ram-revealer",
             transition_duration=250,
@@ -241,7 +241,7 @@ class MetricsSmall(Overlay):
             child=self.disk_circle,
             overlays=[self.disk_icon],
         )
-        self.disk_level = Label(name="metrics-level", label="0%")
+        self.disk_level = Label(name="metrics-level", style_classes="disk", label="0%")
         self.disk_revealer = Revealer(
             name="metrics-disk-revealer",
             transition_duration=250,
@@ -272,7 +272,7 @@ class MetricsSmall(Overlay):
             child=self.bat_circle,
             overlays=[self.bat_icon],
         )
-        self.bat_level = Label(name="metrics-level", label="100%")
+        self.bat_level = Label(name="metrics-level", style_classes="bat", label="100%")
         self.bat_revealer = Revealer(
             name="metrics-bat-revealer",
             transition_duration=250,

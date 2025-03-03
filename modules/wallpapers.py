@@ -26,18 +26,38 @@ class WallpaperSelector(Box):
 
         super().__init__(name="wallpapers", spacing=4, orientation="v", h_expand=False, v_expand=False, **kwargs)
         os.makedirs(self.CACHE_DIR, exist_ok=True)
+
+        # Process old wallpapers: use os.scandir for efficiency and only loop
+        # over image files that actually need renaming (they're not already lowercase
+        # and with hyphens instead of spaces)
+        with os.scandir(data.WALLPAPERS_DIR) as entries:
+            for entry in entries:
+                if entry.is_file() and self._is_image(entry.name):
+                    # Check if the file needs renaming: file should be lowercase and have hyphens instead of spaces
+                    if entry.name != entry.name.lower() or " " in entry.name:
+                        new_name = entry.name.lower().replace(" ", "-")
+                        full_path = os.path.join(data.WALLPAPERS_DIR, entry.name)
+                        new_full_path = os.path.join(data.WALLPAPERS_DIR, new_name)
+                        try:
+                            os.rename(full_path, new_full_path)
+                            print(f"Renamed old wallpaper '{full_path}' to '{new_full_path}'")
+                        except Exception as e:
+                            print(f"Error renaming file {full_path}: {e}")
+
+        # Refresh the file list after potential renaming
         self.files = sorted([f for f in os.listdir(data.WALLPAPERS_DIR) if self._is_image(f)])
         self.thumbnails = []
         self.thumbnail_queue = []
         self.executor = ThreadPoolExecutor(max_workers=4)  # Shared executor
 
-        # Variable para controlar la selección (similar a AppLauncher)
+        # Variable to control the selection (similar to AppLauncher)
         self.selected_index = -1
 
+        # Initialize UI components
         self.viewport = Gtk.IconView(name="wallpaper-icons")
         self.viewport.set_model(Gtk.ListStore(GdkPixbuf.Pixbuf, str))
         self.viewport.set_pixbuf_column(0)
-        # Quitamos la columna de texto para que solo se muestre la imagen
+        # Hide text column so only the image is shown
         self.viewport.set_text_column(-1)
         self.viewport.set_item_width(0)
         self.viewport.connect("item-activated", self.on_wallpaper_selected)
@@ -58,7 +78,6 @@ class WallpaperSelector(Box):
             on_key_press_event=self.on_search_entry_key_press,
         )
         self.search_entry.props.xalign = 0.5
-        # Instead of always grabbing focus on focus-out, call our handler:
         self.search_entry.connect("focus-out-event", self.on_search_entry_focus_out)
 
         self.schemes = {
@@ -80,7 +99,7 @@ class WallpaperSelector(Box):
         self.scheme_dropdown.set_active_id("scheme-monochrome")
         self.scheme_dropdown.connect("changed", self.on_scheme_changed)
 
-        # New: Declare a switcher to enable/disable Matugen (enabled by default)
+        # Create a switcher to enable/disable Matugen (enabled by default)
         self.matugen_switcher = Gtk.Switch(name="matugen-switcher")
         self.matugen_switcher.set_vexpand(False)
         self.matugen_switcher.set_hexpand(False)
@@ -95,7 +114,7 @@ class WallpaperSelector(Box):
             name="header-box",
             spacing=8,
             orientation="h",
-            start_children=[self.matugen_switcher, self.mat_icon],  # <-- added here
+            start_children=[self.matugen_switcher, self.mat_icon],
             center_children=[self.search_entry],
             end_children=[self.scheme_dropdown],
         )
@@ -103,9 +122,9 @@ class WallpaperSelector(Box):
         self.add(self.header_box)
         self.add(self.scrolled_window)
         self._start_thumbnail_thread()
-        self.setup_file_monitor()  # Inicializamos la monitorización de archivos
+        self.setup_file_monitor()  # Initialize file monitoring
         self.show_all()
-        # Garantizamos que el input tenga foco al iniciar
+        # Ensure the search entry gets focus when starting
         self.search_entry.grab_focus()
 
     def setup_file_monitor(self):
@@ -127,10 +146,22 @@ class WallpaperSelector(Box):
                 self.thumbnails = [(p, n) for p, n in self.thumbnails if n != file_name]
                 GLib.idle_add(self.arrange_viewport, self.search_entry.get_text())
         elif event_type == Gio.FileMonitorEvent.CREATED:
-            if self._is_image(file_name) and file_name not in self.files:
-                self.files.append(file_name)
-                self.files.sort()
-                self.executor.submit(self._process_file, file_name)
+            if self._is_image(file_name):
+                # Convert filename to lowercase and replace spaces with "-"
+                new_name = file_name.lower().replace(" ", "-")
+                full_path = os.path.join(data.WALLPAPERS_DIR, file_name)
+                new_full_path = os.path.join(data.WALLPAPERS_DIR, new_name)
+                if new_name != file_name:
+                    try:
+                        os.rename(full_path, new_full_path)
+                        file_name = new_name
+                        print(f"Renamed file '{full_path}' to '{new_full_path}'")
+                    except Exception as e:
+                        print(f"Error renaming file {full_path}: {e}")
+                if file_name not in self.files:
+                    self.files.append(file_name)
+                    self.files.sort()
+                    self.executor.submit(self._process_file, file_name)
         elif event_type == Gio.FileMonitorEvent.CHANGED:
             if self._is_image(file_name) and file_name in self.files:
                 cache_path = self._get_cache_path(file_name)
@@ -152,8 +183,7 @@ class WallpaperSelector(Box):
         filtered_thumbnails.sort(key=lambda x: x[1].lower())
         for pixbuf, file_name in filtered_thumbnails:
             model.append([pixbuf, file_name])
-        # Si el input está vacío, no se marca ningún ícono;
-        # de lo contrario, se marca el primero
+        # If the search entry is empty, no icon is selected; otherwise, select the first one.
         if query.strip() == "":
             self.viewport.unselect_all()
             self.selected_index = -1
@@ -184,10 +214,7 @@ class WallpaperSelector(Box):
                 schemes_list = list(self.schemes.keys())
                 current_id = self.scheme_dropdown.get_active_id()
                 current_index = schemes_list.index(current_id) if current_id in schemes_list else 0
-                if event.keyval == Gdk.KEY_Up:
-                    new_index = (current_index - 1) % len(schemes_list)
-                else:
-                    new_index = (current_index + 1) % len(schemes_list)
+                new_index = (current_index - 1) % len(schemes_list) if event.keyval == Gdk.KEY_Up else (current_index + 1) % len(schemes_list)
                 self.scheme_dropdown.set_active(new_index)
                 return True
             elif event.keyval == Gdk.KEY_Right:
@@ -211,13 +238,11 @@ class WallpaperSelector(Box):
             return
 
         if self.selected_index == -1:
-            # Si no hay selección previa, iniciamos en 0 o en el último según la flecha
             new_index = 0 if keyval in (Gdk.KEY_Down, Gdk.KEY_Right) else total_items - 1
         else:
             current_index = self.selected_index
-            # Se calcula el número de columnas basado en el ancho asignado al IconView y el ancho aproximado de cada ítem.
             allocation = self.viewport.get_allocation()
-            item_width = 108  # Valor aproximado (tamaño del thumbnail más márgenes)
+            item_width = 108  # Approximate item width including margins
             columns = max(1, allocation.width // item_width)
             if keyval == Gdk.KEY_Right:
                 new_index = current_index + 1
@@ -227,7 +252,6 @@ class WallpaperSelector(Box):
                 new_index = current_index + columns
             elif keyval == Gdk.KEY_Up:
                 new_index = current_index - columns
-            # Aseguramos que el índice esté dentro de los límites
             if new_index < 0:
                 new_index = 0
             if new_index >= total_items:
@@ -239,7 +263,7 @@ class WallpaperSelector(Box):
         self.viewport.unselect_all()
         path = Gtk.TreePath.new_from_indices([new_index])
         self.viewport.select_path(path)
-        self.viewport.scroll_to_path(path, False, 0.5, 0.5)  # Asegura que el ícono marcado esté visible
+        self.viewport.scroll_to_path(path, False, 0.5, 0.5)  # Ensure the selected icon is visible
         self.selected_index = new_index
 
     def _start_thumbnail_thread(self):
@@ -294,7 +318,6 @@ class WallpaperSelector(Box):
         return file_name.lower().endswith(('.png', '.jpg', '.jpeg', '.bmp', '.gif', '.webp'))
 
     def on_search_entry_focus_out(self, widget, event):
-        # Only re-grab focus if the WallpaperSelector widget is mapped (visible)
         if self.get_mapped():
             widget.grab_focus()
         return False

@@ -30,22 +30,8 @@
 
 #notch-content.dashboard {
     padding: 16px;
-    min-height: 380px;
-    min-width: 820px;
-    border-radius: 0 0 36px 36px;
-}
-
-#notch-content.wallpapers {
-    padding: 16px;
-    min-height: 420px;
-    min-width: 620px;
-    border-radius: 0 0 36px 36px;
-}
-
-#notch-content.notification {
-    padding: 16px;
-    min-height: 45px;
-    min-width: 360px;
+    min-height: 450px;
+    min-width: 1070px;
     border-radius: 0 0 36px 36px;
 }
 
@@ -56,6 +42,11 @@
     border-radius: 0 0 36px 36px;
 }
 
+#notch-content.tools {
+    min-height: 84px;
+    min-width: 308px;
+    border-radius: 0 0 36px 36px;
+}
 #notch-content.power {
     padding: 16px;
     min-height: 52px;
@@ -83,6 +74,7 @@
 #overview,
 #power-menu,
 #hue,
+#toolbox,
 #bluetooth {
     opacity: 1;
     margin: -1150px;
@@ -95,6 +87,7 @@
 #overview.open,
 #power-menu.open,
 #hue.open,
+#toolbox.open,
 #bluetooth.open {
     opacity: 1;
     margin: 0px;

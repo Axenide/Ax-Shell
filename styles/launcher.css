@@ -11,14 +11,16 @@
   background-color: var(--primary);
 }
 
-#close-button {
+#close-button, #config-button {
   background-color: var(--surface);
   border-radius: 16px;
   padding: 8px;
 }
 
 #close-button:hover,
-#close-button:focus {
+#close-button:focus,
+#config-button:hover,
+#config-button:focus {
   background-color: var(--surface-bright);
 }
 
@@ -34,6 +36,21 @@
 #close-button:active #close-label {
   color: var(--shadow);
 }
+
+#config-button:active {
+  background-color: var(--primary);
+}
+
+#config-label {
+  color: var(--primary);
+  font-size: 24px;
+}
+
+#config-button:active #config-label {
+  color: var(--shadow);
+}
+
+
 
 #scrolled-window {
   border-radius: 16px;
