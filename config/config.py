@@ -29,6 +29,8 @@ bind_vars = {
     'suffix_bluetooth': "B",
     'prefix_launcher': "SUPER",
     'suffix_launcher': "R",
+    'prefix_toolbox': "SUPER",
+    'suffix_toolbox': "S",
     'prefix_overview': "SUPER",
     'suffix_overview': "TAB",
     'prefix_power': "SUPER",
@@ -186,6 +188,7 @@ bind = {bind_vars['prefix_axmsg']}, {bind_vars['suffix_axmsg']}, exec, $axMessag
 bind = {bind_vars['prefix_dash']}, {bind_vars['suffix_dash']}, exec, $fabricSend 'notch.open_notch("dashboard")' # Dashboard | Default: SUPER + D
 bind = {bind_vars['prefix_bluetooth']}, {bind_vars['suffix_bluetooth']}, exec, $fabricSend 'notch.open_notch("bluetooth")' # Bluetooth | Default: SUPER + B
 bind = {bind_vars['prefix_launcher']}, {bind_vars['suffix_launcher']}, exec, $fabricSend 'notch.open_notch("launcher")' # App Launcher | Default: SUPER + R
+bind = {bind_vars['prefix_toolbox']}, {bind_vars['suffix_toolbox']}, exec, $fabricSend 'notch.open_notch("tools")' # Toolbox | Default: SUPER + S
 bind = {bind_vars['prefix_overview']}, {bind_vars['suffix_overview']}, exec, $fabricSend 'notch.open_notch("overview")' # Overview | Default: SUPER + TAB
 bind = {bind_vars['prefix_power']}, {bind_vars['suffix_power']}, exec, $fabricSend 'notch.open_notch("power")' # Power Menu | Default: SUPER + ESCAPE
 bind = {bind_vars['prefix_toggle']}, {bind_vars['suffix_toggle']}, exec, $fabricSend 'bar.toggle_hidden()' # Toggle Bar | Default: SUPER CTRL + B
@@ -290,6 +293,7 @@ class HyprConfGUI(Gtk.Window):
             ("Dashboard", 'prefix_dash', 'suffix_dash'),
             ("Bluetooth", 'prefix_bluetooth', 'suffix_bluetooth'),
             ("App Launcher", 'prefix_launcher', 'suffix_launcher'),
+            ("Toolbox", 'prefix_toolbox', 'suffix_toolbox'),
             ("Overview", 'prefix_overview', 'suffix_overview'),
             ("Power Menu", 'prefix_power', 'suffix_power'),
             ("Toggle Bar and Notch", 'prefix_toggle', 'suffix_toggle'),

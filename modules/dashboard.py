@@ -91,6 +91,7 @@ class Dashboard(Box):
 
         self.coming_soon = Box(
             name="coming-soon",
+            orientation="v",
             h_align="fill",
             v_align="fill",
             h_expand=True,
