@@ -38,18 +38,20 @@ class Weather(Box):
         return True
 
     def _fetch_weather_thread(self):
-        location = self.get_location()
-        if location:
-            # URL encode the location to make it URL friendly.
-            encoded_location = urllib.parse.quote(location)
-            url = f"https://wttr.in/{encoded_location}?format=%c+%t"
-        else:
-            url = "https://wttr.in/?format=%c+%t"
+        #location = "Harstad" #self.get_location()
+        # if location:
+        #     # URL encode the location to make it URL friendly.
+        #     encoded_location = urllib.parse.quote(location)
+        #     url = f"https://wttr.in/{encoded_location}?format=%c+%t"
+        # else:
+        #     url = "https://wttr.in/?format=%c+%t"
+        url = "https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=68.786356786585613&lon=16.56567224799886&altitude=90"
         try:
-            response = requests.get(url)
+            response = requests.get(url, headers={'User-Agent': 'weather-app/1.0'})
             if response.status_code == 200:
-                weather_data = response.text.strip()
-                GLib.idle_add(self.label.set_label, weather_data.replace(" ", ""))
+                weather_data = response.json()["properties"]["timeseries"][0]["data"]["instant"]["details"]["air_temperature"]
+                print(weather_data)
+                GLib.idle_add(self.label.set_label, str(weather_data)+"°C")
             else:
                 GLib.idle_add(self.label.set_markup, f"{icons.cloud_off} Unavailable")
         except Exception as e:

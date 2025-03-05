@@ -74,7 +74,7 @@ class Widgets(Box):
                     v_expand=True,
                     spacing=8,
                     children=[
-                        Calendar(),
+                        self.notification_history,
                         self.cgm,
                     ]
                 ),

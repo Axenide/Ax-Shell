@@ -41,6 +41,7 @@ class Bar(Window):
             spacing=10,
             buttons=[WorkspaceButton(id=i, label="") for i in range(1, 11)],
         )
+
         self.button_tools = Button(
             name="button-bar",
             on_clicked=lambda *_: self.tools_menu(),
