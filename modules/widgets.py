@@ -4,15 +4,17 @@ from fabric.widgets.button import Button
 from fabric.widgets.stack import Stack
 import gi
 gi.require_version('Gtk', '3.0')
-gi.require_version('Vte', '2.91')
-from gi.repository import GLib, Gtk, Vte, Pango
+from gi.repository import GLib, Gtk, Pango
 import modules.icons as icons
 from modules.buttons import Buttons
 from modules.calendar import Calendar
+
 #from modules.media import Media
 from modules.cgmsugar import MyCgm
 from modules.kanban import Kanban
+
 from modules.player import Player
+from modules.bluetooth import BluetoothConnections
 from modules.metrics import Metrics
 from modules.controls import ControlSliders
 
@@ -30,7 +32,8 @@ class Widgets(Box):
 
         self.notch = kwargs["notch"]
 
-        self.buttons = Buttons(notch=self.notch)
+        self.buttons = Buttons(widgets=self)
+        self.bluetooth = BluetoothConnections(widgets=self)
 
         self.box_1 = Box(
             name="box-1",
@@ -46,7 +49,6 @@ class Widgets(Box):
 
         self.box_3 = Box(
             name="box-3",
-            # h_expand=True,
             v_expand=True,
         )
 
@@ -59,6 +61,25 @@ class Widgets(Box):
         self.cgm = MyCgm()
 
         self.notification_history = self.notch.notification_history
+
+        self.applet_stack = Stack(
+            h_expand=True,
+            v_expand=True,
+            transition_type="slide-left-right",
+            children=[
+                self.notification_history,
+                self.bluetooth,
+            ]
+        )
+
+        self.applet_stack_box = Box(
+            name="applet-stack",
+            h_expand=True,
+            v_expand=True,
+            children=[
+                self.applet_stack,
+            ]
+        )
 
         self.container_1 = Box(
             name="container-1",
@@ -74,8 +95,8 @@ class Widgets(Box):
                     v_expand=True,
                     spacing=8,
                     children=[
-                        self.notification_history,
                         self.cgm,
+                        self.applet_stack_box,
                     ]
                 ),
                 self.metrics,
@@ -108,3 +129,9 @@ class Widgets(Box):
         )
 
         self.add(self.container_3)
+
+    def show_bt(self):
+        self.applet_stack.set_visible_child(self.bluetooth)
+
+    def show_notif(self):
+        self.applet_stack.set_visible_child(self.notification_history)

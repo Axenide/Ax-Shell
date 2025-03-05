@@ -4,7 +4,6 @@
 #date-time,
 #systray,
 #battery,
-#button-bar-vol,
 #control-small,
 #notification-stack-box,
 #nav-button,
@@ -20,3 +19,4 @@
 #boxed-revealer {
   margin: -10px;
 }
+

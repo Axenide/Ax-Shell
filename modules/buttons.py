@@ -7,7 +7,6 @@ from fabric.utils.helpers import exec_shell_command_async
 import gi
 from gi.repository import Gtk, Gdk, GLib  # Added GLib import
 gi.require_version('Gtk', '3.0')
-gi.require_version('Vte', '2.91')
 import modules.icons as icons
 from services.network import NetworkClient
 
@@ -201,7 +200,7 @@ class NetworkButton(Box):
 
 
 class BluetoothButton(Box):
-    def __init__(self, notch):
+    def __init__(self, **kwargs):
         super().__init__(
             name="bluetooth-button",
             orientation="h",
@@ -210,7 +209,7 @@ class BluetoothButton(Box):
             h_expand=True,
             v_expand=True,
         )
-        self.notch = notch
+        self.widgets = kwargs["widgets"]
 
         self.bluetooth_icon = Label(
             name="bluetooth-icon",
@@ -253,7 +252,7 @@ class BluetoothButton(Box):
         )
         self.bluetooth_menu_button = Button(
             name="bluetooth-menu-button",
-            on_clicked=lambda *_: self.notch.open_notch("bluetooth"),
+            on_clicked=lambda *_: self.widgets.show_bt(),
             child=self.bluetooth_menu_label,
         )
         add_hover_cursor(self.bluetooth_menu_button)  # <-- Added hover
@@ -404,18 +403,18 @@ class Buttons(Gtk.Grid):
         self.set_column_spacing(4)
         self.set_vexpand(False)  # Prevent vertical expansion
 
-        self.notch = kwargs["notch"]
+        self.widgets = kwargs["widgets"]
 
         # Instantiate each button
         self.network_button = NetworkButton()
-        self.bluetooth_button = BluetoothButton(self.notch)
-        self.light_button = LightButton(self.notch)
+        self.bluetooth_button = BluetoothButton(widgets=self.widgets)
+        #self.light_button = LightButton(self.notch)
         self.caffeine_button = CaffeineButton()
 
         # Attach buttons into the grid (one row, four columns)
         self.attach(self.network_button, 0, 0, 1, 1)
         self.attach(self.bluetooth_button, 1, 0, 1, 1)
-        self.attach(self.light_button, 2, 0, 1, 1)
+        #self.attach(self.light_button, 2, 0, 1, 1)
         self.attach(self.caffeine_button, 3, 0, 1, 1)
 
         self.show_all()

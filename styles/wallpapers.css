@@ -26,7 +26,7 @@
 }
 
 /* Customize the overall switch appearance */
-#matugen-switcher {
+#matugen-switcher, #dnd-switch {
   min-width: 40px;
   min-height: 20px;
   background-color: var(--surface);
@@ -36,7 +36,7 @@
 }
 
 /* Style the switch's slider */
-#matugen-switcher slider {
+#matugen-switcher slider, #dnd-switch slider {
   background-color: var(--primary);
   border-radius: 16px;
   min-width: 20px;
@@ -45,13 +45,17 @@
 }
 
 /* When the switch is active (checked) */
-#matugen-switcher:checked {
+#matugen-switcher:checked, #dnd-switch:checked {
   background-color: var(--primary);
 }
 
 /* Optional: additional styling for the slider when active */
-#matugen-switcher:checked slider {
+#matugen-switcher:checked slider, #dnd-switch:checked slider {
   background-color: var(--shadow);
+}
+
+#matugen-switcher:checked image, #dnd-switch:checked image {
+  color: var(--shadow);
 }
 
 #mat-label {

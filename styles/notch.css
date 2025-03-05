@@ -61,23 +61,15 @@
     border-radius: 0 0 36px 36px;
 }
 
-#notch-content.bluetooth {
-    padding: 16px;
-    min-height: 464px;
-    min-width: 604px;
-    border-radius: 0 0 36px 36px;
-}
-
 #app-launcher,
 #dashboard,
 #notification,
 #overview,
 #power-menu,
 #hue,
-#toolbox,
-#bluetooth {
+#toolbox {
     opacity: 1;
-    margin: -1150px;
+    margin: -800px;
     transition: all 0.25s cubic-bezier(0.5, 0.25, 0, 1);
 }
 
@@ -95,17 +87,8 @@
 
 #notch-compact {
     font-weight: bold;
-    border-radius: 0 0 20px 20px;
-    transition: all 0.1s ease;
-}
-
-#notch-compact:hover {
-    background: linear-gradient(
-        to bottom,
-        var(--shadow) 50%,
-        var(--surface) 95%,
-        var(--primary) 95%
-    );
+    transition: all 0.5s cubic-bezier(0.5, 0.25, 0, 1.25);
+    padding: 10px;
 }
 
 #notch-corner-left {

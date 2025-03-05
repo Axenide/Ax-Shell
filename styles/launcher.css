@@ -1,4 +1,5 @@
-#search-entry, #search-entry-walls {
+#search-entry,
+#search-entry-walls {
   font-weight: bold;
   background-color: var(--surface);
   color: var(--foreground);
@@ -6,12 +7,14 @@
   padding: 10px;
 }
 
-#search-entry selection, #search-entry-walls selection {
+#search-entry selection,
+#search-entry-walls selection {
   color: var(--background);
   background-color: var(--primary);
 }
 
-#close-button, #config-button {
+#close-button,
+#config-button {
   background-color: var(--surface);
   border-radius: 16px;
   padding: 8px;
@@ -50,8 +53,6 @@
   color: var(--shadow);
 }
 
-
-
 #scrolled-window {
   border-radius: 16px;
 }
@@ -73,7 +74,7 @@
 #app-slot-button {
   border-radius: 16px;
   padding: 16px;
-  transition: padding 0.25s cubic-bezier(0.5, 0.25, 0, 1);
+  transition: padding 0.1s ease;
   animation: loadSlot 0.5s ease;
 }
 
@@ -91,7 +92,7 @@
 #app-slot-button:selected,
 #app-slot-button.selected {
   background-color: var(--surface-bright);
-  padding-left: 24px;
+  padding-left: 20px;
 }
 
 #app-slot-button:active {
@@ -99,7 +100,8 @@
 }
 
 #app-icon {
-  margin-right: 8px;
+  margin: -8px;
+  margin-right: 4px;
 }
 
 #app-label {

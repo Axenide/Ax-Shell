@@ -1,4 +1,3 @@
-from fabric import Fabricator
 from fabric.widgets.box import Box
 from fabric.widgets.label import Label
 from fabric.widgets.datetime import DateTime
@@ -12,8 +11,7 @@ from gi.repository import Gdk
 from modules.systemtray import SystemTray
 import modules.icons as icons
 import modules.data as data
-import nightscout
-from modules.metrics import MetricsSmall
+from modules.metrics import MetricsSmall, Battery
 from modules.controls import ControlSmall
 from modules.weather import Weather
 from modules.tools import Toolbox
@@ -41,7 +39,6 @@ class Bar(Window):
             spacing=10,
             buttons=[WorkspaceButton(id=i, label="") for i in range(1, 11)],
         )
-
         self.button_tools = Button(
             name="button-bar",
             on_clicked=lambda *_: self.tools_menu(),
@@ -93,10 +90,12 @@ class Bar(Window):
         self.button_overview.connect("enter_notify_event", self.on_button_enter)
         self.button_overview.connect("leave_notify_event", self.on_button_leave)
 
+
         self.control = ControlSmall()
         self.metrics = MetricsSmall()
+        self.battery = Battery()
 
-        self.revealer = Revealer(
+        self.revealer_right = Revealer(
             name="bar-revealer",
             transition_type="slide-left",
             child_revealed=True,
@@ -111,10 +110,31 @@ class Bar(Window):
             ),
         )
 
-        self.boxed_revealer = Box(
+        self.boxed_revealer_right = Box(
             name="boxed-revealer",
             children=[
-                self.revealer,
+                self.revealer_right,
+            ],
+        )
+
+        self.revealer_left = Revealer(
+            name="bar-revealer",
+            transition_type="slide-right",
+            child_revealed=True,
+            child=Box(
+                name="bar-revealer-box",
+                orientation="h",
+                spacing=4,
+                children=[
+                    self.weather,
+                ],
+            ),
+        )
+
+        self.boxed_revealer_left = Box(
+            name="boxed-revealer",
+            children=[
+                self.revealer_left,
             ],
         )
 
@@ -131,7 +151,7 @@ class Bar(Window):
                     self.button_apps,
                     Box(name="workspaces-container", children=[self.workspaces]),
                     self.button_overview,
-                    self.weather
+                    self.boxed_revealer_left,
                 ]
             ),
             end_children=Box(
@@ -139,7 +159,8 @@ class Bar(Window):
                 spacing=4,
                 orientation="h",
                 children=[
-                    self.boxed_revealer,
+                    self.boxed_revealer_right,
+                    self.battery,
                     self.systray,
                     self.button_tools,
                     self.date_time,
@@ -179,6 +200,7 @@ class Bar(Window):
         self.notch.open_notch("power")
     def tools_menu(self):
         self.notch.open_notch("tools")
+
 
     def toggle_hidden(self):
         self.hidden = not self.hidden

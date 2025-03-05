@@ -125,10 +125,10 @@ class WorkspaceEventBox(EventBox):
     def __init__(self, workspace_id: int, fixed: Gtk.Fixed | None = None):
         self.fixed = fixed
         super().__init__(
+            name="overview-workspace-bg",
             h_expand=True,
             v_expand=True,
             size=(int(CURRENT_WIDTH * SCALE), int(CURRENT_HEIGHT * SCALE)),
-            name="overview-workspace-bg",
             child=fixed
             if fixed
             else Label(

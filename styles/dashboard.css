@@ -142,3 +142,11 @@
     color: var(--tertiary);
     font-size: 20px;
 }
+
+#applet-stack {
+    min-width: 420px;
+    border-radius: 20px;
+    border: 4px solid var(--surface);
+    padding: 4px;
+    min-width: 336px;
+}

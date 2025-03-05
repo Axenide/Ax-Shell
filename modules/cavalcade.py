@@ -12,6 +12,17 @@ from math import pi
 
 from fabric.widgets.overlay import Overlay
 
+import configparser
+
+def get_bars(file_path):
+    config = configparser.ConfigParser()
+    config.read(file_path)
+    return int(config['general']['bars'])
+
+CAVA_CONFIG = os.path.expanduser("~/.config/Ax-Shell/config/cavalcade/cava.ini")
+
+bars = get_bars(CAVA_CONFIG)
+
 def set_death_signal():
     """
     Set the death signal of the child process to SIGTERM so that if the parent
@@ -32,7 +43,7 @@ class Cava:
     CLOSING = 3
 
     def __init__(self, mainapp):
-        self.bars = 20
+        self.bars = bars
         self.path = "/tmp/cava.fifo"
 
         self.cava_config_file = os.path.expanduser("~/.config/Ax-Shell/config/cavalcade/cava.ini")
@@ -196,9 +207,9 @@ class Spectrum:
     # noinspection PyUnusedLocal
     def size_update(self, *args):
         """Update drawing geometry"""
-        self.sizes.number = 20
-        self.sizes.padding = 5
-        self.sizes.zero = 2
+        self.sizes.number = bars
+        self.sizes.padding = 100/bars
+        self.sizes.zero = 0
 
         self.sizes.area.width = self.area.get_allocated_width()
         self.sizes.area.height = self.area.get_allocated_height() - 2
@@ -235,8 +246,8 @@ class SpectrumRender():
 
     def get_spectrum_box(self):
         # Get the spectrum box
-        box = Overlay(h_align='center', v_align='center')
-        box.set_size_request(150, 40)
+        box = Overlay(name="cavalcade", h_align='center', v_align='center')
+        box.set_size_request(180, 40)
         box.add_overlay(self.draw.area)
         return box
 

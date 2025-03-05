@@ -385,11 +385,16 @@ class Player(Box):
 
 class PlayerSmall(CenterBox):
     def __init__(self):
-        super().__init__(orientation="h", h_align="fill", v_align="center")
+        super().__init__(name="player-small", orientation="h", h_align="fill", v_align="center")
         self._show_artist = False  # toggle flag
+        self._display_options = ["cavalcade", "title", "artist"]
+        self._display_index = 0
+        self._current_display = "cavalcade"
 
         self.mpris_icon = Button(
             name="compact-mpris-icon",
+            h_align="center",
+            v_align="center",
             child=Label(name="compact-mpris-icon-label", markup=icons.disc)
         )
         # Remove scroll events; instead, add button press events.
@@ -405,10 +410,14 @@ class PlayerSmall(CenterBox):
         self.mpris_label = Label(
             name="compact-mpris-label",
             label="Nothing Playing",
-            ellipsization="end"
+            ellipsization="end",
+            max_chars_width=26,
+            h_align="center",
         )
         self.mpris_button = Button(
             name="compact-mpris-button",
+            h_align="center",
+            v_align="center",
             child=Label(name="compact-mpris-button-label", markup=icons.play)
         )
         self.mpris_button.add_events(Gdk.EventMask.BUTTON_PRESS_MASK)
@@ -426,12 +435,12 @@ class PlayerSmall(CenterBox):
             v_align="center",
             v_expand=False,
             children=[
-                self.mpris_label,
                 self.cavalcade_box,
+                self.mpris_label,
             ]
         )
-        self.center_stack.set_visible_child(self.cavalcade_box)
-     
+        self.center_stack.set_visible_child(self.cavalcade_box) # default to cavalcade
+
         # Create additional compact view.
         self.mpris_small = CenterBox(
             name="compact-mpris",
@@ -441,16 +450,11 @@ class PlayerSmall(CenterBox):
             v_align="center",
             v_expand=False,
             start_children=self.mpris_icon,
-            center_children=self.mpris_label,
+            center_children=self.center_stack, # Changed to center_stack to handle stack switching
             end_children=self.mpris_button,
         )
-        
-        self.mpris_small_overlay = Overlay()
-        self.mpris_small_overlay.add(self.center_stack)
-        self.mpris_small_overlay.add_overlay(self.mpris_small)
-        
-        
-        self.add(self.mpris_small_overlay)
+
+        self.add(self.mpris_small)
 
         self.mpris_manager = MprisPlayerManager()
         self.mpris_player = None
@@ -475,15 +479,13 @@ class PlayerSmall(CenterBox):
             self.mpris_label.set_text("Nothing Playing")
             self.mpris_button.get_child().set_markup(icons.stop)
             self.mpris_icon.get_child().set_markup(icons.disc)
+            if self._current_display != "cavalcade":
+                self.center_stack.set_visible_child(self.mpris_label) # if was title or artist, keep showing label
+            else:
+                self.center_stack.set_visible_child(self.cavalcade_box) # default to cavalcade if no player
             return
 
         mp = self.mpris_player
-
-        # Toggle between title and artist.
-        text = (mp.artist if self._show_artist and mp.artist
-                else (mp.title if mp.title and mp.title.strip()
-                      else "Nothing Playing"))
-        self.mpris_label.set_text(text)
 
         # Choose icon based on player name.
         player_name = mp.player_name.lower() if hasattr(mp, "player_name") and mp.player_name else ""
@@ -491,33 +493,43 @@ class PlayerSmall(CenterBox):
         self.mpris_icon.get_child().set_markup(icon_markup)
         self.update_play_pause_icon()
 
+        if self._current_display == "title":
+            text = (mp.title if mp.title and mp.title.strip() else "Nothing Playing")
+            self.mpris_label.set_text(text)
+            self.center_stack.set_visible_child(self.mpris_label)
+        elif self._current_display == "artist":
+            text = (mp.artist if mp.artist else "Nothing Playing")
+            self.mpris_label.set_text(text)
+            self.center_stack.set_visible_child(self.mpris_label)
+        else: # default cavalcade
+            self.center_stack.set_visible_child(self.cavalcade_box)
+
+
     def _on_icon_button_press(self, widget, event):
         from gi.repository import Gdk
         if event.type == Gdk.EventType.BUTTON_PRESS:
-            if event.button == 3:
-                self.center_stack.set_visible_child(self.cavalcade_box)
-            if event.button == 2:
-                self.center_stack.set_visible_child(self.mpris_label)
             players = self.mpris_manager.players
             if not players:
                 return True
 
-            # Cambiar de reproductor según el botón presionado.
-            if event.button == 1:  # Left-click: reproductor anterior
-                self.current_index = (self.current_index + 1) % len(players)
-            elif event.button == 3:  # Right-click: reproductor siguiente
-                #self.current_index = (self.current_index + 1) % len(players)
-                self.center_stack.set_visible_child(self.cavalcade_box)
-            elif event.button == 2:  # Middle-click: toggle entre title y artist
-                self._on_icon_clicked(widget)
-                self.center_stack.set_visible_child(self.mpris_label)
+            if event.button == 2:  # Middle-click: cycle display
+                self._display_index = (self._display_index + 1) % len(self._display_options)
+                self._current_display = self._display_options[self._display_index]
+                self._apply_mpris_properties() # Re-apply to update label/cavalcade
                 return True
+
+            # Cambiar de reproductor según el botón presionado.
+            if event.button == 1:  # Left-click: next player
+                self.current_index = (self.current_index + 1) % len(players)
+            elif event.button == 3:  # Right-click: previous player
+                self.current_index = (self.current_index - 1) % len(players)
+                if self.current_index < 0:
+                    self.current_index = len(players) - 1
 
             mp_new = MprisPlayer(players[self.current_index])
             self.mpris_player = mp_new
-            # Conectar el evento "changed" para que se actualice el botón de play/pausa
+            # Conectar el evento "changed" para que se actualice
             self.mpris_player.connect("changed", self._on_mpris_changed)
-            # Se remueve el reinicio de self._show_artist para que la selección (artist/title) persista
             self._apply_mpris_properties()
             return True  # Se consume el evento
         return True
@@ -545,17 +557,8 @@ class PlayerSmall(CenterBox):
         self.update_play_pause_icon()
         return False
 
-    def _on_icon_clicked(self, widget):
-        if not self.mpris_player:
-            return
-        # Toggle between showing title and artist.
-        self._show_artist = not self._show_artist
-        text = (self.mpris_player.artist if self._show_artist and self.mpris_player.artist
-                else (self.mpris_player.title if self.mpris_player.title and self.mpris_player.title.strip()
-                      else "Nothing Playing"))
-        self.mpris_label.set_text(text)
-
-        self.center_stack.set_visible_child(self.mpris_label)
+    def _on_icon_clicked(self, widget): # No longer used, logic moved to _on_icon_button_press
+        pass
 
     def update_play_pause_icon(self):
         if self.mpris_player and self.mpris_player.playback_status == "playing":
@@ -583,10 +586,13 @@ class PlayerSmall(CenterBox):
     def on_player_vanished(self, manager, player_name):
         players = self.mpris_manager.players
         if players and self.mpris_player and self.mpris_player.player_name == player_name:
-            self.current_index = self.current_index % len(players)
-            new_player = MprisPlayer(players[self.current_index])
-            self.mpris_player = new_player
-            self.mpris_player.connect("changed", self._on_mpris_changed)
+            if players: # Check if players is not empty after vanishing
+                self.current_index = self.current_index % len(players)
+                new_player = MprisPlayer(players[self.current_index])
+                self.mpris_player = new_player
+                self.mpris_player.connect("changed", self._on_mpris_changed)
+            else:
+                self.mpris_player = None # No players left
         elif not players:
             self.mpris_player = None
         self._apply_mpris_properties()

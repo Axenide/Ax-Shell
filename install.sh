@@ -9,6 +9,7 @@ INSTALL_DIR="$HOME/.config/Ax-Shell"
 PACKAGES=(
     acpi
     brightnessctl
+    cava
     fabric-cli-git
     gnome-bluetooth-3.0
     gpu-screen-recorder
@@ -20,9 +21,12 @@ PACKAGES=(
     imagemagick
     libnotify
     matugen-bin
+    noto-fonts-emoji
     playerctl
     python-fabric-git
     python-pillow
+    python-psutil
+    python-requests
     python-setproctitle
     python-toml
     python-watchdog
@@ -30,7 +34,7 @@ PACKAGES=(
     swww
     tesseract
     uwsm
-    vte3
+    wl-clipboard
     wlinhibit
 )
 

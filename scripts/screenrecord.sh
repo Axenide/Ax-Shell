@@ -31,4 +31,4 @@ OUTPUT_FILE="$SAVE_DIR/$(date +%Y-%m-%d-%H-%M-%S).mp4"
 
 # Iniciar la grabación
 notify-send -a "Ax-Shell" "🔴 Recording started"
-gpu-screen-recorder -w portal -q ultra -ac opus -cr full -f 60 -o "$OUTPUT_FILE"
+gpu-screen-recorder -w screen -q ultra -a default_output -ac opus -cr full -f 60 -o "$OUTPUT_FILE"

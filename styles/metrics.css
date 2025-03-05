@@ -10,18 +10,6 @@
     border: 3px solid var(--primary);
 }
 
-#metrics-circle.cpu {
-    border: 3px solid var(--primary);
-}
-
-#metrics-circle.ram {
-    border: 3px solid var(--secondary);
-}
-
-#metrics-circle.disk {
-    border: 3px solid var(--tertiary);
-}
-
 #metrics-circle.bat {
     border: 3px solid var(--green);
 }
@@ -39,23 +27,10 @@
 }
 
 #metrics-level {
-    color: var(--primary);
     font-weight: bold;
     margin: 0 4px;
 }
 
-#metrics-level.cpu {
-    color: var(--primary);
-}
-
-#metrics-level.ram {
-    color: var(--secondary);
-}
-
-#metrics-level.disk {
-    color: var(--tertiary);
-}
-
-#metrics-level.bat {
-    color: var(--green);
+#metrics-sep {
+    min-width: 4px;
 }
