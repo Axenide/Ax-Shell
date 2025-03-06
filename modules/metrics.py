@@ -458,7 +458,7 @@ class Battery(Overlay):
             for threshold in self.low_thresholds:
                 if percentage <= threshold and threshold not in self.notified_low:
                     self._notify("Low Battery", 
-                               f"Battery is at {percentage}%. \nPlease plug in your charger.")
+                               f"Battery is at {percentage}%. Please plug in your charger.")
                     self.notified_low.add(threshold)
             self.notified_high.clear()  
             
@@ -468,10 +468,10 @@ class Battery(Overlay):
                 if percentage >= threshold and threshold not in self.notified_high:
                     if threshold == 100:
                         self._notify("Battery Full", 
-                                   "Battery is fully charged. \nPlease unplug the charger.")
+                                   "Battery is fully charged. Please unplug the charger.")
                     else:
                         self._notify("Battery Charging", 
-                                   f"Battery is at {percentage}%. \nConsider unplugging soon.")
+                                   f"Battery is at {percentage}%. Consider unplugging soon.")
                     self.notified_high.add(threshold)
             self.notified_low.clear()  
 
