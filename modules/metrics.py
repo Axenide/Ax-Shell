@@ -157,7 +157,7 @@ class MetricsSmall(Overlay):
         # Creamos el contenedor principal para los widgets métricos
         main_box = Box(
             name="metrics-small",
-            spacing=4,
+            spacing=0,
             orientation="h",
             visible=True,
             all_visible=True,
@@ -190,7 +190,7 @@ class MetricsSmall(Overlay):
         self.cpu_box = Box(
             name="metrics-cpu-box",
             orientation="h",
-            spacing=2,
+            spacing=0,
             children=[self.cpu_overlay, self.cpu_revealer],
         )
 
@@ -221,7 +221,7 @@ class MetricsSmall(Overlay):
         self.ram_box = Box(
             name="metrics-ram-box",
             orientation="h",
-            spacing=2,
+            spacing=0,
             children=[self.ram_overlay, self.ram_revealer],
         )
 
@@ -252,8 +252,93 @@ class MetricsSmall(Overlay):
         self.disk_box = Box(
             name="metrics-disk-box",
             orientation="h",
-            spacing=2,
+            spacing=0,
             children=[self.disk_overlay, self.disk_revealer],
+        )
+
+        # Agregamos cada widget métrico al contenedor principal
+        main_box.add(self.disk_box)
+        main_box.add(Box(name="metrics-sep"))
+        main_box.add(self.ram_box)
+        main_box.add(Box(name="metrics-sep"))
+        main_box.add(self.cpu_box)
+
+        # Se crea un único EventBox que envuelve todo el contenedor, para que
+        # los eventos de hover se capturen de forma central y siempre queden por encima
+        # de los widgets internos.
+        event_box = EventBox(events=["enter-notify-event", "leave-notify-event"])
+        event_box.connect("enter-notify-event", self.on_mouse_enter)
+        event_box.connect("leave-notify-event", self.on_mouse_leave)
+
+        # Inicializamos MetricsSmall como un Overlay cuyo "child" es el EventBox
+        super().__init__(
+            name="metrics-small",
+            child=main_box,
+            visible=True,
+            all_visible=True,
+            overlays=[event_box]
+        )
+
+        # Actualización de métricas cada segundo
+        GLib.timeout_add_seconds(1, self.update_metrics)
+
+        # Estado inicial de los revealers y variables para la gestión del hover
+        self.hide_timer = None
+        self.hover_counter = 0
+
+    def _format_percentage(self, value: int) -> str:
+        """Formato natural del porcentaje sin forzar ancho fijo."""
+        return f"{value}%"
+
+    def on_mouse_enter(self, widget, event):
+        self.hover_counter += 1
+        if self.hide_timer is not None:
+            GLib.source_remove(self.hide_timer)
+            self.hide_timer = None
+        # Revelar niveles en hover para todas las métricas
+        self.cpu_revealer.set_reveal_child(True)
+        self.ram_revealer.set_reveal_child(True)
+        self.disk_revealer.set_reveal_child(True)
+        return False
+
+    def on_mouse_leave(self, widget, event):
+        if self.hover_counter > 0:
+            self.hover_counter -= 1
+        if self.hover_counter == 0:
+            if self.hide_timer is not None:
+                GLib.source_remove(self.hide_timer)
+            self.hide_timer = GLib.timeout_add(500, self.hide_revealer)
+        return False
+
+    def hide_revealer(self):
+        self.cpu_revealer.set_reveal_child(False)
+        self.ram_revealer.set_reveal_child(False)
+        self.disk_revealer.set_reveal_child(False)
+        self.hide_timer = None
+        return False
+
+    def update_metrics(self):
+        # Recuperar datos centralizados
+        cpu, mem, disk = shared_provider.get_metrics()
+        self.cpu_circle.set_value(cpu / 100.0)
+        self.ram_circle.set_value(mem / 100.0)
+        self.disk_circle.set_value(disk / 100.0)
+        # Actualizar etiquetas con el porcentaje formateado
+        self.cpu_level.set_label(self._format_percentage(int(cpu)))
+        self.ram_level.set_label(self._format_percentage(int(mem)))
+        self.disk_level.set_label(self._format_percentage(int(disk)))
+        return True
+
+
+class Battery(Overlay):
+    def __init__(self, **kwargs):
+        # Creamos el contenedor principal para los widgets métricos
+        main_box = Box(
+            name="metrics-small",
+            spacing=0,
+            orientation="h",
+            visible=True,
+            all_visible=True,
         )
 
         # ------------------ Battery ------------------
@@ -283,14 +368,11 @@ class MetricsSmall(Overlay):
         self.bat_box = Box(
             name="metrics-bat-box",
             orientation="h",
-            spacing=2,
+            spacing=0,
             children=[self.bat_overlay, self.bat_revealer],
         )
 
         # Agregamos cada widget métrico al contenedor principal
-        main_box.add(self.disk_box)
-        main_box.add(self.ram_box)
-        main_box.add(self.cpu_box)
         main_box.add(self.bat_box)
 
         # Se crea un único EventBox que envuelve todo el contenedor, para que
@@ -309,9 +391,6 @@ class MetricsSmall(Overlay):
             overlays=[event_box]
         )
 
-        # Actualización de métricas cada segundo
-        GLib.timeout_add_seconds(1, self.update_metrics)
-        
         # Actualización de la batería cada segundo
         self.batt_fabricator = Fabricator(lambda *args, **kwargs: self.poll_battery(), interval=1000, stream=False, default_value=0)
         self.batt_fabricator.changed.connect(self.update_battery)
@@ -331,9 +410,6 @@ class MetricsSmall(Overlay):
             GLib.source_remove(self.hide_timer)
             self.hide_timer = None
         # Revelar niveles en hover para todas las métricas
-        self.cpu_revealer.set_reveal_child(True)
-        self.ram_revealer.set_reveal_child(True)
-        self.disk_revealer.set_reveal_child(True)
         self.bat_revealer.set_reveal_child(True)
         return False
 
@@ -347,24 +423,9 @@ class MetricsSmall(Overlay):
         return False
 
     def hide_revealer(self):
-        self.cpu_revealer.set_reveal_child(False)
-        self.ram_revealer.set_reveal_child(False)
-        self.disk_revealer.set_reveal_child(False)
         self.bat_revealer.set_reveal_child(False)
         self.hide_timer = None
         return False
-
-    def update_metrics(self):
-        # Recuperar datos centralizados
-        cpu, mem, disk = shared_provider.get_metrics()
-        self.cpu_circle.set_value(cpu / 100.0)
-        self.ram_circle.set_value(mem / 100.0)
-        self.disk_circle.set_value(disk / 100.0)
-        # Actualizar etiquetas con el porcentaje formateado
-        self.cpu_level.set_label(self._format_percentage(int(cpu)))
-        self.ram_level.set_label(self._format_percentage(int(mem)))
-        self.disk_level.set_label(self._format_percentage(int(disk)))
-        return True
 
     def poll_battery(self):
         try:
@@ -384,9 +445,9 @@ class MetricsSmall(Overlay):
     def update_battery(self, sender, battery_data):
         value, status = battery_data
         if value == 0:
-            self.bat_box.set_visible(False)
+            self.set_visible(False)
         else:
-            self.bat_box.set_visible(True)
+            self.set_visible(True)
             self.bat_circle.set_value(value)
         percentage = int(value * 100)
         self.bat_level.set_label(self._format_percentage(percentage))

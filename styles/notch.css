@@ -51,20 +51,12 @@
   border-radius: 0 0 36px 36px;
 }
 
-#notch-content.bluetooth {
-  padding: 16px;
-  min-height: 400px;
-  min-width: 512px;
-  border-radius: 0 0 36px 36px;
-}
-
 #app-launcher,
 #dashboard,
 #notification,
 #overview,
 #power-menu,
-#toolbox,
-#bluetooth {
+#toolbox {
   opacity: 1;
   margin: -800px;
   transition: all 0.25s cubic-bezier(0.5, 0.25, 0, 1);
@@ -84,7 +76,7 @@
 #notch-compact {
   font-weight: bold;
   transition: all 0.5s cubic-bezier(0.5, 0.25, 0, 1.25);
-  padding: 0 10px;
+  padding: 10px;
 }
 
 #notch-corner-left {
@@ -123,6 +115,3 @@
 #compact-mpris-button:hover #compact-mpris-button-label {
   color: var(--background);
 }
-
-
-

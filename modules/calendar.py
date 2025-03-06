@@ -3,6 +3,8 @@ from datetime import datetime
 import gi
 import modules.icons as icons
 from fabric.widgets.label import Label
+from fabric.widgets.box import Box
+from fabric.widgets.centerbox import CenterBox
 
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, GLib
@@ -23,32 +25,36 @@ class Calendar(Gtk.Box):
         # Dictionary to store built views for each month.
         self.month_views = {}
 
-        self.header = Gtk.Box(spacing=4, name="header")
-        self.pack_start(self.header, False, False, 0)
-
         self.prev_month_button = Gtk.Button(
             name="prev-month-button",
             child=Label(name="month-button-label", markup=icons.chevron_left)
         )
         self.prev_month_button.connect("clicked", self.on_prev_month_clicked)
-        self.header.pack_start(self.prev_month_button, False, False, 0)
 
         self.month_label = Gtk.Label(name="month-label")
-        self.header.pack_start(self.month_label, True, True, 0)
 
         self.next_month_button = Gtk.Button(
             name="next-month-button",
             child=Label(name="month-button-label", markup=icons.chevron_right)
         )
         self.next_month_button.connect("clicked", self.on_next_month_clicked)
-        self.header.pack_start(self.next_month_button, False, False, 0)
+
+        self.header = CenterBox(
+            spacing=4,
+            name="header",
+            start_children=[self.prev_month_button],
+            center_children=[self.month_label,],
+            end_children=[self.next_month_button],
+        )
+
+        self.add(self.header)
 
         self.weekday_row = Gtk.Box(spacing=4, name="weekday-row")
         self.pack_start(self.weekday_row, False, False, 0)
 
         # Create a stack to hold month days views.
         self.stack = Gtk.Stack(name="calendar-stack")
-        self.stack.set_transition_duration(500)
+        self.stack.set_transition_duration(250)
         self.pack_start(self.stack, True, True, 0)
 
         self.update_header()

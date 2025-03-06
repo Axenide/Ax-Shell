@@ -21,6 +21,7 @@ import modules.icons as icons
 
 # Persistence directory and file (history)
 PERSISTENT_DIR = "/tmp/ax-shell"
+
 PERSISTENT_HISTORY_FILE = os.path.join(PERSISTENT_DIR, "notification_history.json")
 
 def cache_notification_pixbuf(notification_box):
@@ -34,6 +35,7 @@ def cache_notification_pixbuf(notification_box):
         logger.debug(f"Caching image for notification {notification.id} to: {cache_file}") # Log before caching
         try:
             scaled = notification.image_pixbuf.scale_simple(40, 40, GdkPixbuf.InterpType.BILINEAR)
+
             scaled.savev(cache_file, "png", [], [])
             logger.info(f"Successfully cached image for notification {notification.id} to: {cache_file}") # Log on success
             return cache_file # Return the cache file path
@@ -43,6 +45,7 @@ def cache_notification_pixbuf(notification_box):
     else:
         logger.debug(f"Notification {notification.id} has no image_pixbuf to cache.")
         return get_relative_path("../assets/icons/notification.png")
+
 
 def load_scaled_pixbuf(notification_box, width, height):
     """
@@ -72,6 +75,7 @@ def load_scaled_pixbuf(notification_box, width, height):
         return pixbuf
 
     logger.debug(f"No image_pixbuf or cached image found, trying fallback image for notification {notification.id}") # Log app icon fallback
+
     return get_app_icon_pixbuf(notification.app_icon, width, height)
 
 def get_app_icon_pixbuf(icon_path, width, height):
@@ -80,6 +84,7 @@ def get_app_icon_pixbuf(icon_path, width, height):
     """
     if not icon_path:
         icon_path = get_relative_path("../assets/icons/notification.png")
+
     if icon_path.startswith("file://"):
         icon_path = icon_path[7:]
     if not os.path.exists(icon_path):
@@ -207,6 +212,7 @@ class NotificationBox(Box):
     def create_content(self):
         notification = self.notification
         pixbuf = load_scaled_pixbuf(self, 40, 40) # Pass self to load_scaled_pixbuf
+
         self.notification_image_box = Box(
             name="notification-image",
             orientation="v",
@@ -326,6 +332,7 @@ class NotificationBox(Box):
                 else:
                     logger.error(f"Error in close_notification for notification {self.notification.id}: {e}")
 
+
         return False
 
     def destroy(self, from_history_delete=False):
@@ -338,6 +345,7 @@ class NotificationBox(Box):
                     logger.info(f"Deleted cached image: {self.cached_image_path}")
                 except Exception as e:
                     logger.error(f"Error deleting cached image {self.cached_image_path}: {e}")
+
         self._destroyed = True
         self.stop_timeout()
         super().destroy()
@@ -436,6 +444,8 @@ class NotificationHistory(Box):
             min_content_size=(-1, -1),
             max_content_size=(-1, -1),
         )
+
+
         self.scrolled_window_viewport_box = Box(orientation="v", children=[self.notifications_list, self.no_notifications_box]) # Added viewport box as instance variable
         self.scrolled_window.add_with_viewport(self.scrolled_window_viewport_box)
         self.persistent_notifications = []
@@ -568,6 +578,7 @@ class NotificationHistory(Box):
             children=[
                 CustomImage(
                     pixbuf=load_scaled_pixbuf(hist_box, 40, 40) # Pass hist_box to load_scaled_pixbuf
+
                 ),
                 Box(v_expand=True),
             ]
@@ -706,6 +717,7 @@ class NotificationHistory(Box):
             children=[
                 CustomImage(
                     pixbuf=load_scaled_pixbuf(notification_box, 40, 40) # Pass notification_box to load_scaled_pixbuf
+
                 ),
                 Box(v_expand=True, v_align="fill"),
             ]
@@ -730,6 +742,7 @@ class NotificationHistory(Box):
             line_wrap="word-char",
         ) if notification_box.notification.body else Box()
         # self.current_notif_body_label.set_single_line_mode(True)
+
         self.current_notif_summary_box = Box(
             name="notification-summary-box",
             orientation="h",
@@ -1073,4 +1086,3 @@ class NotificationContainer(Box):
         notifications_to_close = self.notifications.copy()
         for notification_box in notifications_to_close:
             notification_box.notification.close("dismissed-by-user")
-
