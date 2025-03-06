@@ -454,11 +454,20 @@ class Battery(Overlay):
             self.high_thresholds = [80, 100]
             
         if status == "Discharging":
-            # Check for low battery
+            # Check for low battery with different message severity
             for threshold in self.low_thresholds:
                 if percentage <= threshold and threshold not in self.notified_low:
-                    self._notify("Low Battery", 
-                               f"Battery is at {percentage}%. Please plug in your charger.")
+                    if threshold <= 5:
+                        title = "Critical Battery Level"
+                        message = f"Battery at {percentage}%! Connect charger immediately!"
+                    elif threshold <= 10:
+                        title = "Very Low Battery"
+                        message = f"Battery at {percentage}%. Please connect charger soon."
+                    else:  # 20%
+                        title = "Low Battery"
+                        message = f"Battery at {percentage}%. Consider connecting charger."
+                    
+                    self._notify(title, message)
                     self.notified_low.add(threshold)
             self.notified_high.clear()  
             
@@ -467,13 +476,15 @@ class Battery(Overlay):
             for threshold in self.high_thresholds:
                 if percentage >= threshold and threshold not in self.notified_high:
                     if threshold == 100:
-                        self._notify("Battery Full", 
-                                   "Battery is fully charged. Please unplug the charger.")
-                    else:
-                        self._notify("Battery Charging", 
-                                   f"Battery is at {percentage}%. Consider unplugging soon.")
+                        title = "Battery Fully Charged"
+                        message = "Your battery is now fully charged. You can disconnect the charger."
+                    else:  # 80%
+                        title = "Battery Charging"
+                        message = f"Battery charged to {percentage}%. You may disconnect the charger soon."
+                    
+                    self._notify(title, message)
                     self.notified_high.add(threshold)
-            self.notified_low.clear()  
+            self.notified_low.clear()
 
     def _notify(self, summary, body):
         icon_path = os.path.expanduser("~/.config/Ax-Shell/assets/ax.png")
