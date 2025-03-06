@@ -145,6 +145,11 @@ palette: str = "&#xeb01;"
 cloud_off: str = "&#xed3e;"
 loader: str = "&#xeca3;"
 radar: str = "&#xf017;"
+graf: str = "&#xed23;"
+amongus: str = "&#xf205;"
+trend_up: str = "&#xf162;"
+trend_down: str = "&#xeb42;"
+arrow_right: str = "&#xea1c;"
 
 exceptions: list[str] = ['font_family', 'font_weight', 'span']
 

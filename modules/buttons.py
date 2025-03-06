@@ -262,7 +262,7 @@ class BluetoothButton(Box):
 
 
 class LightButton(Box):
-    def __init__(self, notch):
+    def __init__(self, **kwargs):
         super().__init__(
             name="light-button",
             orientation="h",
@@ -271,7 +271,7 @@ class LightButton(Box):
             h_expand=True,
             v_expand=True,
         )
-        self.notch = notch
+        self.widgets = kwargs["widgets"]
 
         self.light_icon = Label(
             name="light-icon",
@@ -305,7 +305,7 @@ class LightButton(Box):
             name="light-status-button",
             h_expand=True,
             child=self.light_status_container,
-            on_clicked=lambda *_: self.notch.hue.switch(),
+            on_clicked=lambda *_: self.widgets.light.switch(),
         )
         self.light_menu_label = Label(
             name="light-menu-label",
@@ -313,7 +313,7 @@ class LightButton(Box):
         )
         self.light_menu_button = Button(
             name="light-menu-button",
-            on_clicked=lambda *_: self.notch.open_notch("hue"),
+            on_clicked=lambda *_: self.widgets.show_light(),
             child=self.light_menu_label,
         )
         add_hover_cursor(self.light_menu_button)
@@ -408,13 +408,13 @@ class Buttons(Gtk.Grid):
         # Instantiate each button
         self.network_button = NetworkButton()
         self.bluetooth_button = BluetoothButton(widgets=self.widgets)
-        #self.light_button = LightButton(self.notch)
+        self.light_button = LightButton(widgets=self.widgets)
         self.caffeine_button = CaffeineButton()
 
         # Attach buttons into the grid (one row, four columns)
         self.attach(self.network_button, 0, 0, 1, 1)
         self.attach(self.bluetooth_button, 1, 0, 1, 1)
-        #self.attach(self.light_button, 2, 0, 1, 1)
+        self.attach(self.light_button, 2, 0, 1, 1)
         self.attach(self.caffeine_button, 3, 0, 1, 1)
 
         self.show_all()

@@ -1,12 +1,14 @@
+from quopri import HEX
 from fabric.widgets.box import Box
 from fabric.widgets.label import Label
 from fabric.widgets.scale import Scale
+import threading
 from fabric import Fabricator
 from python_hue_v2 import Hue
 import modules.icons as icons
 import gi
 gi.require_version("Gtk", "3.0")
-from gi.repository import Gtk, Gdk
+from gi.repository import Gtk, Gdk, GLib
 import numpy as np
 import cairo
 import modules.icons as icons
@@ -20,11 +22,14 @@ class Light(Box):
             orientation="h",
             **kwargs,
         )
-        self.notch = kwargs["notch"]
+        self.widgets = kwargs["widgets"]
 
-        self.height = 3.1 #310 pixels
+        self.scale_height = 3.1 #310 pixels
 
-        self.buttons = self.notch.dashboard.widgets.buttons.light_button
+        self.wheel_width = 300
+        self.wheel_height = 300
+
+        self.buttons = self.widgets.buttons.light_button
         self.light_status_text = self.buttons.light_status_text
         self.light_status_button = self.buttons.light_status_button
         self.light_icon = self.buttons.light_icon
@@ -37,7 +42,7 @@ class Light(Box):
         self.bulb = self.hue.lights[0]
         self.status_light()
 
-        self.color_wheel = ColorWheel(self.hue)
+        self.color_wheel = ColorWheel(self.hue, self.wheel_width, self.wheel_height)
 
         self.brightness = Scale(
             name="brightness-bar",
@@ -55,6 +60,8 @@ class Light(Box):
 
         self.last_update = [self.bulb.on, self.brightness.value]
 
+        GLib.timeout_add_seconds(5, self.fetch_status)
+
         self.brightness.add_events(Gdk.EventMask.BUTTON_PRESS_MASK | Gdk.EventMask.BUTTON_MOTION_MASK| Gdk.EventMask.BUTTON_RELEASE_MASK)
         self.brightness.connect("button-press-event", self.on_click)
         self.brightness.connect("motion-notify-event", self.on_drag)
@@ -65,26 +72,36 @@ class Light(Box):
 
     def on_click(self, widget, event):
         if event.button == 1:
-            print(self.height)
-            self.brightness.value = 100 - event.y/self.height
-            self.last_update[1] = 100 - event.y/self.height
+            self.brightness.value = 100 - event.y/self.scale_height
+            self.last_update[1] = 100 - event.y/self.scale_height
 
     def on_drag(self, widget, event):
         if event.state & Gdk.ModifierType.BUTTON1_MASK:
-            self.brightness.value = 100 - event.y/self.height
-            self.last_update[1] = 100 - event.y/self.height
+            self.brightness.value = 100 - event.y/self.scale_height
+            self.last_update[1] = 100 - event.y/self.scale_height
 
     def on_release(self, widget, event):
         if event.button == 1:
             if 5 <= self.brightness.value:
                 if not self.bulb.on:
                     self.bulb.on = True
-                    self.last_update[0] = True
                 self.bulb.brightness = self.brightness.value
                 self.last_update[1] = self.brightness.value
             else:
                 self.bulb.on = False
-                self.last_update[0] = False
+
+    def fetch_status(self):
+        threading.Thread(target=self._fetch_status_thread, daemon=True).start()
+        return True
+
+    def _fetch_status_thread(self):
+        if self.bulb.brightness != self.last_update[1]:
+            if not Gdk.ModifierType.BUTTON1_MASK:
+                self.brightness.value = self.bulb.brightness if 5 <= self.bulb.brightness and self.bulb.on else 0
+                self.last_update[1] = self.bulb.brightness
+        if self.bulb.on != self.last_update[0]:
+            self.last_update[0] = False if self.last_update[0] else True
+            GLib.idle_add(self.status_light)
 
     def switch(self):
         self.bulb.on = False if self.bulb.on else True
@@ -112,18 +129,12 @@ class Light(Box):
                 else:
                     self.bulb.on = False
 
-    def _update(self):
-        if self.bulb.brightness != self.last_update[1]:
-            self.brightness.value = self.bulb.brightness if 5 <= self.bulb.brightness and self.bulb.on else 0
-            self.last_update[1] = self.bulb.brightness
-        if self.bulb.on != self.last_update[0]:
-            self.last_update[0] = True if self.bulb.on else False
-            self.status_light()
-
 class ColorWheel(Gtk.DrawingArea):
-    def __init__(self, hue):
+    def __init__(self, hue, width, height):
         super().__init__()
-        self.set_size_request(300, 300)
+        self.wheel_width = width
+        self.wheel_height = height
+        self.set_size_request(self.wheel_width, self.wheel_height)
         self.connect("draw", self.on_draw)
         self.add_events(Gdk.EventMask.BUTTON_PRESS_MASK | Gdk.EventMask.BUTTON_MOTION_MASK | Gdk.EventMask.BUTTON_RELEASE_MASK)
         self.connect("button-press-event", self.on_click)
@@ -132,18 +143,17 @@ class ColorWheel(Gtk.DrawingArea):
         self.surface = None
         self.dot_position = None
 
+
         self.hue = hue
         self.bulb = self.hue.lights[0]
 
-        self.set_dot_position(150, 150)
+        self.set_dot_position(self.wheel_width/2, self.wheel_height/2)
         self.create_surface() # Do it right away because it lagg
 
     def create_surface(self):
-        width = 300
-        height = 300
-        self.surface = cairo.ImageSurface(cairo.FORMAT_RGB24, width, height)
+        self.surface = cairo.ImageSurface(cairo.FORMAT_RGB24, self.wheel_width, self.wheel_height)
         cr = cairo.Context(self.surface)
-        self.draw_wheel(cr, width, height)
+        self.draw_wheel(cr, self.wheel_width, self.wheel_height)
 
     def draw_wheel(self, cr, width, height):
         radius = min(width, height) / 2
@@ -194,10 +204,8 @@ class ColorWheel(Gtk.DrawingArea):
         if i == 5: return v, p, q
 
     def get_color_at(self, x, y):
-        width = 300
-        height = 300
-        radius = min(width, height) / 2
-        cx, cy = width / 2, height / 2
+        radius = min(self.wheel_width, self.wheel_height) / 2
+        cx, cy = self.wheel_width / 2, self.wheel_height / 2
 
         dx = self.dot_position[0] - cx
         dy = self.dot_position[1] - cy
@@ -242,10 +250,8 @@ class ColorWheel(Gtk.DrawingArea):
         self.queue_draw()
 
     def set_dot_position(self, x, y):
-        width = 300
-        height = 300
-        radius = min(width, height) / 2
-        cx, cy = width / 2, height / 2
+        radius = min(self.wheel_width, self.wheel_height) / 2
+        cx, cy = self.wheel_width / 2, self.wheel_height / 2
 
         dx = x - cx
         dy = y - cy

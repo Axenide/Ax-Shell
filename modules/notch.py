@@ -84,7 +84,7 @@ class Notch(Window):
                 self.player_small,
             ]
         )
-        self.compact_stack.set_visible_child(self.active_window)
+        self.compact_stack.set_visible_child(self.player_small)
 
         # Create the compact button and set the stack as its child
         self.compact = Gtk.EventBox(name="notch-compact")

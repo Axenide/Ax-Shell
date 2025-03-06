@@ -15,6 +15,7 @@ from modules.kanban import Kanban
 
 from modules.player import Player
 from modules.bluetooth import BluetoothConnections
+from modules.hue import Light
 from modules.metrics import Metrics
 from modules.controls import ControlSliders
 
@@ -34,6 +35,7 @@ class Widgets(Box):
 
         self.buttons = Buttons(widgets=self)
         self.bluetooth = BluetoothConnections(widgets=self)
+        self.light = Light(widgets=self)
 
         self.box_1 = Box(
             name="box-1",
@@ -69,6 +71,7 @@ class Widgets(Box):
             children=[
                 self.notification_history,
                 self.bluetooth,
+                self.light,
             ]
         )
 
@@ -135,3 +138,6 @@ class Widgets(Box):
 
     def show_notif(self):
         self.applet_stack.set_visible_child(self.notification_history)
+
+    def show_light(self):
+        self.applet_stack.set_visible_child(self.light)

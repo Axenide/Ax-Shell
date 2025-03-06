@@ -50,7 +50,6 @@ class Weather(Box):
             response = requests.get(url, headers={'User-Agent': 'weather-app/1.0'})
             if response.status_code == 200:
                 weather_data = response.json()["properties"]["timeseries"][0]["data"]["instant"]["details"]["air_temperature"]
-                print(weather_data)
                 GLib.idle_add(self.label.set_label, str(weather_data)+"°C")
             else:
                 GLib.idle_add(self.label.set_markup, f"{icons.cloud_off} Unavailable")
