@@ -2,6 +2,7 @@ import psutil
 import subprocess
 import re
 from gi.repository import GLib
+import os
 
 from fabric.widgets.label import Label
 from fabric.widgets.box import Box
@@ -12,7 +13,7 @@ from fabric.widgets.circularprogressbar import CircularProgressBar
 from fabric.widgets.overlay import Overlay
 from fabric.widgets.revealer import Revealer
 from fabric.core.fabricator import Fabricator
-from fabric.utils.helpers import exec_shell_command_async
+from fabric.utils.helpers import exec_shell_command_async, exec_shell_command
 
 import modules.icons as icons
 
@@ -437,10 +438,46 @@ class Battery(Overlay):
             if match_percent:
                 percent = int(match_percent.group(1))
                 status = match_status.group(1) if match_status else None
+                
+                self._check_battery_notifications(percent, status)
+                
                 return (percent / 100.0, status)
         except Exception:
             pass
         return (0, None)
+
+    def _check_battery_notifications(self, percentage, status):
+        if not hasattr(self, 'notified_low'):
+            self.notified_low = set()
+            self.notified_high = set()
+            self.low_thresholds = [20, 10, 5]
+            self.high_thresholds = [80, 100]
+            
+        if status == "Discharging":
+            # Check for low battery
+            for threshold in self.low_thresholds:
+                if percentage <= threshold and threshold not in self.notified_low:
+                    self._notify("Low Battery", 
+                               f"Battery is at {percentage}%. \nPlease plug in your charger.")
+                    self.notified_low.add(threshold)
+            self.notified_high.clear()  
+            
+        elif status in ["Charging", "Full"]:
+            # Check for high battery
+            for threshold in self.high_thresholds:
+                if percentage >= threshold and threshold not in self.notified_high:
+                    if threshold == 100:
+                        self._notify("Battery Full", 
+                                   "Battery is fully charged. \nPlease unplug the charger.")
+                    else:
+                        self._notify("Battery Charging", 
+                                   f"Battery is at {percentage}%. \nConsider unplugging soon.")
+                    self.notified_high.add(threshold)
+            self.notified_low.clear()  
+
+    def _notify(self, summary, body):
+        icon_path = os.path.expanduser("~/.config/Ax-Shell/assets/ax.png")
+        exec_shell_command_async(f'notify-send -i "{icon_path}" "{summary}" "{body}"')
 
     def update_battery(self, sender, battery_data):
         value, status = battery_data
