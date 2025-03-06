@@ -454,8 +454,10 @@ class Battery(Overlay):
             self.high_thresholds = [80, 100]
             
         if status == "Discharging":
-            # Check for low battery with different message severity
-            for threshold in self.low_thresholds:
+            # Check for the lowest applicable threshold
+            notification_sent = False
+            
+            for threshold in sorted(self.low_thresholds):
                 if percentage <= threshold and threshold not in self.notified_low:
                     if threshold <= 5:
                         title = "Critical Battery Level"
@@ -469,11 +471,20 @@ class Battery(Overlay):
                     
                     self._notify(title, message)
                     self.notified_low.add(threshold)
+                    notification_sent = True
+                    break  # Only send one notification
+            
+            # If we sent a notification, mark all higher thresholds as notified
+            if notification_sent:
+                for t in self.low_thresholds:
+                    if t > percentage:
+                        self.notified_low.add(t)
+                        
             self.notified_high.clear()  
             
         elif status in ["Charging", "Full"]:
-            # Check for high battery
-            for threshold in self.high_thresholds:
+            # For charging, we want notifications at specific thresholds
+            for threshold in sorted(self.high_thresholds, reverse=True):
                 if percentage >= threshold and threshold not in self.notified_high:
                     if threshold == 100:
                         title = "Battery Fully Charged"
@@ -484,6 +495,8 @@ class Battery(Overlay):
                     
                     self._notify(title, message)
                     self.notified_high.add(threshold)
+                    break  # Only send one notification
+                    
             self.notified_low.clear()
 
     def _notify(self, summary, body):
