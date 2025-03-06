@@ -1,4 +1,5 @@
-[!CAUTION] This is a fork not made for others to install. Do so at your own risk
+> [!CAUTION]
+> This is a fork not made for others to install. Do so at your own risk
 
 <p align="center">
   <img src="assets/cover.png">
