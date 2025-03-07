@@ -5,7 +5,6 @@ from gi.repository import GdkPixbuf, Gtk, GLib, Gio, Gdk
 from fabric.widgets.box import Box
 from fabric.widgets.centerbox import CenterBox
 from fabric.widgets.entry import Entry
-from fabric.widgets.button import Button
 from fabric.widgets.scrolledwindow import ScrolledWindow
 from fabric.widgets.label import Label
 from fabric.utils.helpers import exec_shell_command_async
@@ -105,7 +104,7 @@ class WallpaperSelector(Box):
         self.matugen_switcher.set_hexpand(False)
         self.matugen_switcher.set_valign(Gtk.Align.CENTER)
         self.matugen_switcher.set_halign(Gtk.Align.CENTER)
-        self.matugen_switcher.set_active(True)
+        self.matugen_switcher.set_active(False)
 
         self.mat_icon = Label(name="mat-label", markup=icons.palette)
 
@@ -201,7 +200,7 @@ class WallpaperSelector(Box):
         else:
             # Matugen is disabled: run the alternative swww command.
             exec_shell_command_async(
-                f'swww img {full_path} -t outer --transition-duration 1.5 --transition-step 255 --transition-fps 60 -f Nearest'
+                f'~/.scripts/wallpapers.sh change {full_path}'
             )
 
     def on_scheme_changed(self, combo):
