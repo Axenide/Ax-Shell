@@ -6,15 +6,12 @@ from fabric.widgets.button import Button
 from fabric.widgets.revealer import Revealer
 from fabric.widgets.wayland import WaylandWindow as Window
 from fabric.hyprland.widgets import Workspaces, WorkspaceButton
-from fabric.utils.helpers import get_relative_path, exec_shell_command_async
+from fabric.utils.helpers import exec_shell_command_async
 from gi.repository import Gdk
 from modules.systemtray import SystemTray
 import modules.icons as icons
-import modules.data as data
 from modules.metrics import MetricsSmall, Battery
 from modules.controls import ControlSmall
-from modules.weather import Weather
-from modules.tools import Toolbox
 
 class Bar(Window):
     def __init__(self, **kwargs):
@@ -52,10 +49,10 @@ class Bar(Window):
 
 
         self.systray = SystemTray()
-        self.weather = Weather()
+        # self.weather = Weather()
         # self.systray = SystemTray(name="systray", spacing=8, icon_size=20)
 
-        self.date_time = DateTime(name="date-time", formatters=["%H:%M"], h_align="center", v_align="center")
+        self.date_time = DateTime(name="date-time", formatters=["%d-%m-%Y %H:%M"], h_align="center", v_align="center")
 
         self.button_apps = Button(
             name="button-bar",
@@ -117,26 +114,26 @@ class Bar(Window):
             ],
         )
 
-        self.revealer_left = Revealer(
-            name="bar-revealer",
-            transition_type="slide-right",
-            child_revealed=True,
-            child=Box(
-                name="bar-revealer-box",
-                orientation="h",
-                spacing=4,
-                children=[
-                    self.weather,
-                ],
-            ),
-        )
+        # self.revealer_left = Revealer(
+        #     name="bar-revealer",
+        #     transition_type="slide-right",
+        #     child_revealed=True,
+        #     child=Box(
+        #         name="bar-revealer-box",
+        #         orientation="h",
+        #         spacing=4,
+        #         children=[
+        #             self.weather,
+        #         ],
+        #     ),
+        # )
 
-        self.boxed_revealer_left = Box(
-            name="boxed-revealer",
-            children=[
-                self.revealer_left,
-            ],
-        )
+        # self.boxed_revealer_left = Box(
+        #     name="boxed-revealer",
+        #     children=[
+        #         self.revealer_left,
+        #     ],
+        # )
 
         self.bar_inner = CenterBox(
             name="bar-inner",
@@ -151,7 +148,7 @@ class Bar(Window):
                     self.button_apps,
                     Box(name="workspaces-container", children=[self.workspaces]),
                     self.button_overview,
-                    self.boxed_revealer_left,
+                    # self.boxed_revealer_left,
                 ]
             ),
             end_children=Box(

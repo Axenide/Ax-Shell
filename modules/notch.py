@@ -2,7 +2,6 @@ from os import truncate
 from fabric.widgets.box import Box
 from fabric.widgets.label import Label
 from fabric.widgets.centerbox import CenterBox
-from fabric.widgets.button import Button
 from fabric.widgets.stack import Stack
 from fabric.widgets.revealer import Revealer
 from fabric.widgets.wayland import WaylandWindow as Window
@@ -16,7 +15,6 @@ from modules.power import PowerMenu
 from modules.overview import Overview
 from modules.emoji import EmojiPicker
 from modules.corners import MyCorner
-import modules.icons as icons
 import modules.data as data
 from modules.player import PlayerSmall
 from modules.tools import Toolbox
@@ -56,7 +54,7 @@ class Notch(Window):
             name="hyprland-window",
             h_expand=True,
             formatter=FormattedString(
-                f"{{'Desktop' if not win_title or win_title == 'unknown' else truncate(win_title, 32)}}",
+                "{'Desktop' if not win_title or win_title == 'unknown' else truncate(win_title, 32)}",
                 truncate=truncate,
             ),
         )
@@ -209,7 +207,7 @@ class Notch(Window):
         GLib.idle_add(self._show_overview_children, False)
 
         self.bar.revealer_right.set_reveal_child(True)
-        self.bar.revealer_left.set_reveal_child(True)
+        # self.bar.revealer_left.set_reveal_child(True)
         self.applet_stack.set_transition_duration(0) # Set transition to 0 when closing, though it won't be visible.
         self.applet_stack.set_visible_child(self.nhistory)
         self._is_notch_open = False # Set notch state to closed
@@ -260,7 +258,7 @@ class Notch(Window):
                 GLib.timeout_add(10, lambda: [self.stack.set_transition_duration(100), self.applet_stack.set_transition_duration(250)][-1] or False)
 
                 self.bar.revealer_right.set_reveal_child(False)
-                self.bar.revealer_left.set_reveal_child(False)
+                # self.bar.revealer_left.set_reveal_child(False)
                 return
 
         # Handle the "dashboard" case
@@ -298,7 +296,7 @@ class Notch(Window):
                 GLib.timeout_add(10, lambda: [self.stack.set_transition_duration(100), self.applet_stack.set_transition_duration(250)][-1] or False)
 
                 self.bar.revealer_right.set_reveal_child(False)
-                self.bar.revealer_left.set_reveal_child(False)
+                # self.bar.revealer_left.set_reveal_child(False)
                 return
 
         # Handle other widgets (launcher, overview, power, tools)
@@ -352,10 +350,10 @@ class Notch(Window):
 
         if widget == "dashboard" or widget == "overview":
             self.bar.revealer_right.set_reveal_child(False)
-            self.bar.revealer_left.set_reveal_child(False)
+            # self.bar.revealer_left.set_reveal_child(False)
         else:
             self.bar.revealer_right.set_reveal_child(True)
-            self.bar.revealer_left.set_reveal_child(True)
+            # self.bar.revealer_left.set_reveal_child(True)
         self._is_notch_open = True # Set notch state to open
 
     def _show_overview_children(self, show_children):
