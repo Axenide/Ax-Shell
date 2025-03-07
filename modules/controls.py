@@ -144,7 +144,7 @@ class BrightnessSlider(Scale):
 
 class VolumeSmall(Box):
     def __init__(self, **kwargs):
-        super().__init__(name="button-bar-vol", **kwargs)
+        super().__init__(name="button-bar-vol",    **kwargs)
         self.audio = Audio()
         self.progress_bar = CircularProgressBar(
             name="button-volume", size=28, line_width=2,
@@ -156,7 +156,7 @@ class VolumeSmall(Box):
             child=self.vol_label
         )
         self.event_box = EventBox(
-            events="scroll",
+            events=["scroll", "smooth-scroll"],
             child=Overlay(
                 child=self.progress_bar,
                 overlays=self.vol_button
@@ -168,7 +168,8 @@ class VolumeSmall(Box):
         self.event_box.connect("scroll-event", self.on_scroll)
         self.add(self.event_box)
         self.on_speaker_changed()
-
+        # self.scroll_threshold = -80.0  # Ajusta este valor para modificar la sensibilidad
+        # self._scroll_accumulator = 10.0
     def on_new_speaker(self, *args):
         if self.audio.speaker:
             self.audio.speaker.connect("changed", self.on_speaker_changed)
@@ -187,13 +188,23 @@ class VolumeSmall(Box):
                 self.progress_bar.remove_style_class("muted")
                 self.vol_label.remove_style_class("muted")
 
+
     def on_scroll(self, _, event):
-        match event.direction:
-            case 0:
-                self.audio.speaker.volume += 1
-            case 1:
-                self.audio.speaker.volume -= 1
-        return
+        if not self.audio.speaker:
+            return
+
+        if event.direction == Gdk.ScrollDirection.SMOOTH:
+            if abs(event.delta_y) > 0:
+                self.audio.speaker.volume += event.delta_y
+            if abs(event.delta_x) > 0:
+                self.audio.speaker.volume -= event.delta_x
+
+        # match event.direction:
+        #     case 0:
+        #         self.audio.speaker.volume += 1
+        #     case 1:
+        #         self.audio.speaker.volume -= 1
+        # return
 
     def on_speaker_changed(self, *_):
         if not self.audio.speaker:
@@ -231,7 +242,7 @@ class MicSmall(Box):
             child=self.mic_label
         )
         self.event_box = EventBox(
-            events="scroll",
+            events=["scroll", "smooth-scroll"],
             child=Overlay(
                 child=self.progress_bar,
                 overlays=self.mic_button
@@ -263,15 +274,23 @@ class MicSmall(Box):
                 self.mic_label.remove_style_class("muted")
 
     def on_scroll(self, _, event):
-        if not self.audio.microphone:
-            return
-        match event.direction:
-            case 0:
-                self.audio.microphone.volume += 1
-            case 1:
-                self.audio.microphone.volume -= 1
-        return
 
+        val_y = event.delta_y
+        if val_y > 0:
+            self.audio.microphone.volume -= 1
+        else:
+            self.audio.microphone.volume += 1
+        return
+        # match event.direction:
+    #
+    #     # if not self.audio.microphone:
+    #     #     return
+    #     # match event.direction:
+    #     #     case 0:
+    #     #         self.audio.microphone.volume += 1
+    #     #     case 1:
+    #     #         self.audio.microphone.volume -= 1
+    #
     def on_microphone_changed(self, *_):
         if not self.audio.microphone:
             return
@@ -307,7 +326,7 @@ class BrightnessSmall(Box):
         self.brightness_label = Label(name="brightness-label", markup=icons.brightness_high)
         self.brightness_button = Button(child=self.brightness_label)
         self.event_box = EventBox(
-            events="scroll",
+            events=["scroll", "smooth-scroll"],
             child=Overlay(
                 child=self.progress_bar,
                 overlays=self.brightness_button
@@ -319,13 +338,18 @@ class BrightnessSmall(Box):
         self.on_brightness_changed()
 
     def on_scroll(self, _, event):
-        if self.brightness.max_screen == -1:
-            return
-        match event.direction:
-            case 0:
-                self.brightness.screen_brightness += 10  # Increment brightness
-            case 1:
-                self.brightness.screen_brightness -= 10  # Decrement brightness
+        val_y = event.delta_y
+        if val_y > 0:
+            self.brightness.screen_brightness -= 1
+        else:
+            self.brightness.screen_brightness += 1
+        # if self.brightness.max_screen == -1:
+        #     return
+        # match event.direction:
+        #     case 0:
+        #         self.brightness.screen_brightness += 10  # Increment brightness
+        #     case 1:
+        #         self.brightness.screen_brightness -= 10  # Decrement brightness
         return
 
     def on_brightness_changed(self, *_):
@@ -378,4 +402,5 @@ class ControlSmall(Box):
             **kwargs,
         )
         self.show_all()
+
 
