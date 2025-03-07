@@ -1,5 +1,7 @@
 > [!CAUTION]
-> This is a fork not made for others to install. Do so at your own risk
+> This is a fork not made for others to install. Do so at your own risk! The only diffrence between this and the original is that this fork has integration with Philips Hue lights and also a nightscout cgm widget.
+> Also uses yr.no api to get weather instead of Axenide chosen weather api.
+> Axenide Ax-shell is much better!
 
 <p align="center">
   <img src="assets/cover.png">
@@ -49,6 +51,7 @@ curl -fsSL https://raw.githubusercontent.com/Axenide/Ax-Shell/main/install.sh | 
     - [fabric-cli](https://github.com/Fabric-Development/fabric-cli)
     - [Gray](https://github.com/Fabric-Development/gray)
     - [Matugen](https://github.com/InioX/matugen)
+    - [Philips-hue-api](https://github.com/FengChendian/python-hue-v2)
     - `acpi`
     - `brightnessctl`
     - `cava`
