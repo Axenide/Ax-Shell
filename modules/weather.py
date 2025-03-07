@@ -3,6 +3,7 @@ import requests
 import threading
 import urllib.parse
 from gi.repository import Gtk, GLib
+from modules.private_data import PrivateData
 
 from fabric.widgets.label import Label
 from fabric.widgets.box import Box
@@ -15,6 +16,7 @@ class Weather(Box):
     def __init__(self, **kwargs) -> None:
         super().__init__(name="weather", orientation="h", spacing=8, **kwargs)
         self.label = Label(name="weather-label", markup=icons.loader)
+        self.cords = PrivateData()
         self.add(self.label)
         self.show_all()
         # Update every 10 mins
@@ -45,7 +47,7 @@ class Weather(Box):
         #     url = f"https://wttr.in/{encoded_location}?format=%c+%t"
         # else:
         #     url = "https://wttr.in/?format=%c+%t"
-        url = "https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=68.786356786585613&lon=16.56567224799886&altitude=90"
+        url = f'https://api.met.no/weatherapi/locationforecast/2.0/compact?lat={self.cords.location}&altitude=90'
         try:
             response = requests.get(url, headers={'User-Agent': 'weather-app/1.0'})
             if response.status_code == 200:

@@ -1,9 +1,9 @@
 import gi
-from gi.repository.Gio import Icon
 import requests
 import threading
 import urllib.parse
 import datetime
+from modules.private_data import PrivateData
 from fabric.widgets.label import Label
 from fabric.widgets.webview import WebView
 from fabric.widgets.eventbox import EventBox
@@ -14,18 +14,6 @@ from gi.repository import Gtk, GLib
 import modules.icons as icons
 # from gi.repository import GLib
 
-URL_FILE_PATH = "/home/mathias/.config/nightscoutURL.txt"
-
-def get_url():
-    try:
-        with open(URL_FILE_PATH, "r") as file:
-            url = file.read().strip()
-            if url:
-                return url
-    except Exception as e:
-        print(f"Error reading URL file: {e}")
-    return None
-
 class MyCgm(Box):
     def __init__(self, **kwargs):
         super().__init__(
@@ -35,10 +23,10 @@ class MyCgm(Box):
             v_align="center"
         )
 
-        self.url = get_url()
+        self.url = PrivateData()
 
         self.web = WebView(
-            url=self.url,
+            url=self.url.nightscout,
             size=[450,290]
         )
         self.add(self.web)
@@ -52,6 +40,7 @@ class SmallCgm(Overlay):
             visible=True,
             all_visible=True,
         )
+        self.url = PrivateData()
         self.label = Label(name="smallcgm-label", markup=icons.loader)
         # Update every 30 seconds
         GLib.timeout_add_seconds(30, self.fetch_svg)
@@ -92,7 +81,7 @@ class SmallCgm(Overlay):
         return True
 
     def _fetch_svg_thread(self):
-        url = str(get_url())+"api/v1/entries/sgv?count=1&token=pc-c9c1bb7ea942d452"
+        url = self.url.nightscout+"api/v1/entries/sgv?count=1&token="+self.url.nightscout_api
         response = requests.get(url)
         if response.status_code == 200:
             tabel = response.text.split()
