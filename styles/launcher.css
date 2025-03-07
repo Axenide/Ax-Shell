@@ -28,11 +28,11 @@
 }
 
 #close-button:active {
-  background-color: var(--error-dim);
+  background-color: var(--red-dim);
 }
 
 #close-label {
-  color: var(--error-dim);
+  color: var(--red-dim);
   font-size: 24px;
 }
 

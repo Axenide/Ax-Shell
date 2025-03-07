@@ -33,6 +33,8 @@ bind_vars = {
     'suffix_toolbox': "S",
     'prefix_overview': "SUPER",
     'suffix_overview': "TAB",
+    'prefix_emoji': "SUPER",
+    'suffix_emoji': "PERIOD",
     'prefix_power': "SUPER",
     'suffix_power': "ESCAPE",
     'prefix_toggle': "SUPER CTRL",
@@ -190,6 +192,7 @@ bind = {bind_vars['prefix_bluetooth']}, {bind_vars['suffix_bluetooth']}, exec, $
 bind = {bind_vars['prefix_launcher']}, {bind_vars['suffix_launcher']}, exec, $fabricSend 'notch.open_notch("launcher")' # App Launcher | Default: SUPER + R
 bind = {bind_vars['prefix_toolbox']}, {bind_vars['suffix_toolbox']}, exec, $fabricSend 'notch.open_notch("tools")' # Toolbox | Default: SUPER + S
 bind = {bind_vars['prefix_overview']}, {bind_vars['suffix_overview']}, exec, $fabricSend 'notch.open_notch("overview")' # Overview | Default: SUPER + TAB
+bind = {bind_vars['prefix_emoji']}, {bind_vars['suffix_emoji']}, exec, $fabricSend 'notch.open_notch("emoji")' # Emoji | Default: SUPER + PERIOD
 bind = {bind_vars['prefix_power']}, {bind_vars['suffix_power']}, exec, $fabricSend 'notch.open_notch("power")' # Power Menu | Default: SUPER + ESCAPE
 bind = {bind_vars['prefix_toggle']}, {bind_vars['suffix_toggle']}, exec, $fabricSend 'bar.toggle_hidden()' # Toggle Bar | Default: SUPER CTRL + B
 bind = {bind_vars['prefix_toggle']}, {bind_vars['suffix_toggle']}, exec, $fabricSend 'notch.toggle_hidden()' # Toggle Notch | Default: SUPER CTRL + B
@@ -295,6 +298,7 @@ class HyprConfGUI(Gtk.Window):
             ("App Launcher", 'prefix_launcher', 'suffix_launcher'),
             ("Toolbox", 'prefix_toolbox', 'suffix_toolbox'),
             ("Overview", 'prefix_overview', 'suffix_overview'),
+            ("Emoji Picker", 'prefix_emoji', 'suffix_emoji'),
             ("Power Menu", 'prefix_power', 'suffix_power'),
             ("Toggle Bar and Notch", 'prefix_toggle', 'suffix_toggle'),
             ("Reload CSS", 'prefix_css', 'suffix_css'),

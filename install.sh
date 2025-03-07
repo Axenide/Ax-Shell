@@ -24,6 +24,7 @@ PACKAGES=(
     noto-fonts-emoji
     playerctl
     python-fabric-git
+    python-ijson
     python-pillow
     python-psutil
     python-requests

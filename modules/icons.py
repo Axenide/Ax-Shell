@@ -150,6 +150,7 @@ amongus: str = "&#xf205;"
 trend_up: str = "&#xf162;"
 trend_down: str = "&#xeb42;"
 arrow_right: str = "&#xea1c;"
+emoji: str = "&#xeaf7;"
 
 exceptions: list[str] = ['font_family', 'font_weight', 'span']
 

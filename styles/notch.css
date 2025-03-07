@@ -44,9 +44,17 @@
 
 #notch-content.tools {
     min-height: 84px;
-    min-width: 308px;
+    min-width: 364px;
     border-radius: 0 0 36px 36px;
 }
+
+#notch-content.emoji {
+    padding: 16px;
+    min-height: 238px;
+    min-width: 574px;
+    border-radius: 0 0 36px 36px;
+}
+
 #notch-content.power {
     padding: 16px;
     min-height: 52px;
@@ -65,6 +73,7 @@
 #dashboard,
 #notification,
 #overview,
+#emoji,
 #power-menu,
 #toolbox {
     opacity: 1;
@@ -76,6 +85,7 @@
 #dashboard.open,
 #notification.open,
 #overview.open,
+#emoji.open,
 #power-menu.open,
 #toolbox.open {
     opacity: 1;

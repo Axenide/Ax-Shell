@@ -98,7 +98,7 @@ class ActionButton(Button):
             name="action-button",
             h_expand=True,
             on_clicked=self.on_clicked,
-            child=Label(name="button-label", label=action.label),
+            child=Label(name="button-label", h_expand=True, h_align="fill", ellipsization="end", max_chars_width=1, label=action.label),
         )
         self.action = action
         self.notification_box = notification_box
@@ -170,7 +170,7 @@ class NotificationBox(Box):
 
     def create_header(self):
         notification = self.notification
-        app_icon = (
+        self.app_icon_image = (
             Image(
                 name="notification-icon",
                 image_file=notification.app_icon[7:],
@@ -182,6 +182,12 @@ class NotificationBox(Box):
                 icon_size=24,
             )
         )
+        self.app_name_label_header = Label(
+            notification.app_name,
+            name="notification-app-name",
+            h_align="start"
+        )
+        self.header_close_button = self.create_close_button()
 
         return CenterBox(
             name="notification-title",
@@ -189,67 +195,80 @@ class NotificationBox(Box):
                 Box(
                     spacing=4,
                     children=[
-                        app_icon,
-                        Label(
-                            notification.app_name,
-                            name="notification-app-name",
-                            h_align="start"
-                        )
+                        self.app_icon_image,
+                        self.app_name_label_header,
                     ]
                 )
             ],
-            end_children=[self.create_close_button()]
+            end_children=[self.header_close_button]
         )
 
     def create_content(self):
         notification = self.notification
         pixbuf = load_scaled_pixbuf(self, 48, 48) # Pass self to load_scaled_pixbuf
+        self.notification_image_box = Box(
+            name="notification-image",
+            orientation="v",
+            children=[CustomImage(pixbuf=pixbuf), Box(v_expand=True)],
+        )
+        self.notification_summary_label = Label(
+            name="notification-summary",
+            markup=notification.summary,
+            # h_expand=True,
+            h_align="start",
+            max_chars_width=16,
+            ellipsization="end",
+        )
+        self.notification_app_name_label_content = Label(
+            name="notification-app-name",
+            markup=notification.app_name,
+            # h_expand=True,
+            h_align="start",
+            max_chars_width=16,
+            ellipsization="end",
+        )
+        self.notification_body_label = Label(
+            markup=notification.body,
+            # h_expand=True,
+            h_align="start",
+            max_chars_width=34,
+            ellipsization="end",
+        ) if notification.body else Box()
+        self.notification_body_label.set_single_line_mode(True) if notification.body else None
+        self.notification_text_box = Box(
+            name="notification-text",
+            orientation="v",
+            v_align="center",
+            h_expand=True,
+            h_align="start",
+            children=[
+                Box(
+                    name="notification-summary-box",
+                    orientation="h",
+                    children=[
+                        self.notification_summary_label,
+                        Box(name="notif-sep", h_expand=False, v_expand=False, h_align="center", v_align="center"),
+                        self.notification_app_name_label_content,
+                    ],
+                ),
+                self.notification_body_label,
+            ],
+        )
+        self.content_close_button = self.create_close_button()
+        self.content_close_button_box = Box(
+            orientation="v",
+            children=[
+                self.content_close_button,
+            ],
+        )
+
         return Box(
             name="notification-content",
             spacing=8,
             children=[
-                Box(
-                    name="notification-image",
-                    children=CustomImage(pixbuf=pixbuf),
-                ),
-                Box(
-                    name="notification-text",
-                    orientation="v",
-                    v_align="center",
-                    children=[
-                        Box(
-                            name="notification-summary-box",
-                            orientation="h",
-                            children=[
-                                Label(
-                                    name="notification-summary",
-                                    markup=notification.summary,
-                                    h_align="start",
-                                    ellipsization="end",
-                                ),
-                                Label(
-                                    name="notification-app-name",
-                                    markup=" | " + notification.app_name,
-                                    h_align="start",
-                                    ellipsization="end",
-                                ),
-                            ],
-                        ),
-                        Label(
-                            markup=notification.body,
-                            h_align="start",
-                            ellipsization="end",
-                        ) if notification.body else Box(),
-                    ],
-                ),
-                Box(h_expand=True),
-                Box(
-                    orientation="v",
-                    children=[
-                        self.create_close_button(),
-                        Box(v_expand=True),
-                    ],
-                ),
+                self.notification_image_box,
+                self.notification_text_box,
+                self.content_close_button_box,
             ],
         )
 
@@ -268,14 +287,14 @@ class NotificationBox(Box):
         return grid
 
     def create_close_button(self):
-        close_button = Button(
+        self.close_button = Button(
             name="notif-close-button",
             child=Label(name="notif-close-label", markup=icons.cancel),
             on_clicked=lambda *_: self.notification.close("dismissed-by-user"),
         )
-        close_button.connect("enter-notify-event", lambda *_: self.hover_button(close_button))
-        close_button.connect("leave-notify-event", lambda *_: self.unhover_button(close_button))
-        return close_button
+        self.close_button.connect("enter-notify-event", lambda *_: self.hover_button(self.close_button))
+        self.close_button.connect("leave-notify-event", lambda *_: self.unhover_button(self.close_button))
+        return self.close_button
 
     def on_hover_enter(self, *args):
         if self._container:
@@ -379,6 +398,10 @@ class NotificationHistory(Box):
             name="notifications-list",
             orientation="v",
             spacing=4,
+            h_expand=True,
+            v_expand=True,
+            h_align="fill",
+            v_align="fill",
         )
         self.no_notifications_label = Label(
             name="no-notifications-label",
@@ -406,7 +429,8 @@ class NotificationHistory(Box):
             min_content_size=(-1, -1),
             max_content_size=(-1, -1),
         )
-        self.scrolled_window.add_with_viewport(Box(orientation="v", children=[self.notifications_list, self.no_notifications_box]))
+        self.scrolled_window_viewport_box = Box(orientation="v", children=[self.notifications_list, self.no_notifications_box]) # Added viewport box as instance variable
+        self.scrolled_window.add_with_viewport(self.scrolled_window_viewport_box)
         self.persistent_notifications = []
         self.add(self.history_header)
         self.add(self.scrolled_window)
@@ -434,7 +458,6 @@ class NotificationHistory(Box):
             except Exception as e:
                 logger.error(f"Error deleting persistent history file: {e}")
         self.persistent_notifications = []
-        self.update_separators()
         self.update_no_notifications_label_visibility()
 
     def _load_persistent_history(self):
@@ -473,7 +496,6 @@ class NotificationHistory(Box):
         ]
         self._save_persistent_history()
         container.destroy()
-        GLib.idle_add(self.update_separators)
         self.update_no_notifications_label_visibility()
 
     def _add_historical_notification(self, note):
@@ -509,96 +531,95 @@ class NotificationHistory(Box):
         container.arrival_time = arrival
 
         def compute_time_label(arrival_time):
-            now = datetime.now()
-            if arrival_time.date() != now.date():
-                if arrival_time.date() == (now - timedelta(days=1)).date():
-                    return " | Yesterday " + arrival_time.strftime("%H:%M")
-                else:
-                    return arrival_time.strftime("| %d/%m/%Y %H:%M")
-            delta = now - arrival_time
-            seconds = delta.total_seconds()
-            if seconds < 60:
-                return " | Now"
-            elif seconds < 3600:
-                minutes = int(seconds // 60)
-                return f" | {minutes} min" if minutes == 1 else f" | {minutes} mins"
-            else:
-                return arrival_time.strftime(" | %H:%M")
+            return arrival_time.strftime("%H:%M") # Show only HH:MM
 
-        time_label = Label(name="notification-timestamp", markup=compute_time_label(container.arrival_time))
+        self.hist_time_label = Label(
+            name="notification-timestamp",
+            markup=compute_time_label(container.arrival_time),
+            h_align="start",
+            ellipsization="end",
+        )
+        self.hist_notif_image_box = Box(
+            name="notification-image",
+            orientation="v",
+            children=[
+                CustomImage(
+                    pixbuf=load_scaled_pixbuf(hist_box, 48, 48) # Pass hist_box to load_scaled_pixbuf
+                ),
+                Box(v_expand=True),
+            ]
+        )
+        self.hist_notif_summary_label = Label(
+            name="notification-summary",
+            markup=hist_notif.summary,
+            h_align="start",
+            # max_chars_width=16,
+            ellipsization="end",
+        )
+        self.hist_notif_app_name_label = Label(
+            name="notification-app-name",
+            markup=f"{hist_notif.app_name}",
+            h_align="start",
+            # max_chars_width=16,
+            ellipsization="end",
+        )
+        self.hist_notif_body_label = Label(
+            name="notification-body",
+            markup=hist_notif.body,
+            h_align="start",
+            # max_chars_width=34,
+            ellipsization="end",
+            line_wrap="word-char",
+        ) if hist_notif.body else Box()
+        self.hist_notif_body_label.set_single_line_mode(True) if hist_notif.body else None
+        self.hist_notif_summary_box = Box(
+            name="notification-summary-box",
+            orientation="h",
+            h_align="start",
+            children=[
+                self.hist_notif_summary_label,
+                Box(name="notif-sep", h_expand=False, v_expand=False, h_align="center", v_align="center"),
+                self.hist_notif_app_name_label,
+                Box(name="notif-sep", h_expand=False, v_expand=False, h_align="center", v_align="center"),
+                self.hist_time_label,
+            ],
+        )
+        self.hist_notif_text_box = Box(
+            name="notification-text",
+            orientation="v",
+            v_align="center",
+            h_expand=True,
+            children=[
+                self.hist_notif_summary_box,
+                self.hist_notif_body_label,
+            ],
+        )
+        self.hist_notif_close_button = Button(
+            name="notif-close-button",
+            child=Label(name="notif-close-label", markup=icons.cancel),
+            on_clicked=lambda *_: self.delete_historical_notification(hist_notif.id, container),
+        )
+        self.hist_notif_close_button_box = Box(
+            orientation="v",
+            children=[
+                self.hist_notif_close_button,
+                Box(v_expand=True),
+            ],
+        )
         content_box = Box(
             name="notification-box-hist",
             spacing=8,
             children=[
-                Box(
-                    name="notification-image",
-                    children=[
-                        CustomImage(
-                            pixbuf=load_scaled_pixbuf(hist_box, 48, 48) # Pass hist_box to load_scaled_pixbuf
-                        )
-                    ]
-                ),
-                Box(
-                    name="notification-text",
-                    orientation="v",
-                    v_align="center",
-                    h_expand=True,
-                    children=[
-                        Box(
-                            name="notification-summary-box",
-                            orientation="h",
-                            children=[
-                                Label(
-                                    name="notification-summary",
-                                    markup=hist_notif.summary,
-                                    h_align="start",
-                                    ellipsization="end",
-                                ),
-                                Label(
-                                    name="notification-app-name",
-                                    markup=f" | {hist_notif.app_name}",
-                                    h_align="start",
-                                    ellipsization="end",
-                                ),
-                                time_label,
-                            ],
-                        ),
-                        Label(
-                            name="notification-body",
-                            markup=hist_notif.body,
-                            h_align="start",
-                            ellipsization="end",
-                        ) if hist_notif.body else Box(),
-                    ],
-                ),
-                Box(
-                    orientation="v",
-                    children=[
-                        Button(
-                            name="notif-close-button",
-                            child=Label(name="notif-close-label", markup=icons.cancel),
-                            on_clicked=lambda *_: self.delete_historical_notification(hist_notif.id, container),
-                        ),
-                        Box(v_expand=True),
-                    ],
-                ),
+                self.hist_notif_image_box,
+                self.hist_notif_text_box,
+                self.hist_notif_close_button_box,
             ],
         )
         container.add(content_box)
-        container.add(Box(name="notification-separator"))
         self.notifications_list.pack_start(container, False, False, 0)
         self.notifications_list.reorder_child(container, 0)
-        self.update_separators()
         self.show_all()
         self.update_no_notifications_label_visibility()
-
-    def update_last_separator(self):
-        children = self.notifications_list.get_children()
-        for child in children:
-            separator = [c for c in child.get_children() if c.get_name() == "notification-separator"]
-            if separator:
-                separator[0].set_visible(child != children[-1])
-
 
     def add_notification(self, notification_box):
         if len(self.notifications_list.get_children()) >= 50:
@@ -619,7 +640,6 @@ class NotificationHistory(Box):
             if hasattr(container, "notification_box"):
                 notif_box = container.notification_box
             container.destroy()
-            GLib.idle_add(self.update_separators)
             self.update_no_notifications_label_visibility()
 
         container = Box(
@@ -630,84 +650,81 @@ class NotificationHistory(Box):
         )
         container.arrival_time = datetime.now()
         def compute_time_label(arrival_time):
-            now = datetime.now()
-            if arrival_time.date() != now.date():
-                if arrival_time.date() == (now - timedelta(days=1)).date():
-                    return " | Yesterday " + arrival_time.strftime("%H:%M")
-                else:
-                    return arrival_time.strftime("| %d/%m/%Y %H:%M")
-            delta = now - arrival_time
-            seconds = delta.total_seconds()
-            if seconds < 60:
-                return " | Now"
-            elif seconds < 3600:
-                minutes = int(seconds // 60)
-                return f" | {minutes} min" if minutes == 1 else f" | {minutes} mins"
-            else:
-                return arrival_time.strftime(" | %H:%M")
-        time_label = Label(name="notification-timestamp", markup=compute_time_label(container.arrival_time))
-        content_box = Box(
+            return arrival_time.strftime("%H:%M") # Show only HH:MM
+        self.current_time_label = Label(name="notification-timestamp", markup=compute_time_label(container.arrival_time))
+        self.current_notif_image_box = Box(
+            name="notification-image",
+            orientation="v",
+            children=[
+                CustomImage(
+                    pixbuf=load_scaled_pixbuf(notification_box, 48, 48) # Pass notification_box to load_scaled_pixbuf
+                ),
+                Box(v_expand=True, v_align="fill"),
+            ]
+        )
+        self.current_notif_summary_label = Label(
+            name="notification-summary",
+            markup=notification_box.notification.summary,
+            h_align="start",
+            ellipsization="end",
+        )
+        self.current_notif_app_name_label = Label(
+            name="notification-app-name",
+            markup=f"{notification_box.notification.app_name}",
+            h_align="start",
+            ellipsization="end",
+        )
+        self.current_notif_body_label = Label(
+            name="notification-body",
+            markup=notification_box.notification.body,
+            h_align="start",
+            ellipsization="end",
+            line_wrap="word-char",
+        ) if notification_box.notification.body else Box()
+        self.current_notif_body_label.set_single_line_mode(True) if notification_box.notification.body else None
+        self.current_notif_summary_box = Box(
+            name="notification-summary-box",
+            orientation="h",
+            children=[
+                self.current_notif_summary_label,
+                Box(name="notif-sep", h_expand=False, v_expand=False, h_align="center", v_align="center"),
+                self.current_notif_app_name_label,
+                Box(name="notif-sep", h_expand=False, v_expand=False, h_align="center", v_align="center"),
+                self.current_time_label,
+            ],
+        )
+        self.current_notif_text_box = Box(
+            name="notification-text",
+            orientation="v",
+            v_align="center",
+            h_expand=True,
+            children=[
+                self.current_notif_summary_box,
+                self.current_notif_body_label,
+            ],
+        )
+        self.current_notif_close_button = Button(
+            name="notif-close-button",
+            child=Label(name="notif-close-label", markup=icons.cancel),
+            on_clicked=lambda *_: on_container_destroy(container),
+        )
+        self.current_notif_close_button_box = Box(
+            orientation="v",
+            children=[
+                self.current_notif_close_button,
+                Box(v_expand=True),
+            ],
+        )
+        content_box = Box( # No name change needed, this is in a different scope than `_add_historical_notification`
             name="notification-content",
             spacing=8,
             children=[
-                Box(
-                    name="notification-image",
-                    children=[
-                        CustomImage(
-                            pixbuf=load_scaled_pixbuf(notification_box, 48, 48) # Pass notification_box to load_scaled_pixbuf
-                        )
-                    ]
-                ),
-                Box(
-                    name="notification-text",
-                    orientation="v",
-                    v_align="center",
-                    h_expand=True,
-                    children=[
-                        Box(
-                            name="notification-summary-box",
-                            orientation="h",
-                            children=[
-                                Label(
-                                    name="notification-summary",
-                                    markup=notification_box.notification.summary,
-                                    h_align="start",
-                                    ellipsization="end",
-                                ),
-                                Label(
-                                    name="notification-app-name",
-                                    markup=f" | {notification_box.notification.app_name}",
-                                    h_align="start",
-                                    ellipsization="end",
-                                ),
-                                time_label,
-                            ],
-                        ),
-                        Label(
-                            name="notification-body",
-                            markup=notification_box.notification.body,
-                            h_align="start",
-                            ellipsization="end",
-                        ) if notification_box.notification.body else Box(),
-                    ],
-                ),
-                Box(
-                    orientation="v",
-                    children=[
-                        Button(
-                            name="notif-close-button",
-                            child=Label(name="notif-close-label", markup=icons.cancel),
-                            on_clicked=lambda *_: on_container_destroy(container),
-                        ),
-                        Box(v_expand=True),
-                    ],
-                ),
+                self.current_notif_image_box,
+                self.current_notif_text_box,
+                self.current_notif_close_button_box,
             ],
         )
-        def update_timestamp():
-            time_label.set_markup(compute_time_label(container.arrival_time))
-            return True
-        container._timestamp_timer_id = GLib.timeout_add_seconds(10, update_timestamp)
+        # Removed timestamp update timer
         container.notification_box = notification_box
         hist_box = Box(
             name="notification-box-hist",
@@ -721,10 +738,8 @@ class NotificationHistory(Box):
             lambda *_: on_container_destroy(container)
         )
         container.add(hist_box)
-        container.add(Box(name="notification-separator"))
         self.notifications_list.pack_start(container, False, False, 0)
         self.notifications_list.reorder_child(container, 0)
-        self.update_separators()
         self.show_all()
         self._append_persistent_notification(notification_box, container.arrival_time)
         self.update_no_notifications_label_visibility()
@@ -777,18 +792,6 @@ class NotificationHistory(Box):
         else:
             logger.info("Orphan cached image cleanup finished. No orphan images found.")
 
-
-    def update_separators(self):
-        children = self.notifications_list.get_children()
-        for child in children:
-            for widget in child.get_children():
-                if widget.get_name() == "notification-separator":
-                    child.remove(widget)
-        for i, child in enumerate(children):
-            if i < len(children) - 1:
-                separator = Box(name="notification-separator")
-                child.add(separator)
-
     def update_no_notifications_label_visibility(self):
         """Updates the visibility of the 'No notifications!' label based on history."""
         has_notifications = bool(self.notifications_list.get_children())
@@ -833,7 +836,8 @@ class NotificationContainer(Box):
             child=Label(name="nav-button-label", markup=icons.cancel),
             on_clicked=self.close_all_notifications,
         )
-        self.close_all_button.get_child().add_style_class("close")
+        self.close_all_button_label = self.close_all_button.get_child() # Assign label to instance variable
+        self.close_all_button_label.add_style_class("close")
         self.next_button = Button(
             name="nav-button",
             child=Label(name="nav-button-label", markup=icons.chevron_right),
@@ -845,7 +849,7 @@ class NotificationContainer(Box):
         self.navigation.add(self.prev_button)
         self.navigation.add(self.close_all_button)
         self.navigation.add(self.next_button)
-        self.notification_box = Box(
+        self.notification_box_container = Box( # Renamed to avoid conflict with class name
             orientation="v",
             spacing=4,
             children=[self.stack_box, self.navigation]
@@ -902,8 +906,8 @@ class NotificationContainer(Box):
         for notification_box in self.notifications:
             notification_box.start_timeout()
         if len(self.notifications) == 1:
-            if not self.notification_box.get_parent():
-                self.notch.notification_revealer.add(self.notification_box)
+            if not self.notification_box_container.get_parent():
+                self.notch.notification_revealer.add(self.notification_box_container)
         self.notch.notification_revealer.show_all()
         self.notch.notification_revealer.set_reveal_child(True)
         self.update_navigation_buttons()
@@ -972,8 +976,8 @@ class NotificationContainer(Box):
                 self.stack.remove(child)
             self.current_index = 0
             self.navigation.set_visible(False)
-            if self.notification_box.get_parent():
-                self.notification_box.get_parent().remove(self.notification_box)
+            if self.notification_box_container.get_parent():
+                self.notification_box_container.get_parent().remove(self.notification_box_container)
         except Exception as e:
             logger.error(f"Error cleaning up the container: {e}")
         finally:

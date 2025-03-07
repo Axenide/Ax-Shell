@@ -10,7 +10,7 @@
 }
 
 #toolbox-button.recording label {
-  color: var(--error-dim);
+  color: var(--red-dim);
 }
 
 #toolbox-button:hover,
@@ -25,7 +25,7 @@
 
 #toolbox-button.recording:hover label,
 #toolbox-button.recording:focus label {
-  color: var(--error-dim);
+  color: var(--red-dim);
 }
 
 #toolbox-button:active {
@@ -37,9 +37,10 @@
 }
 
 #toolbox-button.recording:active {
-  background-color: var(--error-dim);
+  background-color: var(--red-dim);
 }
 
 #toolbox-button.recording:active label {
   color: var(--shadow);
 }
+

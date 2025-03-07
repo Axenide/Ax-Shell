@@ -84,12 +84,23 @@ class Toolbox(Box):
         self.btn_color.connect("button-press-event", self.colorpicker)
         self.btn_color.connect("key_press_event", self.colorpicker_key)
 
+        self.btn_emoji = Button(
+            name="toolbox-button",
+            child=Label(name="button-label", markup=icons.emoji),
+            on_clicked=self.emoji,
+            h_expand=False,
+            v_expand=False,
+            h_align="center",
+            v_align="center",
+        )
+
         self.buttons = [
             self.btn_ssregion,
             self.btn_ssfull,
             self.btn_screenrecord,
             self.btn_ocr,
             self.btn_color,
+            self.btn_emoji,
         ]
 
         for button in self.buttons:
@@ -175,3 +186,6 @@ class Toolbox(Box):
         
         # Return True to keep this callback active.
         return True
+
+    def emoji(self, *args):
+        self.notch.open_notch("emoji")

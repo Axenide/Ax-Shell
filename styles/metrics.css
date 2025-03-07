@@ -1,36 +1,37 @@
 #metrics-small {
-    background-color: var(--shadow);
-    padding: 4px;
-    border-radius: 16px;
-    margin-top: 4px;
+  background-color: var(--shadow);
+  padding: 4px;
+  border-radius: 16px;
+  margin-top: 4px;
 }
 
 #metrics-circle {
-    color: var(--surface-bright);
-    border: 3px solid var(--primary);
+  color: var(--surface-bright);
+  border: 3px solid var(--primary);
 }
 
 #metrics-circle.bat {
-    border: 3px solid var(--green);
+  border: 3px solid var(--green);
 }
 
 #metrics-circle.alert {
-    border: 3px solid var(--error-dim);
+  border: 3px solid var(--red-dim);
 }
 
 #metrics-icon {
-    font-size: 20px;
+  font-size: 20px;
 }
 
 #metrics-icon.alert {
-    color: var(--error-dim);
+  color: var(--red-dim);
 }
 
 #metrics-level {
-    font-weight: bold;
-    margin: 0 4px;
+  font-weight: bold;
+  margin: 0 4px;
 }
 
 #metrics-sep {
-    min-width: 4px;
+  min-width: 4px;
 }
+
