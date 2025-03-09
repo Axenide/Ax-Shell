@@ -4,11 +4,15 @@ from fabric.widgets.button import Button
 from fabric.utils.helpers import exec_shell_command_async, get_relative_path
 import modules.icons as icons
 from gi.repository import Gdk, GLib
+import os
 import modules.data as data
 import subprocess
+from loguru import logger
 
 SCREENSHOT_SCRIPT = get_relative_path("../scripts/screenshot.sh")
 OCR_SCRIPT = get_relative_path("../scripts/ocr.sh")
+GAMEMODE_SCRIPT = get_relative_path("../scripts/gamemode.sh")
+GAMEMODE_CHECK_SCRIPT = os.path.join("/home", os.path.expanduser("~"), ".config", "Ax-Shell", "scripts", "gamemode_check.sh")
 SCREENRECORD_SCRIPT = get_relative_path("../scripts/screenrecord.sh")
 
 class Toolbox(Box):
@@ -78,6 +82,16 @@ class Toolbox(Box):
             v_align="center",
         )
 
+        self.btn_gamemode = Button(
+            name="toolbox-button",
+            child=Label(name="button-label", markup=icons.gamemode),
+            on_clicked=self.gamemode,
+            h_expand=False,
+            v_expand=False,
+            h_align="center",
+            v_align="center",
+        )
+
         # Enable keyboard focus for the colorpicker button.
         self.btn_color.set_can_focus(True)
         # Connect both mouse and keyboard events.
@@ -100,6 +114,7 @@ class Toolbox(Box):
             self.btn_screenrecord,
             self.btn_ocr,
             self.btn_color,
+            self.btn_gamemode,
             self.btn_emoji,
         ]
 
@@ -110,6 +125,7 @@ class Toolbox(Box):
 
         # Start polling for process state every second.
         self.recorder_timer_id = GLib.timeout_add_seconds(1, self.update_screenrecord_state)
+        self.gamemode_updater = GLib.timeout_add_seconds(1, self.gamemode_check)
 
     def close_menu(self):
         self.notch.close_notch()
@@ -127,6 +143,25 @@ class Toolbox(Box):
     def ocr(self, *args):
         exec_shell_command_async(f"bash {OCR_SCRIPT} sf")
         self.close_menu()
+
+    def gamemode(self, *args):
+        exec_shell_command_async(f"bash {GAMEMODE_SCRIPT} sf")
+        self.gamemode_check()
+        self.close_menu()
+
+    def gamemode_check(self):
+        try:
+            result = subprocess.run(f"bash {GAMEMODE_CHECK_SCRIPT} sf", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            enabled = result.stdout == b't\n'
+        except Exception:
+            enabled = False
+
+        if enabled:
+            self.btn_gamemode.get_child().set_markup(icons.gamemode_off)
+        else:
+            self.btn_gamemode.get_child().set_markup(icons.gamemode)
+
+        return True
 
     def ssregion(self, *args):
         exec_shell_command_async(f"bash {SCREENSHOT_SCRIPT} sf")

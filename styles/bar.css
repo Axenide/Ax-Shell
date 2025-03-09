@@ -22,6 +22,18 @@ menu > menuitem > label,
   font-weight: bold;
 }
 
+#language {
+  background-color: var(--shadow);
+  padding: 8px;
+  border-radius: 16px;
+  margin-top: 4px;
+}
+
+menu > menuitem > label,
+#language > label {
+  font-weight: bold;
+}
+
 #weather {
   background-color: var(--shadow);
   padding: 8px;

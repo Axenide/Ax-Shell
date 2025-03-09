@@ -22,6 +22,8 @@ ssfull: str = "&#xeaea;"    # camera
 ssregion: str = "&#xf201;"    # camera
 screenrecord: str = "&#xeafa;"  # video
 ocr: str = "&#xfcc3;"          # text-recognition
+gamemode: str = "&#xf026;"
+gamemode_off: str = "&#xf111;"
 close : str = "&#xeb55;"
 
 # Circles

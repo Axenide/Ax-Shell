@@ -1,6 +1,7 @@
 from fabric.widgets.box import Box
 from fabric.widgets.label import Label
 from fabric.widgets.datetime import DateTime
+from fabric.hyprland.widgets import Language
 from fabric.widgets.centerbox import CenterBox
 from fabric.widgets.button import Button
 from fabric.widgets.revealer import Revealer
@@ -55,6 +56,7 @@ class Bar(Window):
         self.weather = Weather()
         # self.systray = SystemTray(name="systray", spacing=8, icon_size=20)
 
+        self.language = Language(name="language", h_align="center", v_align="center")
         self.date_time = DateTime(name="date-time", formatters=["%H:%M"], h_align="center", v_align="center")
 
         self.button_apps = Button(
@@ -163,6 +165,7 @@ class Bar(Window):
                     self.battery,
                     self.systray,
                     self.button_tools,
+                    self.language,
                     self.date_time,
                     self.button_power,
                 ],
