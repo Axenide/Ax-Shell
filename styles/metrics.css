@@ -19,7 +19,7 @@
 }
 
 #metrics-icon {
-  font-size: 20px;
+    font-size: 18px;
 }
 
 #metrics-icon.alert {
@@ -34,4 +34,71 @@
 #metrics-sep {
   min-width: 4px;
 }
+
+#network-icon-label {
+  color: var(--foreground);
+  font-size: 20px;
+  padding: 4px;
+  border-radius: 11px;
+  transition: all 0.1s ease;
+}
+
+#download-label {
+  color: #E6FF95;
+  font-size: 14px;
+  font-weight: bold;
+  padding: 4px;
+  border-radius: 11px;
+  transition: all 0.1s ease;
+  }
+  
+  #download-label.urgent {
+  color: var(--shadow);
+  }
+  
+  #network-icon-label.urgent {
+  color: var(--shadow);
+  }
+  
+  #button-bar.download {
+    background-color: #E6FF95;
+  }
+  
+  #button-bar.upload {
+      background-color: #FFD695;
+  }
+  
+  
+  #download-icon-label {
+  color: #E6FF95;
+  font-size: 16px;
+  }
+  
+  #download-icon-label.urgent {
+  color: var(--shadow);
+  }
+  
+  #upload-icon-label {
+      color: #FFD695;
+      font-size: 16px;
+  }
+  
+  #upload-label {
+      color: #FFD695;
+      font-size: 14px;
+      font-weight: bold;
+      padding: 4px;
+      border-radius: 11px;
+      transition: all 0.1s ease;
+  }
+  
+  #upload-label.urgent {
+      color: var(--shadow);
+  }
+  
+  #upload-icon-label.urgent {
+      color: var(--shadow);
+  }
+  
+  
 
