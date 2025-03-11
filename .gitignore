@@ -4,8 +4,5 @@ config/config.json
 config/hypr/ax-shell.conf
 config/hypr/colors.conf
 Ax-Shell.code-workspace
-<<<<<<< HEAD
 personal_config.json
-=======
 .aider*
->>>>>>> c983b92ad2cc01142779030fbfa24cd9fe3f2b51

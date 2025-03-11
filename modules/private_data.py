@@ -1,13 +1,15 @@
 import json
 import os
+from fabric.utils import get_relative_path
 
 # Class to get personal data from a JSON file, like location and nightscoutURL
 
 class PrivateData:
     def __init__(self):
         try:
-            if os.path.exists('/home/mathias/.config/Ax-Shell/personal_config.json'):
-                with open('/home/mathias/.config/Ax-Shell/personal_config.json', 'r') as f:
+            path = get_relative_path('../personal_config.json')
+            if os.path.exists(path):
+                with open(path, 'r') as f:
                     data = json.load(f)
                     _location = data.get("location", "")
                     _nightscout = data.get("nightscout", "")

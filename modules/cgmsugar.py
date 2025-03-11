@@ -89,12 +89,14 @@ class SmallCgm(Overlay):
             GLib.idle_add(self.label.set_label, icons.graf + str(svg)+"mmol/L")
             # Parse the ISO 8601 format time
             parsed_time = datetime.datetime.strptime(tabel[0].strip('"\''), "%Y-%m-%dT%H:%M:%S.%fZ").replace(tzinfo=datetime.timezone.utc)
-            if tabel[3].find("Down") != -1:
+            if tabel[3].lower().find("down") != -1:
                 trend = icons.trend_down
-            elif tabel[3].find("Flat") != -1:
+            elif tabel[3].lower().find("flat") != -1:
                 trend = icons.arrow_right
-            elif tabel[3].find("Up") != -1:
+            elif tabel[3].lower().find("up") != -1:
                 trend = icons.trend_up
+            else:
+                trend = icons.arrow_right
             # Get current time
             now = datetime.datetime.now(datetime.timezone.utc)
 
