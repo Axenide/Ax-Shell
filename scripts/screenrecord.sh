@@ -15,7 +15,7 @@ if pgrep -f "gpu-screen-recorder" >/dev/null; then
     LAST_VIDEO=$(ls -t "$SAVE_DIR"/*.mp4 2>/dev/null | head -n 1)
 
     # Notificación con acciones: "View" abre el archivo, "Open folder" abre la carpeta
-    ACTION=$(notify-send -a "Ax-Shell" "⬜ Recording started" \
+    ACTION=$(notify-send -a "Ax-Shell" "⬜ Recording stopped" \
         -A "view=View" -A "open=Open folder")
 
     if [ "$ACTION" = "view" ] && [ -n "$LAST_VIDEO" ]; then

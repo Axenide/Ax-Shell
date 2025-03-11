@@ -10,17 +10,17 @@ from fabric.widgets.scrolledwindow import ScrolledWindow
 from fabric.widgets.label import Label
 from fabric.utils.helpers import exec_shell_command_async
 import modules.icons as icons
-import modules.data as data
+import config.data as data
 from PIL import Image
 import concurrent.futures
 from concurrent.futures import ThreadPoolExecutor
 
 class WallpaperSelector(Box):
-    CACHE_DIR = os.path.expanduser("~/.cache/ax-shell/thumbs")  # Changed from wallpapers to thumbs
+    CACHE_DIR = f"{data.CACHE_DIR}/thumbs"  # Changed from wallpapers to thumbs
 
     def __init__(self, **kwargs):
         # Delete the old cache directory if it exists
-        old_cache_dir = os.path.expanduser("~/.cache/ax-shell/wallpapers")
+        old_cache_dir = f"{data.CACHE_DIR}/wallpapers"
         if os.path.exists(old_cache_dir):
             shutil.rmtree(old_cache_dir)
 

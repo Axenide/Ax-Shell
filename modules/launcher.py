@@ -7,9 +7,10 @@ from fabric.widgets.entry import Entry
 from fabric.widgets.image import Image
 from fabric.widgets.scrolledwindow import ScrolledWindow
 from fabric.utils import DesktopApp, get_desktop_applications, idle_add, remove_handler, exec_shell_command_async
+from fabric.utils.helpers import get_relative_path
 from gi.repository import GLib, Gdk
 import modules.icons as icons
-import modules.data as data
+import config.data as data
 import json
 import os
 import re
@@ -32,7 +33,7 @@ class AppLauncher(Box):
         self._all_apps = get_desktop_applications()
 
         # Calculator history initialization
-        self.calc_history_path = os.path.expanduser("~/.cache/ax-shell/calc.json")
+        self.calc_history_path = f"{data.CACHE_DIR}/calc.json"
         if os.path.exists(self.calc_history_path):
             with open(self.calc_history_path, "r") as f:
                 self.calc_history = json.load(f)
@@ -68,7 +69,7 @@ class AppLauncher(Box):
                 Button(
                     name="config-button",
                     child=Label(name="config-label", markup=icons.config),
-                    on_clicked=lambda *_: (exec_shell_command_async(f"python {data.HOME_DIR}/.config/Ax-Shell/config/config.py"), self.close_launcher()),
+                    on_clicked=lambda *_: (exec_shell_command_async(f"python {get_relative_path('../config/config.py')}"), self.close_launcher()),
                 ),
                 self.search_entry,
                 Button(
@@ -246,6 +247,9 @@ class AppLauncher(Box):
                         children[selected_index].clicked()
 
     def on_search_entry_key_press(self, widget, event):
+        if event.keyval in (Gdk.KEY_Return, Gdk.KEY_KP_Enter) and (event.state & Gdk.ModifierType.SHIFT_MASK):
+            self.add_selected_app_to_dock()
+            return True
         text = widget.get_text()
         if text.startswith("="):
             if event.keyval == Gdk.KEY_Down:
@@ -283,6 +287,34 @@ class AppLauncher(Box):
                 self.close_launcher()
                 return True
             return False
+    
+    def add_selected_app_to_dock(self):
+        """Adds the currently selected application to the dock.json file."""
+        children = self.viewport.get_children()
+        if not children or self.selected_index == -1 or self.selected_index >= len(children):
+            return  # No app selected
+
+        selected_button = children[self.selected_index]
+        # Assuming the app's name/command is stored in the tooltip_text of the button.
+        # We need to extract the app's command from the DesktopApp object.
+        selected_app = next((app for app in self._all_apps if app.display_name == selected_button.get_child().get_children()[1].props.label), None)
+        if not selected_app:
+            return
+
+        app_command = selected_app.executable
+
+        config_path = get_relative_path("../config/dock.json")
+        try:
+            with open(config_path, "r+") as file:
+                data = json.load(file)
+        except (FileNotFoundError, json.JSONDecodeError):
+            data = {}  # Initialize as an empty dictionary if file not found or corrupted
+            with open(config_path, "w") as file: #create the file
+                pass
+        if app_command not in data.get("pinned_apps", []):
+            data.setdefault("pinned_apps", []).append(app_command)
+            with open(config_path, "w") as file:
+                json.dump(data, file, indent=4)
 
     def move_selection(self, delta: int):
         children = self.viewport.get_children()

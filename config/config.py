@@ -1,6 +1,7 @@
 import os
 import json
 import shutil
+import subprocess
 import gi
 
 gi.require_version('Gtk', '3.0')
@@ -8,14 +9,17 @@ from gi.repository import Gtk
 from PIL import Image
 import toml
 
+from fabric.utils.helpers import get_relative_path
+import data
+
 # Constants
-SOURCE_STRING = """
-# Ax-Shell
-source = ~/.config/Ax-Shell/config/hypr/ax-shell.conf
+SOURCE_STRING = f"""
+# {data.APP_NAME_CAP}
+source = ~/.config/{data.APP_NAME_CAP}/config/hypr/{data.APP_NAME}.conf
 """
 
-CONFIG_DIR = os.path.expanduser("~/.config/Ax-Shell")
-WALLPAPERS_DIR_DEFAULT = os.path.expanduser("~/.config/Ax-Shell/assets/wallpapers_example")
+CONFIG_DIR = os.path.expanduser(f"~/.config/{data.APP_NAME}")
+WALLPAPERS_DIR_DEFAULT = get_relative_path("../assets/wallpapers_example")
 
 # Default key binding values
 bind_vars = {
@@ -111,13 +115,13 @@ def ensure_matugen_config():
         },
         'templates': {
             'hyprland': {
-                'input_path': '~/.config/Ax-Shell/config/matugen/templates/hyprland-colors.conf',
-                'output_path': '~/.config/Ax-Shell/config/hypr/colors.conf'
+                'input_path': f'~/.config/{data.APP_NAME_CAP}/config/matugen/templates/hyprland-colors.conf',
+                'output_path': f'~/.config/{data.APP_NAME_CAP}/config/hypr/colors.conf'
             },
-            'ax-shell': {
-                'input_path': '~/.config/Ax-Shell/config/matugen/templates/ax-shell.css',
-                'output_path': '~/.config/Ax-Shell/styles/colors.css',
-                'post_hook': "fabric-cli exec ax-shell 'app.set_css()' &"
+            f'{data.APP_NAME}': {
+                'input_path': f'~/.config/{data.APP_NAME_CAP}/config/matugen/templates/{data.APP_NAME}.css',
+                'output_path': f'~/.config/{data.APP_NAME_CAP}/styles/colors.css',
+                'post_hook': f"fabric-cli exec {data.APP_NAME} 'app.set_css()' &"
             }
         }
     }
@@ -141,29 +145,14 @@ def ensure_matugen_config():
     # Trigger image generation if "~/.current.wall" does not exist
     current_wall = os.path.expanduser("~/.current.wall")
     if not os.path.exists(current_wall):
-        image_path = os.path.expanduser("~/.config/Ax-Shell/assets/wallpapers_example/example-1.jpg")
+        image_path = os.path.expanduser(f"~/.config/{data.APP_NAME_CAP}/assets/wallpapers_example/example-1.jpg")
         os.system(f"matugen image {image_path}")
-
-
-def ensure_fonts():
-    """
-    Ensure that required fonts are installed.
-    """
-    fonts_to_copy = [
-        ('~/.fonts/zed-sans/', '~/.config/Ax-Shell/assets/fonts/zed-sans/'),
-        ('~/.fonts/tabler-icons/', '~/.config/Ax-Shell/assets/fonts/tabler-icons/')
-    ]
-    for dest_font, src_font in fonts_to_copy:
-        dest_path = os.path.expanduser(dest_font)
-        if not os.path.exists(dest_path):
-            shutil.copytree(os.path.expanduser(src_font), dest_path)
-
 
 def load_bind_vars():
     """
     Load saved key binding variables from JSON, if available.
     """
-    config_json = os.path.expanduser('~/.config/Ax-Shell/config/config.json')
+    config_json = os.path.expanduser(f'~/.config/{data.APP_NAME_CAP}/config/config.json')
     try:
         with open(config_json, 'r') as f:
             saved_vars = json.load(f)
@@ -178,14 +167,14 @@ def generate_hyprconf() -> str:
     Generate the Hypr configuration string using the current bind_vars.
     """
     home = os.path.expanduser('~')
-    return f"""exec-once = uwsm app -- python {home}/.config/Ax-Shell/main.py
+    return f"""exec-once = uwsm app -- python {home}/.config/{data.APP_NAME_CAP}/main.py
 exec = pgrep -x "hypridle" > /dev/null || uwsm app -- hypridle
 exec = uwsm app -- swww-daemon
 
-$fabricSend = fabric-cli exec ax-shell
-$axMessage = notify-send "Axenide" "What are you doing?" -i "{home}/.config/Ax-Shell/assets/ax.png" -a "Source Code" -A "Be patient. 🍙"
+$fabricSend = fabric-cli exec {data.APP_NAME}
+$axMessage = notify-send "Axenide" "What are you doing?" -i "{home}/.config/{data.APP_NAME_CAP}/assets/ax.png" -a "Source Code" -A "Be patient. 🍙"
 
-bind = {bind_vars['prefix_restart']}, {bind_vars['suffix_restart']}, exec, killall ax-shell; uwsm app -- python {home}/.config/Ax-Shell/main.py # Reload Ax-Shell | Default: SUPER ALT + B
+bind = {bind_vars['prefix_restart']}, {bind_vars['suffix_restart']}, exec, killall {data.APP_NAME}; uwsm app -- python {home}/.config/{data.APP_NAME_CAP}/main.py # Reload {data.APP_NAME_CAP} | Default: SUPER ALT + B
 bind = {bind_vars['prefix_axmsg']}, {bind_vars['suffix_axmsg']}, exec, $axMessage # Message | Default: SUPER + A
 bind = {bind_vars['prefix_dash']}, {bind_vars['suffix_dash']}, exec, $fabricSend 'notch.open_notch("dashboard")' # Dashboard | Default: SUPER + D
 bind = {bind_vars['prefix_bluetooth']}, {bind_vars['suffix_bluetooth']}, exec, $fabricSend 'notch.open_notch("bluetooth")' # Bluetooth | Default: SUPER + B
@@ -197,11 +186,11 @@ bind = {bind_vars['prefix_power']}, {bind_vars['suffix_power']}, exec, $fabricSe
 bind = {bind_vars['prefix_toggle']}, {bind_vars['suffix_toggle']}, exec, $fabricSend 'bar.toggle_hidden()' # Toggle Bar | Default: SUPER CTRL + B
 bind = {bind_vars['prefix_toggle']}, {bind_vars['suffix_toggle']}, exec, $fabricSend 'notch.toggle_hidden()' # Toggle Notch | Default: SUPER CTRL + B
 bind = {bind_vars['prefix_css']}, {bind_vars['suffix_css']}, exec, $fabricSend 'app.set_css()' # Reload CSS | Default: SUPER SHIFT + B
-bind = {bind_vars['prefix_restart_inspector']}, {bind_vars['suffix_restart_inspector']}, exec, killall ax-shell; GTK_DEBUG=interactive uwsm app -- python {home}/.config/Ax-Shell/main.py # Restart with inspector | Default: SUPER CTRL ALT + B
+bind = {bind_vars['prefix_restart_inspector']}, {bind_vars['suffix_restart_inspector']}, exec, killall {data.APP_NAME}; GTK_DEBUG=interactive uwsm app -- python {home}/.config/{data.APP_NAME_CAP}/main.py # Restart with inspector | Default: SUPER CTRL ALT + B
 
 # Wallpapers directory: {bind_vars['wallpapers_dir']}
 
-source = {home}/.config/Ax-Shell/config/hypr/colors.conf
+source = {home}/.config/{data.APP_NAME_CAP}/config/hypr/colors.conf
 
 layerrule = noanim, fabric
 
@@ -214,6 +203,10 @@ general {{
     gaps_out = 4
     border_size = 2
     layout = dwindle
+}}
+
+cursor {{
+  no_warps=true
 }}
 
 decoration {{
@@ -250,7 +243,7 @@ def ensure_face_icon():
     Ensure the face icon exists. If not, copy the default icon.
     """
     face_icon_path = os.path.expanduser("~/.face.icon")
-    default_icon_path = os.path.expanduser("~/.config/Ax-Shell/assets/default.png")
+    default_icon_path = os.path.expanduser(f"~/.config/{data.APP_NAME_CAP}/assets/default.png")
     if not os.path.exists(face_icon_path) and os.path.exists(default_icon_path):
         shutil.copy(default_icon_path, face_icon_path)
 
@@ -291,7 +284,7 @@ class HyprConfGUI(Gtk.Window):
 
         self.entries = []
         bindings = [
-            ("Reload Ax-Shell", 'prefix_restart', 'suffix_restart'),
+            (f"Reload {data.APP_NAME_CAP}", 'prefix_restart', 'suffix_restart'),
             ("Message", 'prefix_axmsg', 'suffix_axmsg'),
             ("Dashboard", 'prefix_dash', 'suffix_dash'),
             ("Bluetooth", 'prefix_bluetooth', 'suffix_bluetooth'),
@@ -412,7 +405,7 @@ class HyprConfGUI(Gtk.Window):
         bind_vars['wallpapers_dir'] = self.wall_dir_chooser.get_filename()
 
         # Save the updated bind_vars to a JSON file
-        config_json = os.path.expanduser('~/.config/Ax-Shell/config/config.json')
+        config_json = os.path.expanduser(f'~/.config/{data.APP_NAME_CAP}/config/config.json')
         os.makedirs(os.path.dirname(config_json), exist_ok=True)
         with open(config_json, 'w') as f:
             json.dump(bind_vars, f)
@@ -432,13 +425,13 @@ class HyprConfGUI(Gtk.Window):
 
         # Replace hyprlock config if requested
         if hasattr(self, "lock_checkbox") and self.lock_checkbox.get_active():
-            src_lock = os.path.expanduser("~/.config/Ax-Shell/config/hypr/hyprlock.conf")
+            src_lock = os.path.expanduser(f"~/.config/{data.APP_NAME_CAP}/config/hypr/hyprlock.conf")
             dest_lock = os.path.expanduser("~/.config/hypr/hyprlock.conf")
             backup_and_replace(src_lock, dest_lock, "Hyprlock")
 
         # Replace hypridle config if requested
         if hasattr(self, "idle_checkbox") and self.idle_checkbox.get_active():
-            src_idle = os.path.expanduser("~/.config/Ax-Shell/config/hypr/hypridle.conf")
+            src_idle = os.path.expanduser(f"~/.config/{data.APP_NAME_CAP}/config/hypr/hypridle.conf")
             dest_idle = os.path.expanduser("~/.config/hypr/hypridle.conf")
             backup_and_replace(src_idle, dest_idle, "Hypridle")
 
@@ -465,9 +458,9 @@ def start_config():
     ensure_face_icon()
 
     # Write the generated hypr configuration to file
-    hypr_config_dir = os.path.expanduser("~/.config/Ax-Shell/config/hypr/")
+    hypr_config_dir = os.path.expanduser(f"~/.config/{data.APP_NAME_CAP}/config/hypr/")
     os.makedirs(hypr_config_dir, exist_ok=True)
-    hypr_conf_path = os.path.join(hypr_config_dir, "ax-shell.conf")
+    hypr_conf_path = os.path.join(hypr_config_dir, f"{data.APP_NAME}.conf")
     with open(hypr_conf_path, "w") as f:
         f.write(generate_hyprconf())
 
@@ -479,12 +472,11 @@ def open_config():
     """
     Entry point for opening the configuration GUI.
     """
-    ensure_fonts()
     load_bind_vars()
 
     # Check and copy hyprlock config if needed
     dest_lock = os.path.expanduser("~/.config/hypr/hyprlock.conf")
-    src_lock = os.path.expanduser("~/.config/Ax-Shell/config/hypr/hyprlock.conf")
+    src_lock = os.path.expanduser(f"~/.config/{data.APP_NAME_CAP}/config/hypr/hyprlock.conf")
     os.makedirs(os.path.dirname(dest_lock), exist_ok=True)
     show_lock_checkbox = True
     if not os.path.exists(dest_lock):
@@ -493,7 +485,7 @@ def open_config():
 
     # Check and copy hypridle config if needed
     dest_idle = os.path.expanduser("~/.config/hypr/hypridle.conf")
-    src_idle = os.path.expanduser("~/.config/Ax-Shell/config/hypr/hypridle.conf")
+    src_idle = os.path.expanduser(f"~/.config/{data.APP_NAME_CAP}/config/hypr/hypridle.conf")
     show_idle_checkbox = True
     if not os.path.exists(dest_idle):
         shutil.copy(src_idle, dest_idle)

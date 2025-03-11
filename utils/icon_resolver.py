@@ -8,6 +8,8 @@ gi.require_version("Gtk", "3.0")
 from gi.repository import GLib, Gtk
 from loguru import logger
 
+import config.data as data
+
 
 # TODO WIP
 # Idea: nearest string matching algorithm
@@ -16,10 +18,9 @@ from loguru import logger
 #       if not found: store in json -> misisng-icon
 
 
-CACHE_DIR = str(GLib.get_user_cache_dir()) + "/fabric"
-ICON_CACHE_FILE = CACHE_DIR + "/icons.json"
-if not os.path.exists(CACHE_DIR):
-    os.makedirs(CACHE_DIR)
+ICON_CACHE_FILE = data.CACHE_DIR + "/icons.json"
+if not os.path.exists(data.CACHE_DIR):
+    os.makedirs(data.CACHE_DIR)
 
 
 class IconResolver:

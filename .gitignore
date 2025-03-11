@@ -6,3 +6,4 @@ config/hypr/colors.conf
 Ax-Shell.code-workspace
 personal_config.json
 .aider*
+config/dock.json

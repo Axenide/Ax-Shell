@@ -8,7 +8,8 @@
 #notification-stack-box,
 #nav-button,
 #metrics-small,
-#weather {
+#weather,
+#dock {
   box-shadow: 0 0 4px alpha(black, 0.5);
 }
 
@@ -19,4 +20,3 @@
 #boxed-revealer {
   margin: -10px;
 }
-

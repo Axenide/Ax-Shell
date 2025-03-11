@@ -59,3 +59,10 @@
   font-size: 24px;
   color: var(--surface-bright);
 }
+
+#overview-workspace-label {
+  font-weight: bold;
+  background-color: var(--surface);
+  border-radius: 10px;
+  padding: 4px;
+}

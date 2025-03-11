@@ -1,5 +1,6 @@
 import os
 import random
+from fabric.utils import get_relative_path
 from fabric.widgets.box import Box
 from fabric.widgets.centerbox import CenterBox
 from fabric.widgets.label import Label
@@ -16,7 +17,7 @@ from modules.widgets import Widgets
 from modules.pins import Pins
 from modules.wallpapers import WallpaperSelector
 from modules.kanban import Kanban
-import modules.data as data
+import config.data as data
 
 class Dashboard(Box):
     def __init__(self, **kwargs):
@@ -84,7 +85,7 @@ class Dashboard(Box):
         self.soon = Image(
             name="coming-soon",
             pixbuf=GdkPixbuf.Pixbuf.new_from_file_at_scale(
-                f"{data.HOME_DIR}/.config/Ax-Shell/assets/soon.png", 366, 300, True
+                get_relative_path("../assets/soon.png"), 366, 300, True
             ),
         )
 

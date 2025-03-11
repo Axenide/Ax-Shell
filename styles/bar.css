@@ -1,0 +1,131 @@
+#bar-inner {
+  margin: 8px;
+  opacity: 1;
+  transition: all 0.5s cubic-bezier(0.5, 0.25, 0, 1);
+}
+
+#bar-inner.hidden {
+  margin: 8px;
+  margin-top: -40px;
+  opacity: 0;
+}
+
+#date-time {
+  background-color: var(--shadow);
+  padding: 8px;
+  border-radius: 16px;
+  /*margin-top: 4px;*/
+}
+
+menu > menuitem > label,
+#date-time > label {
+  font-weight: bold;
+}
+
+#weather {
+  background-color: var(--shadow);
+  padding: 8px;
+  border-radius: 16px;
+  /*margin-top: 4px;*/
+}
+
+#weather-label {
+  font-weight: bold;
+}
+
+#systray {
+  background-color: var(--shadow);
+  padding: 8px;
+  border-radius: 16px;
+  /*margin-top: 4px;*/
+}
+
+menu {
+  border: solid 1px;
+  border-radius: 16px;
+  border-color: var(--surface);
+  background-color: var(--shadow);
+  padding: 6px;
+}
+
+menu > menuitem {
+  border-radius: 10px;
+  padding: 6px 10px;
+}
+
+menu > menuitem:hover {
+  background-color: var(--primary);
+}
+
+menu > menuitem:hover > label {
+  color: var(--shadow);
+}
+
+tooltip {
+  border: solid 1px;
+  border-color: var(--surface);
+  background-color: var(--shadow);
+  animation: tooltipShow 0.25s cubic-bezier(0.5, 0.25, 0, 1);
+}
+
+@keyframes tooltipShow {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+tooltip > * {
+  padding: 6px 10px;
+  border-radius: 10px;
+}
+
+#button-bar {
+  padding: 4px;
+  min-width: 28px;
+  min-height: 28px;
+  /*margin-top: 4px;*/
+  border-radius: 16px;
+  background-color: var(--shadow);
+  transition: all 0.1s ease;
+}
+
+#button-bar-label {
+  color: var(--primary);
+  font-size: 20px;
+  padding: 4px;
+  border-radius: 12px;
+  transition: all 0.1s ease;
+}
+
+#button-bar:hover #button-bar-label {
+  background-color: var(--surface_bright);
+}
+
+#button-bar:active #button-bar-label {
+  color: var(--shadow);
+  background-color: var(--primary);
+}
+
+#corner {
+  background-color: var(--shadow);
+  border-radius: 0;
+}
+
+#corner-container {
+  min-width: 20px;
+  min-height: 20px;
+}
+
+#button-corner {
+  border-radius: 0px;
+  min-width: 20px;
+  min-height: 20px;
+}
+
+#notch,
+#bar {
+  border-radius: 0px;
+}

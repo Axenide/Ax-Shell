@@ -11,6 +11,7 @@ from loguru import logger
 from math import pi
 
 from fabric.widgets.overlay import Overlay
+from fabric.utils.helpers import get_relative_path
 
 import configparser
 
@@ -19,7 +20,7 @@ def get_bars(file_path):
     config.read(file_path)
     return int(config['general']['bars'])
 
-CAVA_CONFIG = os.path.expanduser("~/.config/Ax-Shell/config/cavalcade/cava.ini")
+CAVA_CONFIG = get_relative_path("../config/cavalcade/cava.ini")
 
 bars = get_bars(CAVA_CONFIG)
 
@@ -46,7 +47,7 @@ class Cava:
         self.bars = bars
         self.path = "/tmp/cava.fifo"
 
-        self.cava_config_file = os.path.expanduser("~/.config/Ax-Shell/config/cavalcade/cava.ini")
+        self.cava_config_file = CAVA_CONFIG
         self.data_handler = mainapp.draw.update
         self.command = ["cava", "-p", self.cava_config_file]
         self.state = self.NONE
@@ -223,7 +224,7 @@ class Spectrum:
         """Set drawing color according current settings by reading primary color from CSS"""
         color = "#a5c8ff"  # default value
         try:
-            with open(os.path.expanduser("~/.config/Ax-Shell/styles/colors.css"), "r") as f:
+            with open(get_relative_path("../styles/colors.css"), "r") as f:
                 content = f.read()
                 m = re.search(r"--primary:\s*(#[0-9a-fA-F]{6})", content)
                 if m:

@@ -9,7 +9,7 @@ from fabric.widgets.revealer import Revealer
 from fabric.widgets.wayland import WaylandWindow as Window
 from fabric.hyprland.widgets import ActiveWindow
 from fabric.utils.helpers import FormattedString, truncate
-from gi.repository import GLib, Gdk, Gtk
+from gi.repository import GLib, Gdk, Gtk, Pango
 from modules.launcher import AppLauncher
 from modules.dashboard import Dashboard
 from modules.notifications import NotificationContainer
@@ -19,7 +19,7 @@ from modules.hue import Light
 from modules.emoji import EmojiPicker
 from modules.corners import MyCorner
 import modules.icons as icons
-import modules.data as data
+import config.data as data
 from modules.player import PlayerSmall
 from modules.tools import Toolbox
 
@@ -29,8 +29,8 @@ class Notch(Window):
         super().__init__(
             name="notch",
             layer="top",
-            anchor="top",
-            margin="-40px 40px 10px 10px",
+            anchor="top center",
+            margin="-40px 0px 0px 0px",
             keyboard_mode="none",
             exclusivity="normal",
             visible=True,
@@ -56,16 +56,29 @@ class Notch(Window):
         self.nhistory = self.applet_stack.get_children()[0]
         self.btdevices = self.applet_stack.get_children()[1]
 
+        self.window_label = Label(
+            name="notch-window-label",
+            h_expand=True,
+            h_align="fill",
+        )
+
         self.active_window = ActiveWindow(
             name="hyprland-window",
             h_expand=True,
+            h_align="fill",
             formatter=FormattedString(
-                f"{{'Desktop' if not win_title or win_title == 'unknown' else truncate(win_title, 32)}}",
+                f"{{'Desktop' if not win_title or win_title == 'unknown' else truncate(win_title, 64)}}",
                 truncate=truncate,
             ),
         )
         # Add the click connection for active_window.
         self.active_window.connect("button-press-event", lambda widget, event: (self.open_notch("dashboard"), False)[1])
+
+        self.active_window.get_children()[0].set_hexpand(True)
+        self.active_window.get_children()[0].set_halign(Gtk.Align.FILL)
+        self.active_window.get_children()[0].set_ellipsize(Pango.EllipsizeMode.END)
+
+        self.active_window.connect("notify::label", lambda *_: self.restore_label_properties())
 
         # Create additional compact views:
         self.player_small = PlayerSmall()
@@ -427,3 +440,11 @@ class Notch(Window):
     def on_player_vanished(self, *args):
         if self.player_small.mpris_label.get_label() == "Nothing Playing":
             self.compact_stack.set_visible_child(self.active_window)
+
+    def restore_label_properties(self):
+        label = self.active_window.get_children()[0]
+        if isinstance(label, Gtk.Label):
+            label.set_ellipsize(Pango.EllipsizeMode.END)
+            label.set_hexpand(True)
+            label.set_halign(Gtk.Align.FILL)
+            label.queue_resize()

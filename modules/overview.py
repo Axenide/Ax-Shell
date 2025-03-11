@@ -215,6 +215,7 @@ class Overview(Box):
                     name="overview-workspace-box",
                     orientation="vertical",
                     children=[
+                        Label(name="overview-workspace-label", label=f"Workspace {w_id}"),
                         WorkspaceEventBox(
                             w_id,
                             self.workspace_boxes[w_id]

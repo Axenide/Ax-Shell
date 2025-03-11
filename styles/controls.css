@@ -41,25 +41,31 @@
 
 #control-small {
   padding: 4px;
-  margin-top: 4px;
+  /*margin-top: 4px;*/
   border-radius: 16px;
   background-color: var(--shadow);
 }
 
-#button-volume, #button-mic, #button-brightness {
+#button-volume,
+#button-mic,
+#button-brightness {
   color: var(--surface-bright);
   border: 3px solid var(--primary);
 }
 
-#button-volume.muted, #button-mic.muted {
+#button-volume.muted,
+#button-mic.muted {
   color: var(--surface-bright);
   border: 3px solid var(--outline);
 }
 
-#vol-label, #mic-label, #brightness-label {
-  font-size: 20px;
+#vol-label,
+#mic-label,
+#brightness-label {
+  font-size: 16px;
 }
 
-#vol-label.muted, #mic-label.muted {
+#vol-label.muted,
+#mic-label.muted {
   color: var(--outline);
 }

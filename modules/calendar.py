@@ -1,9 +1,8 @@
 import calendar
-from datetime import datetime
+from datetime import datetime, timedelta
 import gi
 import modules.icons as icons
 from fabric.widgets.label import Label
-from fabric.widgets.box import Box
 from fabric.widgets.centerbox import CenterBox
 
 gi.require_version("Gtk", "3.0")
@@ -43,7 +42,7 @@ class Calendar(Gtk.Box):
             spacing=4,
             name="header",
             start_children=[self.prev_month_button],
-            center_children=[self.month_label,],
+            center_children=[self.month_label],
             end_children=[self.next_month_button],
         )
 
@@ -59,7 +58,31 @@ class Calendar(Gtk.Box):
 
         self.update_header()
         self.update_calendar()
-        GLib.timeout_add_seconds(60, self.check_date_change)
+        self.schedule_midnight_update()  # Schedule the initial midnight update
+
+    def schedule_midnight_update(self):
+        now = datetime.now()
+        # Calculate next midnight
+        midnight = now.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
+        delta = midnight - now
+        seconds_until = delta.total_seconds()
+        GLib.timeout_add_seconds(int(seconds_until), self.on_midnight)
+
+    def on_midnight(self):
+        now = datetime.now()
+        self.current_year = now.year
+        self.current_month = now.month
+        self.current_day = now.day
+
+        # If the displayed month view is already cached, remove it so that it can be recreated with updated day highlighting.
+        key = (self.current_year, self.current_month)
+        if key in self.month_views:
+            widget = self.month_views.pop(key)
+            self.stack.remove(widget)
+
+        self.update_calendar()
+        self.schedule_midnight_update()  # Reschedule for the next midnight
+        return False  # Ensure the timeout doesn't repeat
 
     def update_header(self):
         # Update header month label and weekday row.
@@ -136,6 +159,7 @@ class Calendar(Gtk.Box):
                     label = Label(name="day-empty", markup=icons.dot)
                 else:
                     label = Gtk.Label(label=str(day), name="day-label")
+                    # Highlight today's date if it matches the current day.
                     if (
                         day == self.current_day
                         and month == datetime.now().month
@@ -175,12 +199,3 @@ class Calendar(Gtk.Box):
         else:
             self.current_month += 1
         self.update_calendar()
-
-    def check_date_change(self):
-        now = datetime.now()
-        if now.day != self.current_day or now.month != self.current_month or now.year != self.current_year:
-            self.current_day = now.day
-            self.current_month = now.month
-            self.current_year = now.year
-            self.update_calendar()
-        return True

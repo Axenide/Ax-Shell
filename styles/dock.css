@@ -1,0 +1,38 @@
+#dock {
+  background-color: var(--shadow);
+  padding: 8px;
+  margin: 8px 8px 7px 8px;
+  border-radius: 20px;
+  transition: all 0.25s cubic-bezier(0.5, 0.25, 0, 1);
+}
+
+#dock.occluded {
+  margin-bottom: -64px;
+  opacity: 0;
+}
+
+#dock-separator {
+  padding: 1px;
+  margin: 8px 0;
+  border-radius: 16px;
+  background-color: var(--surface-bright);
+}
+
+#dock-app-button {
+  padding: 4px;
+  border-radius: 12px;
+}
+
+#dock-app-button:hover,
+#dock-app-button:hover.instance {
+  background-color: var(--surface-bright);
+}
+
+#dock-app-button:active,
+#dock-app-button:active.instance {
+  background-color: var(--primary);
+}
+
+#dock-app-button.instance {
+  background: linear-gradient(to top, transparent, var(--surface-bright));
+}

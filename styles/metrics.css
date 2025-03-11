@@ -2,7 +2,7 @@
   background-color: var(--shadow);
   padding: 4px;
   border-radius: 16px;
-  margin-top: 4px;
+  /*margin-top: 4px;*/
 }
 
 #metrics-circle {
@@ -19,7 +19,7 @@
 }
 
 #metrics-icon {
-  font-size: 20px;
+  font-size: 16px;
 }
 
 #metrics-icon.alert {
@@ -34,4 +34,3 @@
 #metrics-sep {
   min-width: 4px;
 }
-

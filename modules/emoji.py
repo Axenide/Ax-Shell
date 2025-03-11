@@ -4,6 +4,7 @@ from fabric.widgets.button import Button
 from fabric.widgets.entry import Entry
 from fabric.widgets.stack import Stack
 from fabric.utils import remove_handler
+from fabric.utils.helpers import get_relative_path
 from gi.repository import Gdk
 import modules.icons as icons
 import os
@@ -78,7 +79,7 @@ class EmojiPicker(Box):
 
     def _load_emoji_data(self):
         emoji_data = {}
-        emoji_file_path = os.path.expanduser("~/.config/Ax-Shell/assets/emoji.json")
+        emoji_file_path = get_relative_path("../assets/emoji.json")
         if not os.path.exists(emoji_file_path):
             print(f"Emoji JSON file not found at: {emoji_file_path}")
             return {}

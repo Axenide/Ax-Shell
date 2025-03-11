@@ -4,7 +4,7 @@ from fabric.widgets.button import Button
 from fabric.utils.helpers import exec_shell_command_async, get_relative_path
 import modules.icons as icons
 from gi.repository import Gdk, GLib
-import modules.data as data
+import config.data as data
 import subprocess
 
 SCREENSHOT_SCRIPT = get_relative_path("../scripts/screenshot.sh")
@@ -133,32 +133,29 @@ class Toolbox(Box):
         self.close_menu()
 
     def colorpicker(self, button, event):
-        # Mouse event handler
         if event.type == Gdk.EventType.BUTTON_PRESS:
-            if event.button == 1:
-                # Left click: HEX
-                exec_shell_command_async(f"bash {get_relative_path('../scripts/hyprpicker-hex.sh')}")
-            elif event.button == 2:
-                # Middle click: HSV
-                exec_shell_command_async(f"bash {get_relative_path('../scripts/hyprpicker-hsv.sh')}")
-            elif event.button == 3:
-                # Right click: RGB
-                exec_shell_command_async(f"bash {get_relative_path('../scripts/hyprpicker-rgb.sh')}")
-            self.close_menu()
+            cmd = {
+                1: "-hex",   # Left click
+                2: "-hsv",   # Middle click
+                3: "-rgb"    # Right click
+            }.get(event.button)
+            
+            if cmd:
+                exec_shell_command_async(f"bash {get_relative_path('../scripts/hyprpicker.sh')} {cmd}")
+                self.close_menu()
 
     def colorpicker_key(self, widget, event):
-        # Keyboard event handler for colorpicker button.
-        if event.keyval in (Gdk.KEY_Return, Gdk.KEY_KP_Enter):
-            state = event.get_state()
-            # Check for Shift modifier; use RGB script.
-            if state & Gdk.ModifierType.SHIFT_MASK:
-                exec_shell_command_async(f"bash {get_relative_path('../scripts/hyprpicker-rgb.sh')}")
-            # Check for Control modifier; use HSV script.
-            elif state & Gdk.ModifierType.CONTROL_MASK:
-                exec_shell_command_async(f"bash {get_relative_path('../scripts/hyprpicker-hsv.sh')}")
-            else:
-                # No modifier: HEX script.
-                exec_shell_command_async(f"bash {get_relative_path('../scripts/hyprpicker-hex.sh')}")
+        if event.keyval in {Gdk.KEY_Return, Gdk.KEY_KP_Enter}:
+            modifiers = event.get_state()
+            cmd = "-hex"  # Default
+            
+            match modifiers & (Gdk.ModifierType.SHIFT_MASK | Gdk.ModifierType.CONTROL_MASK):
+                case Gdk.ModifierType.SHIFT_MASK:
+                    cmd = "-rgb"
+                case Gdk.ModifierType.CONTROL_MASK:
+                    cmd = "-hsv"
+                
+            exec_shell_command_async(f"bash {get_relative_path('../scripts/hyprpicker.sh')} {cmd}")
             self.close_menu()
             return True
         return False

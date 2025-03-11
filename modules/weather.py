@@ -55,6 +55,8 @@ class Weather(Box):
                 GLib.idle_add(self.label.set_label, str(weather_data)+"°C")
             else:
                 GLib.idle_add(self.label.set_markup, f"{icons.cloud_off} Unavailable")
+                self.set_visible(False)
         except Exception as e:
-            print(f"Error al obtener clima: {e}")
+            print(f"Error fetching weather: {e}")
             GLib.idle_add(self.label.set_markup, f"{icons.cloud_off} Error")
+            self.set_visible(False)
