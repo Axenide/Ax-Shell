@@ -1,0 +1,8 @@
+{
+  "Basic": {
+    "corners": true,
+    "bar": true,
+    "notch": true,
+    "dock": false
+  }
+}

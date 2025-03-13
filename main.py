@@ -7,21 +7,51 @@ from modules.notch import Notch
 from modules.dock import Dock
 from modules.corners import Corners
 import config.data as data
+import json
 
 fonts_updated_file = f"{data.CACHE_DIR}/fonts_updated"
+
+hyprconf = get_relative_path("config.json")
+
+
+def load_config():
+    with open(hyprconf, "r") as f:
+        return json.load(f)
+
 
 if __name__ == "__main__":
     setproctitle.setproctitle(data.APP_NAME)
 
     if not os.path.isfile(data.CONFIG_FILE):
         exec_shell_command_async(f"python {get_relative_path('../config/config.py')}")
-    corners = Corners()
-    bar = Bar()
-    notch = Notch()
-    dock = Dock() 
-    bar.notch = notch
-    notch.bar = bar
-    app = Application(f"{data.APP_NAME}", bar, notch, dock)
+
+    config = load_config()
+
+    assets = []
+    if config["Basic"]["corners"]:
+        from modules.corners import Corners
+
+        corners = Corners()
+        assets.append(corners)
+    if config["Basic"]["bar"]:
+        from modules.bar import Bar
+
+        bar = Bar()
+        assets.append(bar)
+    if config["Basic"]["notch"]:
+        from modules.notch import Notch
+
+        notch = Notch()
+        bar.notch = notch
+        notch.bar = bar
+        assets.append(notch)
+    if config["Basic"]["dock"]:
+        from modules.dock import Dock
+
+        dock = Dock()
+        assets.append(dock)
+
+    app = Application(f"{data.APP_NAME}", *assets)
 
     def set_css():
         app.set_stylesheet_from_file(
