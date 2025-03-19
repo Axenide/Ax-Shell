@@ -16,6 +16,8 @@ import os
 import re
 import math
 import subprocess
+from thefuzz import fuzz
+from config.data import FUZZY_THRESHOLD
 from modules.dock import Dock  # Import the Dock class
 
 class AppLauncher(Box):
@@ -121,12 +123,14 @@ class AppLauncher(Box):
                 [
                     app
                     for app in self._all_apps
-                    if query.casefold()
-                    in (
-                        (app.display_name or "")
-                        + (" " + app.name + " ")
-                        + (app.generic_name or "")
-                    ).casefold()
+                    if fuzz.partial_ratio(
+                        query.casefold(),
+                        (
+                            (app.display_name or "")
+                            + (" " + app.name + " ")
+                            + (app.generic_name or "")
+                        ).casefold(),
+                    ) >= FUZZY_THRESHOLD or query == ""
                 ],
                 key=lambda app: (app.display_name or "").casefold(),
             )

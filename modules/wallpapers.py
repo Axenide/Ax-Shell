@@ -13,6 +13,8 @@ import config.data as data
 from PIL import Image
 import concurrent.futures
 from concurrent.futures import ThreadPoolExecutor
+from thefuzz import fuzz
+from config.data import FUZZY_THRESHOLD
 
 class WallpaperSelector(Box):
     CACHE_DIR = f"{data.CACHE_DIR}/thumbs"  # Changed from wallpapers to thumbs
@@ -177,7 +179,7 @@ class WallpaperSelector(Box):
         filtered_thumbnails = [
             (thumb, name)
             for thumb, name in self.thumbnails
-            if query.casefold() in name.casefold()
+            if fuzz.partial_ratio(query.casefold(), name.casefold()) >= FUZZY_THRESHOLD or query == ""
         ]
         filtered_thumbnails.sort(key=lambda x: x[1].lower())
         for pixbuf, file_name in filtered_thumbnails:

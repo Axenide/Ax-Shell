@@ -74,6 +74,7 @@ curl -fsSL https://raw.githubusercontent.com/Axenide/Ax-Shell/main/install.sh | 
         - setproctitle
         - toml
         - watchdog
+        - thefuzz
     - Fonts (automated on first run):
         - Zed Sans
         - Tabler Icons

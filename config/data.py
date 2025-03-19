@@ -32,3 +32,5 @@ if os.path.exists(CONFIG_FILE):
     WALLPAPERS_DIR = config.get('wallpapers_dir', WALLPAPERS_DIR_DEFAULT)
 else:
     WALLPAPERS_DIR = WALLPAPERS_DIR_DEFAULT
+
+FUZZY_THRESHOLD = 65
