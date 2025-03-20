@@ -56,11 +56,8 @@ class Bar(Window):
 
         self.systray = SystemTray()
         self.weather = Weather()
-<<<<<<< HEAD
         self.smallcgm = SmallCgm()
-=======
         self.network = NetworkApplet()
->>>>>>> 5dd7cc83a8aa349975e713044e5b3411cec2d2c2
         # self.systray = SystemTray(name="systray", spacing=8, icon_size=20)
 
         self.language = Language(name="language", h_align="center", v_align="center")
@@ -139,11 +136,8 @@ class Bar(Window):
                 spacing=4,
                 children=[
                     self.weather,
-<<<<<<< HEAD
-                    self.smallcgm,
-=======
                     self.network,
->>>>>>> 5dd7cc83a8aa349975e713044e5b3411cec2d2c2
+                    self.smallcgm,
                 ],
             ),
         )

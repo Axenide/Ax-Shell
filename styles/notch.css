@@ -1,74 +1,72 @@
 #notch-box {
-    margin: 10px;
-    margin-top: 0px;
-    transition: all 0.5s cubic-bezier(0.5, 0.25, 0, 1);
+  margin: 10px;
+  margin-top: 0px;
+  transition: all 0.5s cubic-bezier(0.5, 0.25, 0, 1);
 }
 
 #notch-box.hidden {
-    opacity: 0;
+  opacity: 0;
 }
 
 #notch-box.hideshow {
-    opacity: 1;
-    margin-top: 40px;
+  opacity: 1;
+  margin-top: 40px;
 }
 
 #notch-content {
-    background-color: var(--shadow);
-    min-height: 40px;
-    min-width: 256px;
-    border-radius: 0 0 20px 20px;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  background-color: var(--shadow);
+  min-height: 40px;
+  min-width: 256px;
+  border-radius: 0 0 20px 20px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 #notch-content.launcher {
-    padding: 16px;
-    min-height: 220px;
-    min-width: 480px;
-    border-radius: 0 0 36px 36px;
+  padding: 16px;
+  min-height: 220px;
+  min-width: 480px;
+  border-radius: 0 0 36px 36px;
 }
 
 #notch-content.dashboard {
-    padding: 16px;
-    min-height: 450px;
-    min-width: 1050px;
-    border-radius: 0 0 36px 36px;
+  padding: 16px;
+  min-height: 450px;
+  min-width: 1050px;
+  border-radius: 0 0 36px 36px;
 }
 
 #notch-content.overview {
-    padding: 16px;
-    @apply overview_width();
-    @apply overview_height();
-    border-radius: 0 0 36px 36px;
+  padding: 16px;
+  @apply overview_width();
+  @apply overview_height();
+  border-radius: 0 0 36px 36px;
 }
 
 #notch-content.tools {
-
   min-height: 84px;
   min-width: 580px;
   border-radius: 0 0 36px 36px;
->>>>>>> 5dd7cc83a8aa349975e713044e5b3411cec2d2c2
 }
 
 #notch-content.emoji {
-    padding: 16px;
-    min-height: 238px;
-    min-width: 574px;
-    border-radius: 0 0 36px 36px;
+  padding: 16px;
+  min-height: 238px;
+  min-width: 574px;
+  border-radius: 0 0 36px 36px;
 }
 
 #notch-content.power {
-    padding: 16px;
-    min-height: 52px;
-    min-width: 276px;
-    border-radius: 0 0 36px 36px;
+  padding: 16px;
+  min-height: 52px;
+  min-width: 276px;
+  border-radius: 0 0 36px 36px;
 }
 
 #notch-content.hue {
-    padding: 16px;
-    min-height: 310px;
-    min-width: 410px;
-    border-radius: 0 0 36px 36px;
+  padding: 16px;
+  min-height: 310px;
+  min-width: 410px;
+  border-radius: 0 0 36px 36px;
 }
 
 #app-launcher,
@@ -78,9 +76,9 @@
 #emoji,
 #power-menu,
 #toolbox {
-    opacity: 1;
-    margin: -1300px;
-    transition: all 0.25s cubic-bezier(0.5, 0.25, 0, 1);
+  opacity: 1;
+  margin: -1300px;
+  transition: all 0.25s cubic-bezier(0.5, 0.25, 0, 1);
 }
 
 #app-launcher.open,
@@ -90,51 +88,51 @@
 #emoji.open,
 #power-menu.open,
 #toolbox.open {
-    opacity: 1;
-    margin: 0px;
+  opacity: 1;
+  margin: 0px;
 }
 
 #notch-compact {
-    font-weight: bold;
-    transition: all 0.5s cubic-bezier(0.5, 0.25, 0, 1.25);
-    padding: 10px;
+  font-weight: bold;
+  transition: all 0.5s cubic-bezier(0.5, 0.25, 0, 1.25);
+  padding: 10px;
 }
 
 #notch-corner-left {
-    margin-left: -16px;
+  margin-left: -16px;
 }
 
 #notch-corner-right {
-    margin-right: -16px;
+  margin-right: -16px;
 }
 
 #compact-mpris-icon-label {
-    color: var(--primary);
+  color: var(--primary);
 }
 
 #compact-mpris-icon-label,
 #compact-mpris-button-label {
-    font-size: 20px;
+  font-size: 20px;
 }
 
 #compact-mpris-icon,
 #compact-mpris-button {
-    margin: 0 10px;
+  margin: 0 10px;
 }
 
 #compact-mpris-icon:hover,
 #compact-mpris-button:hover {
-    background-color: var(--primary);
+  background-color: var(--primary);
 }
 
 #compact-mpris-icon:active,
 #compact-mpris-button:active {
-    background-color: var(--primary);
+  background-color: var(--primary);
 }
 
 #compact-mpris-icon:hover #compact-mpris-icon-label,
 #compact-mpris-button:hover #compact-mpris-button-label {
-    color: var(--background);
+  color: var(--background);
 }
 
 #hyprland-window label {
