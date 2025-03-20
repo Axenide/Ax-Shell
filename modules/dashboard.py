@@ -1,23 +1,17 @@
-import os
 import random
 from fabric.utils import get_relative_path
 from fabric.widgets.box import Box
-from fabric.widgets.centerbox import CenterBox
 from fabric.widgets.label import Label
-from fabric.widgets.button import Button
 from fabric.widgets.stack import Stack
 from fabric.widgets.image import Image
 import gi
 gi.require_version('Gtk', '3.0')
 gi.require_version('GdkPixbuf', '2.0')
-from gi.repository import GLib, Gtk, Pango, GdkPixbuf
-import modules.icons as icons
-from modules.buttons import Buttons
+from gi.repository import Gtk, GdkPixbuf
 from modules.widgets import Widgets
 from modules.pins import Pins
 from modules.wallpapers import WallpaperSelector
 from modules.kanban import Kanban
-import config.data as data
 
 class Dashboard(Box):
     def __init__(self, **kwargs):
@@ -182,3 +176,16 @@ class Dashboard(Box):
             new_start_text, new_end_text = random.choice(text_pairs)
             self.coming_soon_start_label.set_text(new_start_text)
             self.coming_soon_end_label.set_text(new_end_text)
+
+    def go_to_section(self, section_name):
+        """Navigate to a specific section in the dashboard."""
+        if section_name == "widgets":
+            self.stack.set_visible_child(self.widgets)
+        elif section_name == "pins":
+            self.stack.set_visible_child(self.pins)
+        elif section_name == "kanban":
+            self.stack.set_visible_child(self.kanban)
+        elif section_name == "wallpapers":
+            self.stack.set_visible_child(self.wallpapers)
+        elif section_name == "coming-soon":
+            self.stack.set_visible_child(self.coming_soon)

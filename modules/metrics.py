@@ -1,30 +1,38 @@
-import psutil
-import subprocess
 import re
+import subprocess
+
+import psutil
 from gi.repository import GLib
 
-from fabric.widgets.label import Label
+from fabric.core.fabricator import Fabricator
 from fabric.widgets.box import Box
-from fabric.widgets.scale import Scale
-from fabric.widgets.eventbox import EventBox
 from fabric.widgets.button import Button
 from fabric.widgets.circularprogressbar import CircularProgressBar
+from fabric.widgets.eventbox import EventBox
+from fabric.widgets.label import Label
 from fabric.widgets.overlay import Overlay
 from fabric.widgets.revealer import Revealer
 from fabric.core.fabricator import Fabricator
-from fabric.utils.helpers import exec_shell_command_async
+from fabric.utils.helpers import exec_shell_command_async, invoke_repeater
+from fabric.widgets.scale import Scale
 
 import modules.icons as icons
+from services.network import NetworkClient
+import time
 
 class MetricsProvider:
     """
-    Class responsible for obtaining centralized CPU, memory, and disk usage metrics.
+    Class responsible for obtaining centralized CPU, memory, disk usage, and battery metrics.
     It updates periodically so that all widgets querying it display the same values.
     """
     def __init__(self):
         self.cpu = 0.0
         self.mem = 0.0
         self.disk = 0.0
+
+        self.bat_percent = 0.0
+        self.bat_charging = None
+
         # Updates every 1 second
         GLib.timeout_add_seconds(1, self._update)
 
@@ -34,10 +42,22 @@ class MetricsProvider:
         self.cpu = psutil.cpu_percent(interval=0)
         self.mem = psutil.virtual_memory().percent
         self.disk = psutil.disk_usage("/").percent
+
+        battery = psutil.sensors_battery()
+        if battery is None:
+            self.bat_percent = 0.0
+            self.bat_charging = None
+        else:
+            self.bat_percent = battery.percent
+            self.bat_charging = battery.power_plugged
+
         return True
 
     def get_metrics(self):
         return (self.cpu, self.mem, self.disk)
+
+    def get_battery(self):
+        return (self.bat_percent, self.bat_charging)
 
 # Global instance to share data between both widgets.
 shared_provider = MetricsProvider()
@@ -339,6 +359,7 @@ class Battery(Overlay):
             start_angle=150,
             end_angle=390,
             style_classes="bat",
+            child=self.bat_icon,
         )
         self.bat_level = Label(name="metrics-level", style_classes="bat", label="100%")
         self.bat_revealer = Revealer(
@@ -375,9 +396,15 @@ class Battery(Overlay):
         )
 
         # Actualización de la batería cada segundo
-        self.batt_fabricator = Fabricator(lambda *args, **kwargs: self.poll_battery(), interval=1000, stream=False, default_value=0)
+        self.batt_fabricator = Fabricator(
+            poll_from=lambda v: shared_provider.get_battery(),
+            on_changed=lambda f, v: self.update_battery,
+            interval=1000,
+            stream=False,
+            default_value=0
+        )
         self.batt_fabricator.changed.connect(self.update_battery)
-        GLib.idle_add(self.update_battery, None, self.poll_battery())
+        GLib.idle_add(self.update_battery, None, shared_provider.get_battery())
 
         # Estado inicial de los revealers y variables para la gestión del hover
         self.hide_timer = None
@@ -410,29 +437,14 @@ class Battery(Overlay):
         self.hide_timer = None
         return False
 
-    def poll_battery(self):
-        try:
-            output = subprocess.check_output(["acpi", "-b"]).decode("utf-8").strip()
-            if "Battery" not in output:
-                return (0, None)
-            match_percent = re.search(r'(\d+)%', output)
-            match_status = re.search(r'Battery \d+: (\w+)', output)
-            if match_percent:
-                percent = int(match_percent.group(1))
-                status = match_status.group(1) if match_status else None
-                return (percent / 100.0, status)
-        except Exception:
-            pass
-        return (0, None)
-
     def update_battery(self, sender, battery_data):
-        value, status = battery_data
+        value, charging = battery_data
         if value == 0:
             self.set_visible(False)
         else:
             self.set_visible(True)
-            self.bat_circle.set_value(value)
-        percentage = int(value * 100)
+            self.bat_circle.set_value(value / 100)
+        percentage = int(value)
         self.bat_level.set_label(self._format_percentage(percentage))
         if percentage <= 15:
             self.bat_icon.set_markup(icons.alert)
@@ -441,11 +453,150 @@ class Battery(Overlay):
         else:
             self.bat_icon.remove_style_class("alert")
             self.bat_circle.remove_style_class("alert")
-            if status == "Discharging":
+            if charging == False:
                 self.bat_icon.set_markup(icons.discharging)
             elif percentage == 100:
                 self.bat_icon.set_markup(icons.battery)
-            elif status == "Charging":
+            elif charging == True:
                 self.bat_icon.set_markup(icons.charging)
             else:
                 self.bat_icon.set_markup(icons.battery)
+
+                
+class NetworkApplet(Button):
+    def __init__(self, **kwargs):
+        super().__init__(name="button-bar", **kwargs)
+        self.download_label = Label(name="download-label", markup="Download: 0 B/s")
+        self.network_client = NetworkClient()
+        self.upload_label = Label(name="upload-label", markup="Upload: 0 B/s")
+        self.wifi_label = Label(name="network-icon-label", markup="WiFi: Unknown")
+
+        self.is_mouse_over = False
+
+        self.download_icon = Label(name="download-icon-label", markup=icons.download)
+        self.upload_icon = Label(name="upload-icon-label", markup=icons.upload)
+
+        self.download_box = Box(
+            children=[self.download_icon, self.download_label],
+        )
+
+        self.upload_box = Box(
+            children=[self.upload_label, self.upload_icon],
+        )
+
+        self.download_revealer = Revealer(child=self.download_box, transition_type = "slide-right", child_revealed=False)
+        self.upload_revealer = Revealer(child=self.upload_box, transition_type="slide-left" ,child_revealed=False)
+        
+
+        self.children = Box(
+            children=[self.upload_revealer, self.wifi_label, self.download_revealer],
+        )
+        self.last_counters = psutil.net_io_counters()
+        self.last_time = time.time()
+        invoke_repeater(1000, self.update_network)
+
+        self.connect("enter-notify-event", self.on_mouse_enter)
+        self.connect("leave-notify-event", self.on_mouse_leave)
+
+    def update_network(self):
+        current_time = time.time()
+        elapsed = current_time - self.last_time
+        current_counters = psutil.net_io_counters()
+        download_speed = (current_counters.bytes_recv - self.last_counters.bytes_recv) / elapsed
+        upload_speed = (current_counters.bytes_sent - self.last_counters.bytes_sent) / elapsed
+        self.download_label.set_markup(self.format_speed(download_speed))
+        self.upload_label.set_markup(self.format_speed(upload_speed))
+
+        self.downloading = (download_speed >= 10e6)
+        self.uploading = (upload_speed >= 2e6)
+
+        if self.downloading and not self.is_mouse_over:
+            self.download_urgent()
+        if self.uploading and not self.is_mouse_over:
+            self.upload_urgent()
+
+        self.download_revealer.set_reveal_child(self.downloading or self.is_mouse_over)
+        self.upload_revealer.set_reveal_child(self.uploading or self.is_mouse_over)
+
+        if not self.downloading and not self.uploading:
+            self.remove_urgent()
+
+        if self.network_client and self.network_client.wifi_device:
+            if self.network_client.wifi_device.ssid != "Disconnected":
+                strength = self.network_client.wifi_device.strength
+                
+                if strength >= 75:
+                    self.wifi_label.set_markup(icons.wifi_3)
+                elif strength >= 50:
+                    self.wifi_label.set_markup(icons.wifi_2)
+                elif strength >= 25:
+                    self.wifi_label.set_markup(icons.wifi_1)
+                else:
+                    self.wifi_label.set_markup(icons.wifi_0)
+
+                self.set_tooltip_text(self.network_client.wifi_device.ssid)
+
+            else:
+                self.wifi_label.set_markup(icons.world_off)
+                self.set_tooltip_text("Disconnected")
+        else:
+            self.wifi_label.set_markup(icons.world_off)
+            self.set_tooltip_text("Disconnected")
+
+        
+
+        self.last_counters = current_counters
+        self.last_time = current_time
+        return True
+
+    def format_speed(self, speed):
+        if speed < 1024:
+            return f"{speed:.0f} B/s"
+        elif speed < 1024 * 1024:
+            return f"{speed / 1024:.1f} KB/s"
+        else:
+            return f"{speed / (1024 * 1024):.1f} MB/s"
+        
+    def on_mouse_enter(self, *_):
+        self.is_mouse_over = True
+        self.remove_urgent()
+        self.download_revealer.set_reveal_child(True)
+        self.upload_revealer.set_reveal_child(True)
+        return
+    
+    def on_mouse_leave(self, *_):
+        self.is_mouse_over = False
+        self.remove_urgent()
+        self.download_revealer.set_reveal_child(False)
+        self.upload_revealer.set_reveal_child(False)
+        return
+
+    def upload_urgent(self):
+        self.add_style_class("upload")
+        self.wifi_label.add_style_class("urgent")
+        self.upload_label.add_style_class("urgent")
+        self.upload_icon.add_style_class("urgent")
+        self.download_icon.add_style_class("urgent")
+        self.upload_revealer.set_reveal_child(True)
+        self.download_revealer.set_reveal_child(self.downloading)
+        return
+    
+    def download_urgent(self):
+        self.add_style_class("download")
+        self.wifi_label.add_style_class("urgent")
+        self.download_label.add_style_class("urgent")
+        self.download_icon.add_style_class("urgent")
+        self.upload_icon.add_style_class("urgent")
+        self.download_revealer.set_reveal_child(True)
+        self.upload_revealer.set_reveal_child(self.uploading)
+        return
+    
+    def remove_urgent(self):
+        self.remove_style_class("download")
+        self.remove_style_class("upload")
+        self.wifi_label.remove_style_class("urgent")
+        self.download_label.remove_style_class("urgent")
+        self.upload_label.remove_style_class("urgent")
+        self.download_icon.remove_style_class("urgent")
+        self.upload_icon.remove_style_class("urgent")
+        return

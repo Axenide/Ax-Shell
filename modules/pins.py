@@ -11,7 +11,7 @@ from watchdog.events import FileSystemEventHandler
 
 from fabric.widgets.box import Box
 from fabric.widgets.label import Label
-from fabric.widgets.scrolledwindow import ScrolledWindow  # <-- new import
+from fabric.widgets.scrolledwindow import ScrolledWindow
 
 import modules.icons as icons
 

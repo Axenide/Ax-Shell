@@ -7,7 +7,7 @@
 }
 
 #dock.occluded {
-  margin-bottom: -64px;
+  @apply dock_nmargin();
   opacity: 0;
 }
 
@@ -26,6 +26,8 @@
 #dock-app-button:hover,
 #dock-app-button:hover.instance {
   background-color: var(--surface-bright);
+  border-top: 1px solid var(--primary);
+  padding-top: 3px;
 }
 
 #dock-app-button:active,
@@ -35,4 +37,7 @@
 
 #dock-app-button.instance {
   background: linear-gradient(to top, transparent, var(--surface-bright));
+  border-bottom: 1px solid var(--surface);
+  border-top: 1px solid var(--outline);
+  padding: 3px 4px;
 }

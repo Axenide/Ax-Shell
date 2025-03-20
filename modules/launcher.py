@@ -16,6 +16,7 @@ import os
 import re
 import math
 import subprocess
+from modules.dock import Dock  # Import the Dock class
 
 class AppLauncher(Box):
     def __init__(self, **kwargs):
@@ -39,7 +40,7 @@ class AppLauncher(Box):
                 self.calc_history = json.load(f)
         else:
             self.calc_history = []
-        
+
         self.viewport = Box(name="viewport", spacing=4, orientation="v")
         self.search_entry = Entry(
             name="search-entry",
@@ -80,7 +81,7 @@ class AppLauncher(Box):
                 ),
             ],
         )
-        
+
         self.launcher_box = Box(
             name="launcher-box",
             spacing=10,
@@ -202,12 +203,12 @@ class AppLauncher(Box):
             alloc = button.get_allocation()
             if alloc.height == 0:
                 return False  # Retry if allocation isn't ready
-            
+
             y = alloc.y
             height = alloc.height
             page_size = adj.get_page_size()
             current_value = adj.get_value()
-            
+
             # Calculate visible boundaries
             visible_top = current_value
             visible_bottom = current_value + page_size
@@ -287,34 +288,62 @@ class AppLauncher(Box):
                 self.close_launcher()
                 return True
             return False
-    
+
     def add_selected_app_to_dock(self):
-        """Adds the currently selected application to the dock.json file."""
+        """Adds the currently selected application to the dock.json file with comprehensive metadata."""
         children = self.viewport.get_children()
         if not children or self.selected_index == -1 or self.selected_index >= len(children):
             return  # No app selected
 
         selected_button = children[self.selected_index]
-        # Assuming the app's name/command is stored in the tooltip_text of the button.
-        # We need to extract the app's command from the DesktopApp object.
+        # Extract the app's display name from the label to find the DesktopApp object
         selected_app = next((app for app in self._all_apps if app.display_name == selected_button.get_child().get_children()[1].props.label), None)
         if not selected_app:
             return
 
-        app_command = selected_app.executable
+        # Create comprehensive app data dictionary - Include all available properties
+        # Filter out None values to keep the JSON clean
+        app_data = {k: v for k, v in {
+            "name": selected_app.name,
+            "display_name": selected_app.display_name,
+            "window_class": selected_app.window_class,
+            "executable": selected_app.executable,
+            "command_line": selected_app.command_line,
+            "icon_name": selected_app.icon_name
+        }.items() if v is not None}
 
         config_path = get_relative_path("../config/dock.json")
         try:
-            with open(config_path, "r+") as file:
+            with open(config_path, "r") as file:
                 data = json.load(file)
         except (FileNotFoundError, json.JSONDecodeError):
-            data = {}  # Initialize as an empty dictionary if file not found or corrupted
-            with open(config_path, "w") as file: #create the file
-                pass
-        if app_command not in data.get("pinned_apps", []):
-            data.setdefault("pinned_apps", []).append(app_command)
-            with open(config_path, "w") as file:
-                json.dump(data, file, indent=4)
+            data = {"pinned_apps": []}
+
+        # Check if app is already pinned (by name)
+        already_pinned = False
+        for pinned_app in data.get("pinned_apps", []):
+            if isinstance(pinned_app, dict) and pinned_app.get("name") == app_data["name"]:
+                already_pinned = True
+                # Update existing entry with latest app data
+                pinned_app.update(app_data)
+                break
+            elif isinstance(pinned_app, str) and pinned_app == app_data["name"]:
+                already_pinned = True
+                # Replace string format with new comprehensive format
+                data["pinned_apps"].remove(pinned_app)
+                data["pinned_apps"].append(app_data)
+                break
+
+        # Add to pinned apps if not already there
+        if not already_pinned:
+            data.setdefault("pinned_apps", []).append(app_data)
+        
+        # Write the updated config
+        with open(config_path, "w") as file:
+            json.dump(data, file, indent=4)
+            
+        # Notify dock instances of the configuration change immediately
+        Dock.notify_config_change()
 
     def move_selection(self, delta: int):
         children = self.viewport.get_children()

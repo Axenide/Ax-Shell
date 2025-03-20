@@ -4,11 +4,15 @@ from fabric.widgets.button import Button
 from fabric.utils.helpers import exec_shell_command_async, get_relative_path
 import modules.icons as icons
 from gi.repository import Gdk, GLib
-import config.data as data
+import os
+import modules.data as data
 import subprocess
+from loguru import logger
 
 SCREENSHOT_SCRIPT = get_relative_path("../scripts/screenshot.sh")
 OCR_SCRIPT = get_relative_path("../scripts/ocr.sh")
+GAMEMODE_SCRIPT = get_relative_path("../scripts/gamemode.sh")
+GAMEMODE_CHECK_SCRIPT = get_relative_path("../scripts/gamemode_check.sh")
 SCREENRECORD_SCRIPT = get_relative_path("../scripts/screenrecord.sh")
 
 class Toolbox(Box):
@@ -34,6 +38,10 @@ class Toolbox(Box):
             h_align="center",
             v_align="center",
         )
+        # Enable keyboard focus and connect events
+        self.btn_ssregion.set_can_focus(True)
+        self.btn_ssregion.connect("button-press-event", self.on_ssregion_click)
+        self.btn_ssregion.connect("key-press-event", self.on_ssregion_key)
 
         self.btn_ssfull = Button(
             name="toolbox-button",
@@ -44,6 +52,10 @@ class Toolbox(Box):
             h_align="center",
             v_align="center",
         )
+        # Enable keyboard focus and connect events
+        self.btn_ssfull.set_can_focus(True) 
+        self.btn_ssfull.connect("button-press-event", self.on_ssfull_click)
+        self.btn_ssfull.connect("key-press-event", self.on_ssfull_key)
 
         self.btn_screenrecord = Button(
             name="toolbox-button",
@@ -67,11 +79,21 @@ class Toolbox(Box):
 
         self.btn_color = Button(
             name="toolbox-button",
-            tooltip_text="Color Picker\nLeft Click: HEX\nMiddle Click: HSV\nRight Click: RGB\n\nKeyboard:\nReturn: HEX\nShift+Return: RGB\nCtrl+Return: HSV",
+            tooltip_text="Color Picker\nLeft Click: HEX\nMiddle Click: HSV\nRight Click: RGB\n\nKeyboard:\nEnter: HEX\nShift+Enter: RGB\nCtrl+Enter: HSV",
             child=Label(
                 name="button-bar-label",
                 markup=icons.colorpicker
             ),
+            h_expand=False,
+            v_expand=False,
+            h_align="center",
+            v_align="center",
+        )
+
+        self.btn_gamemode = Button(
+            name="toolbox-button",
+            child=Label(name="button-label", markup=icons.gamemode),
+            on_clicked=self.gamemode,
             h_expand=False,
             v_expand=False,
             h_align="center",
@@ -93,13 +115,39 @@ class Toolbox(Box):
             h_align="center",
             v_align="center",
         )
+        
+        self.btn_screenshots_folder = Button(
+            name="toolbox-button",
+            child=Label(name="button-label", markup=icons.screenshots),
+            on_clicked=self.open_screenshots_folder,
+            h_expand=False,
+            v_expand=False,
+            h_align="center",
+            v_align="center",
+        )
+        
+        self.btn_recordings_folder = Button(
+            name="toolbox-button",
+            child=Label(name="button-label", markup=icons.recordings),
+            on_clicked=self.open_recordings_folder,
+            h_expand=False,
+            v_expand=False,
+            h_align="center",
+            v_align="center",
+        )
 
         self.buttons = [
             self.btn_ssregion,
             self.btn_ssfull,
+            self.btn_screenshots_folder,
+            Box(name="tool-sep", h_expand=False, v_expand=False, h_align="center", v_align="center"),
             self.btn_screenrecord,
+            self.btn_recordings_folder,
+            Box(name="tool-sep", h_expand=False, v_expand=False, h_align="center", v_align="center"),
             self.btn_ocr,
             self.btn_color,
+            Box(name="tool-sep", h_expand=False, v_expand=False, h_align="center", v_align="center"),
+            self.btn_gamemode,
             self.btn_emoji,
         ]
 
@@ -110,6 +158,7 @@ class Toolbox(Box):
 
         # Start polling for process state every second.
         self.recorder_timer_id = GLib.timeout_add_seconds(1, self.update_screenrecord_state)
+        self.gamemode_updater = GLib.timeout_add_seconds(1, self.gamemode_check)
 
     def close_menu(self):
         self.notch.close_notch()
@@ -119,6 +168,52 @@ class Toolbox(Box):
         exec_shell_command_async(f"bash {SCREENSHOT_SCRIPT} p")
         self.close_menu()
 
+    def on_ssfull_click(self, button, event):
+        if event.type == Gdk.EventType.BUTTON_PRESS:
+            if event.button == 1:  # Left click
+                self.ssfull()
+            elif event.button == 3:  # Right click
+                exec_shell_command_async(f"bash {SCREENSHOT_SCRIPT} p mockup")
+                self.close_menu()
+            return True
+        return False
+
+    def on_ssfull_key(self, widget, event):
+        if event.keyval in {Gdk.KEY_Return, Gdk.KEY_KP_Enter}:
+            modifiers = event.get_state()
+            if modifiers & Gdk.ModifierType.SHIFT_MASK:
+                exec_shell_command_async(f"bash {SCREENSHOT_SCRIPT} p mockup")
+                self.close_menu()
+            else:
+                self.ssfull()
+            return True
+        return False
+
+    def ssregion(self, *args):
+        exec_shell_command_async(f"bash {SCREENSHOT_SCRIPT} sf")
+        self.close_menu()
+
+    def on_ssregion_click(self, button, event):
+        if event.type == Gdk.EventType.BUTTON_PRESS:
+            if event.button == 1:  # Left click
+                self.ssregion()
+            elif event.button == 3:  # Right click
+                exec_shell_command_async(f"bash {SCREENSHOT_SCRIPT} sf mockup")
+                self.close_menu()
+            return True
+        return False
+
+    def on_ssregion_key(self, widget, event):
+        if event.keyval in {Gdk.KEY_Return, Gdk.KEY_KP_Enter}:
+            modifiers = event.get_state()
+            if modifiers & Gdk.ModifierType.SHIFT_MASK:
+                exec_shell_command_async(f"bash {SCREENSHOT_SCRIPT} sf mockup")
+                self.close_menu()
+            else:
+                self.ssregion()
+            return True
+        return False
+
     def screenrecord(self, *args):
         # Launch screenrecord script in detached mode so that it remains running independently of this program.
         exec_shell_command_async(f"bash -c 'nohup bash {SCREENRECORD_SCRIPT} > /dev/null 2>&1 & disown'")
@@ -127,6 +222,25 @@ class Toolbox(Box):
     def ocr(self, *args):
         exec_shell_command_async(f"bash {OCR_SCRIPT} sf")
         self.close_menu()
+
+    def gamemode(self, *args):
+        exec_shell_command_async(f"bash {GAMEMODE_SCRIPT} sf")
+        self.gamemode_check()
+        self.close_menu()
+
+    def gamemode_check(self):
+        try:
+            result = subprocess.run(f"bash {GAMEMODE_CHECK_SCRIPT} sf", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            enabled = result.stdout == b't\n'
+        except Exception:
+            enabled = False
+
+        if enabled:
+            self.btn_gamemode.get_child().set_markup(icons.gamemode_off)
+        else:
+            self.btn_gamemode.get_child().set_markup(icons.gamemode)
+
+        return True
 
     def ssregion(self, *args):
         exec_shell_command_async(f"bash {SCREENSHOT_SCRIPT} sf")
@@ -183,6 +297,24 @@ class Toolbox(Box):
         
         # Return True to keep this callback active.
         return True
+
+    def open_screenshots_folder(self, *args):
+        screenshots_dir = os.path.join(os.environ.get('XDG_PICTURES_DIR', 
+                                                    os.path.expanduser('~/Pictures')), 
+                                     'Screenshots')
+        # Create directory if it doesn't exist
+        os.makedirs(screenshots_dir, exist_ok=True)
+        exec_shell_command_async(f"xdg-open {screenshots_dir}")
+        self.close_menu()
+
+    def open_recordings_folder(self, *args):
+        recordings_dir = os.path.join(os.environ.get('XDG_VIDEOS_DIR', 
+                                                   os.path.expanduser('~/Videos')), 
+                                    'Recordings')
+        # Create directory if it doesn't exist
+        os.makedirs(recordings_dir, exist_ok=True)
+        exec_shell_command_async(f"xdg-open {recordings_dir}")
+        self.close_menu()
 
     def emoji(self, *args):
         self.notch.open_notch("emoji")

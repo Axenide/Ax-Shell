@@ -43,9 +43,11 @@
 }
 
 #notch-content.tools {
-    min-height: 84px;
-    min-width: 364px;
-    border-radius: 0 0 36px 36px;
+
+  min-height: 84px;
+  min-width: 580px;
+  border-radius: 0 0 36px 36px;
+>>>>>>> 5dd7cc83a8aa349975e713044e5b3411cec2d2c2
 }
 
 #notch-content.emoji {
@@ -136,5 +138,9 @@
 }
 
 #hyprland-window label {
-  margin: 0px 10px;
+  margin: 0px 8px;
+}
+
+#active-window-box {
+  margin: 10px;
 }

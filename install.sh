@@ -7,11 +7,11 @@ set -o pipefail  # Prevent errors in a pipeline from being masked
 REPO_URL="https://github.com/Axenide/Ax-Shell.git"
 INSTALL_DIR="$HOME/.config/Ax-Shell"
 PACKAGES=(
-  acpi
   brightnessctl
   cava
   fabric-cli-git
   gnome-bluetooth-3.0
+  gobject-introspection
   gpu-screen-recorder
   grimblast
   hypridle
@@ -70,10 +70,10 @@ fi
 
 # Install required packages using the detected AUR helper (only if missing)
 echo "Installing required packages..."
-$aur_helper -Syy --needed --noconfirm "${PACKAGES[@]}" || true
+$aur_helper -Syy --needed --devel --noconfirm "${PACKAGES[@]}" || true
 
 echo "Installing gray-git..."
-yes | $aur_helper -Syy --needed --noconfirm gray-git || true
+yes | $aur_helper -Syy --needed --devel --noconfirm gray-git || true
 
 echo "Installing required fonts..."
 

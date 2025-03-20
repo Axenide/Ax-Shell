@@ -1,5 +1,5 @@
 import subprocess
-import re
+import json
 
 def get_current_workspace():
     """
@@ -11,9 +11,12 @@ def get_current_workspace():
             capture_output=True,
             text=True
         )
-        match = re.search(r"ID (\d+)", result.stdout)
-        if match:
-            return int(match.group(1))
+        # Assume the output similar to: "ID <number>"
+        # Extracting the number from the output
+        parts = result.stdout.split()
+        for i, part in enumerate(parts):
+            if part == "ID" and i + 1 < len(parts):
+                return int(parts[i+1])
     except Exception as e:
         print(f"Error getting current workspace: {e}")
     return -1
@@ -34,11 +37,11 @@ def check_occlusion(occlusion_region, workspace=None):
 
     try:
         result = subprocess.run(
-            ["hyprctl", "clients"],
+            ["hyprctl", "-j", "clients"],
             capture_output=True,
             text=True
         )
-        clients = result.stdout
+        clients = json.loads(result.stdout)
     except Exception as e:
         print(f"Error retrieving client windows: {e}")
         return False
@@ -47,33 +50,24 @@ def check_occlusion(occlusion_region, workspace=None):
     occ_x2 = occ_x + occ_width
     occ_y2 = occ_y + occ_height
 
-    # Precompile regex patterns for performance
-    workspace_pattern = re.compile(r"workspace:\s*(\d+)")
-    position_pattern = re.compile(r"at:\s*(-?\d+),(-?\d+)")
-    size_pattern = re.compile(r"size:\s*(\d+),(\d+)")
-    mapped_pattern = re.compile(r"mapped:\s*(\d+)")
-
-    # Process each client (window) block
-    for client in clients.split("\n\n"):
-        if "workspace" not in client or "at:" not in client or "size:" not in client:
+    for client in clients:
+        # Check if client is mapped
+        if not client.get("mapped", False):
             continue
 
-        mapped_match = mapped_pattern.search(client)
-        if not mapped_match or int(mapped_match.group(1)) == 0:
-            continue  # Skip unmapped windows
-
-        workspace_match = workspace_pattern.search(client)
-        if not workspace_match or int(workspace_match.group(1)) != workspace:
-            continue  # Skip windows from other workspaces
-
-        position_match = position_pattern.search(client)
-        size_match = size_pattern.search(client)
-        if not position_match or not size_match:
+        # Ensure client has proper workspace information and matches the workspace
+        client_workspace = client.get("workspace", {})
+        if client_workspace.get("id") != workspace:
             continue
 
-        # Extract window position and size
-        x, y = map(int, position_match.groups())
-        width, height = map(int, size_match.groups())
+        # Ensure client has position and size info
+        position = client.get("at")
+        size = client.get("size")
+        if not position or not size:
+            continue
+
+        x, y = position
+        width, height = size
         win_x1, win_y1 = x, y
         win_x2, win_y2 = x + width, y + height
 

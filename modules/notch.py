@@ -2,7 +2,6 @@ from os import truncate
 from fabric.widgets.box import Box
 from fabric.widgets.label import Label
 from fabric.widgets.centerbox import CenterBox
-from fabric.widgets.button import Button
 from fabric.widgets.stack import Stack
 from fabric.widgets.overlay import Overlay
 from fabric.widgets.revealer import Revealer
@@ -18,10 +17,12 @@ from modules.overview import Overview
 from modules.hue import Light
 from modules.emoji import EmojiPicker
 from modules.corners import MyCorner
-import modules.icons as icons
 import config.data as data
 from modules.player import PlayerSmall
 from modules.tools import Toolbox
+from utils.icon_resolver import IconResolver
+from fabric.utils.helpers import get_desktop_applications
+from fabric.widgets.image import Image
 
 
 class Notch(Window):
@@ -39,11 +40,13 @@ class Notch(Window):
 
         self.bar = kwargs.get("bar", None)
 
-        # Primero inicializamos NotificationContainer
         self.notification = NotificationContainer(notch=self)
         self.notification_history = self.notification.history
 
-        # Luego inicializamos el resto de componentes que dependen de notification_history
+        self.icon_resolver = IconResolver()
+        self._all_apps = get_desktop_applications()
+        self.app_identifiers = self._build_app_identifiers_map()
+
         self.dashboard = Dashboard(notch=self)
         self.launcher = AppLauncher(notch=self)
         self.overview = Overview()
@@ -62,6 +65,12 @@ class Notch(Window):
             h_align="fill",
         )
 
+        self.window_icon = Image(
+            name="notch-window-icon",
+            icon_name="application-x-executable",
+            icon_size=20
+        )
+
         self.active_window = ActiveWindow(
             name="hyprland-window",
             h_expand=True,
@@ -71,8 +80,19 @@ class Notch(Window):
                 truncate=truncate,
             ),
         )
-        # Add the click connection for active_window.
-        self.active_window.connect("button-press-event", lambda widget, event: (self.open_notch("dashboard"), False)[1])
+        
+        self.active_window_box = CenterBox(
+            name="active-window-box",
+            h_expand=True,
+            h_align="fill",
+            start_children=self.window_icon,
+            center_children=self.active_window,
+            end_children=None
+        )
+
+        self.active_window_box.connect("button-press-event", lambda widget, event: (self.open_notch("dashboard"), False)[1])
+
+        self.active_window.connect("notify::label", self.update_window_icon)
 
         self.active_window.get_children()[0].set_hexpand(True)
         self.active_window.get_children()[0].set_halign(Gtk.Align.FILL)
@@ -80,14 +100,12 @@ class Notch(Window):
 
         self.active_window.connect("notify::label", lambda *_: self.restore_label_properties())
 
-        # Create additional compact views:
         self.player_small = PlayerSmall()
         self.user_label = Label(name="compact-user", label=f"{data.USERNAME}@{data.HOSTNAME}")
 
         self.player_small.mpris_manager.connect("player-appeared", lambda *_: self.compact_stack.set_visible_child(self.player_small))
         self.player_small.mpris_manager.connect("player-vanished", self.on_player_vanished)
 
-        # Create a stack to hold the three views:
         self.compact_stack = Stack(
             name="notch-compact-stack",
             v_expand=True,
@@ -96,17 +114,15 @@ class Notch(Window):
             transition_duration=100,
             children=[
                 self.user_label,
-                self.active_window,
+                self.active_window_box,
                 self.player_small,
             ]
         )
         self.compact_stack.set_visible_child(self.player_small)
 
-        # Create the compact button and set the stack as its child
         self.compact = Gtk.EventBox(name="notch-compact")
         self.compact.set_visible(True)
         self.compact.add(self.compact_stack)
-        # Se agrega el mask de smooth scroll junto a scroll y button press.
         self.compact.add_events(
             Gdk.EventMask.SCROLL_MASK |
             Gdk.EventMask.BUTTON_PRESS_MASK |
@@ -114,7 +130,6 @@ class Notch(Window):
         )
         self.compact.connect("scroll-event", self._on_compact_scroll)
         self.compact.connect("button-press-event", lambda widget, event: (self.open_notch("dashboard"), False)[1])
-        # Add cursor change on hover.
         self.compact.connect("enter-notify-event", self.on_button_enter)
         self.compact.connect("leave-notify-event", self.on_button_leave)
 
@@ -167,9 +182,7 @@ class Notch(Window):
             orientation="h",
             h_align="center",
             v_align="center",
-            # start_children=self.corner_left,
             center_children=self.stack,
-            # end_children=self.corner_right,
         )
 
         self.notch_overlay = Overlay(
@@ -211,7 +224,7 @@ class Notch(Window):
         )
 
         self.hidden = False
-        self._is_notch_open = False  # Add a flag to track notch open state
+        self._is_notch_open = False
         self._scrolling = False
 
         self.add(self.notch_complete)
@@ -222,6 +235,8 @@ class Notch(Window):
         self.add_keybinding("Escape", lambda *_: self.close_notch())
         self.add_keybinding("Ctrl Tab", lambda *_: self.dashboard.go_to_next_child())
         self.add_keybinding("Ctrl Shift ISO_Left_Tab", lambda *_: self.dashboard.go_to_previous_child())
+        
+        self.update_window_icon()
 
     def on_button_enter(self, widget, event):
         window = widget.get_window()
@@ -240,9 +255,9 @@ class Notch(Window):
 
         self.bar.revealer_right.set_reveal_child(True)
         self.bar.revealer_left.set_reveal_child(True)
-        self.applet_stack.set_transition_duration(0) # Set transition to 0 when closing, though it won't be visible.
+        self.applet_stack.set_transition_duration(0)
         self.applet_stack.set_visible_child(self.nhistory)
-        self._is_notch_open = False # Set notch state to closed
+        self._is_notch_open = False
 
         if self.hidden:
             self.notch_box.remove_style_class("hideshow")
@@ -260,15 +275,23 @@ class Notch(Window):
         if widget == "bluetooth":
             # If dashboard is already open
             if self.stack.get_visible_child() == self.dashboard:
-                # If visible applet is already btdevices then toggle close the dashboard.
-                if self.applet_stack.get_visible_child() == self.btdevices:
+                # If we're in the widgets section and btdevices is already visible, close the notch
+                if self.dashboard.stack.get_visible_child() == self.dashboard.widgets and self.applet_stack.get_visible_child() == self.btdevices:
                     self.close_notch()
-                else:
-                    self.applet_stack.set_transition_duration(250) # Set transition to 250 when already open
+                    return
+                # If we're in the widgets section but not on btdevices, switch to btdevices
+                elif self.dashboard.stack.get_visible_child() == self.dashboard.widgets:
+                    self.applet_stack.set_transition_duration(250)
                     self.applet_stack.set_visible_child(self.btdevices)
-                return
+                    return
+                # If we're in another dashboard section, switch to widgets and btdevices
+                else:
+                    self.dashboard.go_to_section("widgets")
+                    self.applet_stack.set_transition_duration(250)
+                    self.applet_stack.set_visible_child(self.btdevices)
+                    return
             else:
-                # Open dashboard with btdevices visible.
+                # Open dashboard with btdevices visible
                 self.set_keyboard_mode("exclusive")
 
                 if self.hidden:
@@ -281,13 +304,13 @@ class Notch(Window):
                     w.remove_style_class("open")
 
                 self.stack.add_style_class("dashboard")
-                self.applet_stack.set_transition_duration(0) # Set transition to 0 when opening
-                self.stack.set_transition_duration(0) # Keep stack transition to 0 for opening
+                self.applet_stack.set_transition_duration(0)
+                self.stack.set_transition_duration(0)
                 self.stack.set_visible_child(self.dashboard)
                 self.dashboard.add_style_class("open")
+                self.dashboard.go_to_section("widgets")  # Ensure we're on widgets section
                 self.applet_stack.set_visible_child(self.btdevices)
-                self._is_notch_open = True # Set notch state to open
-                # Reset the transition duration back to 250 after a short delay.
+                self._is_notch_open = True
                 GLib.timeout_add(10, lambda: [self.stack.set_transition_duration(100), self.applet_stack.set_transition_duration(250)][-1] or False)
 
                 self.bar.revealer_right.set_reveal_child(False)
@@ -297,14 +320,15 @@ class Notch(Window):
         # Handle the "dashboard" case
         if widget == "dashboard":
             if self.stack.get_visible_child() == self.dashboard:
-                # If dashboard is already open, ensure nhistory is visible.
-                if self.applet_stack.get_visible_child() != self.nhistory:
-                    self.applet_stack.set_transition_duration(250) # Set transition to 250 when already open
-                    self.applet_stack.set_visible_child(self.nhistory)
-                    return
-                else:
-                    # Otherwise, toggle the notch closed.
+                # If dashboard is already open and showing widgets, close it
+                if self.applet_stack.get_visible_child() == self.nhistory and self.dashboard.stack.get_visible_child() == self.dashboard.widgets:
                     self.close_notch()
+                    return
+                # Otherwise navigate to widgets and ensure nhistory is visible
+                else:
+                    self.applet_stack.set_transition_duration(250)
+                    self.applet_stack.set_visible_child(self.nhistory)
+                    self.dashboard.go_to_section("widgets")
                     return
             else:
                 self.set_keyboard_mode("exclusive")
@@ -319,14 +343,108 @@ class Notch(Window):
                     w.remove_style_class("open")
 
                 self.stack.add_style_class("dashboard")
-                self.applet_stack.set_transition_duration(0) # Set transition to 0 when opening
-                self.stack.set_transition_duration(0) # Keep stack transition to 0 for opening
+                self.applet_stack.set_transition_duration(0)
+                self.stack.set_transition_duration(0)
                 self.stack.set_visible_child(self.dashboard)
                 self.dashboard.add_style_class("open")
+                self.dashboard.go_to_section("widgets")  # Explicitly go to widgets section
                 self.applet_stack.set_visible_child(self.nhistory)
-                self._is_notch_open = True # Set notch state to open
+                self._is_notch_open = True
                 # Reset the transition duration back to 250 after a short delay.
                 GLib.timeout_add(10, lambda: [self.stack.set_transition_duration(100), self.applet_stack.set_transition_duration(250)][-1] or False)
+
+                self.bar.revealer_right.set_reveal_child(False)
+                self.bar.revealer_left.set_reveal_child(False)
+                return
+
+        # Handle pins section
+        if widget == "pins":
+            if self.stack.get_visible_child() == self.dashboard and self.dashboard.stack.get_visible_child() == self.dashboard.pins:
+                # If dashboard is already open and showing pins, close it
+                self.close_notch()
+                return
+            else:
+                # Open dashboard and navigate to pins
+                self.set_keyboard_mode("exclusive")
+
+                if self.hidden:
+                    self.notch_box.remove_style_class("hidden")
+                    self.notch_box.add_style_class("hideshow")
+
+                for style in ["launcher", "dashboard", "notification", "overview", "emoji", "power", "tools"]:
+                    self.stack.remove_style_class(style)
+                for w in [self.launcher, self.dashboard, self.overview, self.emoji, self.power, self.tools]:
+                    w.remove_style_class("open")
+
+                self.stack.add_style_class("dashboard")
+                self.stack.set_transition_duration(0)
+                self.stack.set_visible_child(self.dashboard)
+                self.dashboard.add_style_class("open")
+                self.dashboard.go_to_section("pins")
+                self._is_notch_open = True
+                GLib.timeout_add(10, lambda: self.stack.set_transition_duration(100) or False)
+
+                self.bar.revealer_right.set_reveal_child(False)
+                self.bar.revealer_left.set_reveal_child(False)
+                return
+                
+        # Handle kanban section
+        if widget == "kanban":
+            if self.stack.get_visible_child() == self.dashboard and self.dashboard.stack.get_visible_child() == self.dashboard.kanban:
+                # If dashboard is already open and showing kanban, close it
+                self.close_notch()
+                return
+            else:
+                # Open dashboard and navigate to kanban
+                self.set_keyboard_mode("exclusive")
+
+                if self.hidden:
+                    self.notch_box.remove_style_class("hidden")
+                    self.notch_box.add_style_class("hideshow")
+
+                for style in ["launcher", "dashboard", "notification", "overview", "emoji", "power", "tools"]:
+                    self.stack.remove_style_class(style)
+                for w in [self.launcher, self.dashboard, self.overview, self.emoji, self.power, self.tools]:
+                    w.remove_style_class("open")
+
+                self.stack.add_style_class("dashboard")
+                self.stack.set_transition_duration(0)
+                self.stack.set_visible_child(self.dashboard)
+                self.dashboard.add_style_class("open")
+                self.dashboard.go_to_section("kanban")
+                self._is_notch_open = True
+                GLib.timeout_add(10, lambda: self.stack.set_transition_duration(100) or False)
+
+                self.bar.revealer_right.set_reveal_child(False)
+                self.bar.revealer_left.set_reveal_child(False)
+                return
+                
+        # Handle wallpapers section
+        if widget == "wallpapers":
+            if self.stack.get_visible_child() == self.dashboard and self.dashboard.stack.get_visible_child() == self.dashboard.wallpapers:
+                # If dashboard is already open and showing wallpapers, close it
+                self.close_notch()
+                return
+            else:
+                # Open dashboard and navigate to wallpapers
+                self.set_keyboard_mode("exclusive")
+
+                if self.hidden:
+                    self.notch_box.remove_style_class("hidden")
+                    self.notch_box.add_style_class("hideshow")
+
+                for style in ["launcher", "dashboard", "notification", "overview", "emoji", "power", "tools"]:
+                    self.stack.remove_style_class(style)
+                for w in [self.launcher, self.dashboard, self.overview, self.emoji, self.power, self.tools]:
+                    w.remove_style_class("open")
+
+                self.stack.add_style_class("dashboard")
+                self.stack.set_transition_duration(0)
+                self.stack.set_visible_child(self.dashboard)
+                self.dashboard.add_style_class("open")
+                self.dashboard.go_to_section("wallpapers")
+                self._is_notch_open = True
+                GLib.timeout_add(10, lambda: self.stack.set_transition_duration(100) or False)
 
                 self.bar.revealer_right.set_reveal_child(False)
                 self.bar.revealer_left.set_reveal_child(False)
@@ -439,7 +557,7 @@ class Notch(Window):
 
     def on_player_vanished(self, *args):
         if self.player_small.mpris_label.get_label() == "Nothing Playing":
-            self.compact_stack.set_visible_child(self.active_window)
+            self.compact_stack.set_visible_child(self.active_window_box)  # Use box instead of direct active_window
 
     def restore_label_properties(self):
         label = self.active_window.get_children()[0]
@@ -448,3 +566,149 @@ class Notch(Window):
             label.set_hexpand(True)
             label.set_halign(Gtk.Align.FILL)
             label.queue_resize()
+            # Update icon after restoring label properties
+            self.update_window_icon()
+
+    def _build_app_identifiers_map(self):
+        """Build a mapping of app identifiers (class names, executables, names) to DesktopApp objects"""
+        identifiers = {}
+        for app in self._all_apps:
+            # Map by name (lowercase)
+            if app.name:
+                identifiers[app.name.lower()] = app
+                
+            # Map by display name
+            if app.display_name:
+                identifiers[app.display_name.lower()] = app
+                
+            # Map by window class if available
+            if app.window_class:
+                identifiers[app.window_class.lower()] = app
+                
+            # Map by executable name if available
+            if app.executable:
+                exe_basename = app.executable.split('/')[-1].lower()
+                identifiers[exe_basename] = app
+                
+            # Map by command line if available (without parameters)
+            if app.command_line:
+                cmd_base = app.command_line.split()[0].split('/')[-1].lower()
+                identifiers[cmd_base] = app
+                
+        return identifiers
+
+    def _normalize_window_class(self, class_name):
+        """Normalize window class by removing common suffixes and lowercase."""
+        if not class_name:
+            return ""
+            
+        normalized = class_name.lower()
+        
+        # Remove common suffixes
+        suffixes = [".bin", ".exe", ".so", "-bin", "-gtk"]
+        for suffix in suffixes:
+            if normalized.endswith(suffix):
+                normalized = normalized[:-len(suffix)]
+                
+        return normalized
+    
+    def find_app(self, app_identifier):
+        """Return the DesktopApp object by matching any app identifier."""
+        if not app_identifier:
+            return None
+        
+        # Try direct lookup in our identifiers map
+        normalized_id = str(app_identifier).lower()
+        if normalized_id in self.app_identifiers:
+            return self.app_identifiers[normalized_id]
+            
+        # Try with normalized class name
+        norm_id = self._normalize_window_class(normalized_id)
+        if norm_id in self.app_identifiers:
+            return self.app_identifiers[norm_id]
+            
+        # More targeted matching with exact names only
+        for app in self._all_apps:
+            if app.name and app.name.lower() == normalized_id:
+                return app
+            if app.window_class and app.window_class.lower() == normalized_id:
+                return app
+            if app.display_name and app.display_name.lower() == normalized_id:
+                return app
+            # Try with executable basename
+            if app.executable:
+                exe_base = app.executable.split('/')[-1].lower()
+                if exe_base == normalized_id:
+                    return app
+            # Try with command basename
+            if app.command_line:
+                cmd_base = app.command_line.split()[0].split('/')[-1].lower()
+                if cmd_base == normalized_id:
+                    return app
+                
+        return None
+
+    def update_window_icon(self, *args):
+        """Update the window icon based on the current active window title"""
+        # Get current window title from the active_window label
+        label_widget = self.active_window.get_children()[0]
+        if not isinstance(label_widget, Gtk.Label):
+            return
+            
+        # Get window title
+        title = label_widget.get_text()
+        if title == 'Desktop' or not title:
+            # If on desktop, hide icon completely
+            self.window_icon.set_visible(False)
+            return
+        
+        # For any active window, ensure icon is visible
+        self.window_icon.set_visible(True)
+            
+        # Try to get window class from Hyprland
+        from fabric.hyprland.widgets import get_hyprland_connection
+        conn = get_hyprland_connection()
+        if conn:
+            try:
+                import json
+                active_window = json.loads(conn.send_command("j/activewindow").reply.decode())
+                app_id = active_window.get("initialClass", "") or active_window.get("class", "")
+                
+                # Find app using icon resolver or desktop apps
+                icon_size = 20
+                desktop_app = self.find_app(app_id)
+                
+                # Get icon using improved method with fallbacks
+                icon_pixbuf = None
+                if desktop_app:
+                    icon_pixbuf = desktop_app.get_icon_pixbuf(size=icon_size)
+                
+                if not icon_pixbuf:
+                    # Try non-symbolic icon first (full color)
+                    icon_pixbuf = self.icon_resolver.get_icon_pixbuf(app_id, icon_size)
+                
+                if not icon_pixbuf and "-" in app_id:
+                    # Try with base name (no suffix) for flatpak apps
+                    base_app_id = app_id.split("-")[0]
+                    icon_pixbuf = self.icon_resolver.get_icon_pixbuf(base_app_id, icon_size)
+                    
+                if icon_pixbuf:
+                    self.window_icon.set_from_pixbuf(icon_pixbuf)
+                else:
+                    # Fallback chain: first try non-symbolic application icon
+                    try:
+                        self.window_icon.set_from_icon_name("application-x-executable", 20)
+                    except:
+                        # Last resort: use symbolic icon
+                        self.window_icon.set_from_icon_name("application-x-executable-symbolic", 20)
+            except Exception as e:
+                print(f"Error updating window icon: {e}")
+                try:
+                    self.window_icon.set_from_icon_name("application-x-executable", 20)
+                except:
+                    self.window_icon.set_from_icon_name("application-x-executable-symbolic", 20)
+        else:
+            try:
+                self.window_icon.set_from_icon_name("application-x-executable", 20)
+            except:
+                self.window_icon.set_from_icon_name("application-x-executable-symbolic", 20)

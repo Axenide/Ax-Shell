@@ -1,28 +1,37 @@
+# Standard library imports
 import os
-import json
 import shutil
+import json
+import sys
+from pathlib import Path
+
+# Add the parent directory to sys.path to allow the direct execution of this script
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+# Third-party imports
+import toml
+from PIL import Image
 import subprocess
 import gi
 
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk
-from PIL import Image
-import toml
 
+# Local imports - now using absolute import that will work when executed directly
+from config.data import (
+    APP_NAME, APP_NAME_CAP, CONFIG_DIR, HOME_DIR, WALLPAPERS_DIR_DEFAULT
+)
 from fabric.utils.helpers import get_relative_path
-import data
+from gi.repository import GdkPixbuf
 
 # Constants
 SOURCE_STRING = f"""
-# {data.APP_NAME_CAP}
-source = ~/.config/{data.APP_NAME_CAP}/config/hypr/{data.APP_NAME}.conf
+# {APP_NAME_CAP}
+source = ~/.config/{APP_NAME_CAP}/config/hypr/{APP_NAME}.conf
 """
 
-CONFIG_DIR = os.path.expanduser(f"~/.config/{data.APP_NAME}")
-WALLPAPERS_DIR_DEFAULT = get_relative_path("../assets/wallpapers_example")
-
-# Default key binding values
-bind_vars = {
+# Initialize bind_vars with default values
+DEFAULT_KEYBINDINGS = {
     'prefix_restart': "SUPER ALT",
     'suffix_restart': "B",
     'prefix_axmsg': "SUPER",
@@ -31,12 +40,18 @@ bind_vars = {
     'suffix_dash': "D",
     'prefix_bluetooth': "SUPER",
     'suffix_bluetooth': "B",
+    'prefix_pins': "SUPER",
+    'suffix_pins': "Q",
+    'prefix_kanban': "SUPER",
+    'suffix_kanban': "N",
     'prefix_launcher': "SUPER",
     'suffix_launcher': "R",
     'prefix_toolbox': "SUPER",
     'suffix_toolbox': "S",
     'prefix_overview': "SUPER",
     'suffix_overview': "TAB",
+    'prefix_wallpapers': "SUPER",
+    'suffix_wallpapers': "COMMA",
     'prefix_emoji': "SUPER",
     'suffix_emoji': "PERIOD",
     'prefix_power': "SUPER",
@@ -49,6 +64,8 @@ bind_vars = {
     'prefix_restart_inspector': "SUPER CTRL ALT",
     'suffix_restart_inspector': "B",
 }
+
+bind_vars = DEFAULT_KEYBINDINGS.copy()
 
 
 def deep_update(target: dict, update: dict) -> dict:
@@ -115,13 +132,13 @@ def ensure_matugen_config():
         },
         'templates': {
             'hyprland': {
-                'input_path': f'~/.config/{data.APP_NAME_CAP}/config/matugen/templates/hyprland-colors.conf',
-                'output_path': f'~/.config/{data.APP_NAME_CAP}/config/hypr/colors.conf'
+                'input_path': f'~/.config/{APP_NAME_CAP}/config/matugen/templates/hyprland-colors.conf',
+                'output_path': f'~/.config/{APP_NAME_CAP}/config/hypr/colors.conf'
             },
-            f'{data.APP_NAME}': {
-                'input_path': f'~/.config/{data.APP_NAME_CAP}/config/matugen/templates/{data.APP_NAME}.css',
-                'output_path': f'~/.config/{data.APP_NAME_CAP}/styles/colors.css',
-                'post_hook': f"fabric-cli exec {data.APP_NAME} 'app.set_css()' &"
+            f'{APP_NAME}': {
+                'input_path': f'~/.config/{APP_NAME_CAP}/config/matugen/templates/{APP_NAME}.css',
+                'output_path': f'~/.config/{APP_NAME_CAP}/styles/colors.css',
+                'post_hook': f"fabric-cli exec {APP_NAME} 'app.set_css()' &"
             }
         }
     }
@@ -145,14 +162,14 @@ def ensure_matugen_config():
     # Trigger image generation if "~/.current.wall" does not exist
     current_wall = os.path.expanduser("~/.current.wall")
     if not os.path.exists(current_wall):
-        image_path = os.path.expanduser(f"~/.config/{data.APP_NAME_CAP}/assets/wallpapers_example/example-1.jpg")
+        image_path = os.path.expanduser(f"~/.config/{APP_NAME_CAP}/assets/wallpapers_example/example-1.jpg")
         os.system(f"matugen image {image_path}")
 
 def load_bind_vars():
     """
     Load saved key binding variables from JSON, if available.
     """
-    config_json = os.path.expanduser(f'~/.config/{data.APP_NAME_CAP}/config/config.json')
+    config_json = os.path.expanduser(f'~/.config/{APP_NAME_CAP}/config/config.json')
     try:
         with open(config_json, 'r') as f:
             saved_vars = json.load(f)
@@ -167,30 +184,33 @@ def generate_hyprconf() -> str:
     Generate the Hypr configuration string using the current bind_vars.
     """
     home = os.path.expanduser('~')
-    return f"""exec-once = uwsm app -- python {home}/.config/{data.APP_NAME_CAP}/main.py
+    return f"""exec-once = uwsm app -- python {home}/.config/{APP_NAME_CAP}/main.py
 exec = pgrep -x "hypridle" > /dev/null || uwsm app -- hypridle
 exec = uwsm app -- swww-daemon
 
-$fabricSend = fabric-cli exec {data.APP_NAME}
-$axMessage = notify-send "Axenide" "What are you doing?" -i "{home}/.config/{data.APP_NAME_CAP}/assets/ax.png" -a "Source Code" -A "Be patient. 🍙"
+$fabricSend = fabric-cli exec {APP_NAME}
+$axMessage = notify-send "Axenide" "What are you doing?" -i "{home}/.config/{APP_NAME_CAP}/assets/ax.png" -a "Source Code" -A "Be patient. 🍙"
 
-bind = {bind_vars['prefix_restart']}, {bind_vars['suffix_restart']}, exec, killall {data.APP_NAME}; uwsm app -- python {home}/.config/{data.APP_NAME_CAP}/main.py # Reload {data.APP_NAME_CAP} | Default: SUPER ALT + B
+bind = {bind_vars['prefix_restart']}, {bind_vars['suffix_restart']}, exec, killall {APP_NAME}; uwsm app -- python {home}/.config/{APP_NAME_CAP}/main.py # Reload {APP_NAME_CAP} | Default: SUPER ALT + B
 bind = {bind_vars['prefix_axmsg']}, {bind_vars['suffix_axmsg']}, exec, $axMessage # Message | Default: SUPER + A
 bind = {bind_vars['prefix_dash']}, {bind_vars['suffix_dash']}, exec, $fabricSend 'notch.open_notch("dashboard")' # Dashboard | Default: SUPER + D
 bind = {bind_vars['prefix_bluetooth']}, {bind_vars['suffix_bluetooth']}, exec, $fabricSend 'notch.open_notch("bluetooth")' # Bluetooth | Default: SUPER + B
+bind = {bind_vars['prefix_pins']}, {bind_vars['suffix_pins']}, exec, $fabricSend 'notch.open_notch("pins")' # Pins | Default: SUPER + Q
+bind = {bind_vars['prefix_kanban']}, {bind_vars['suffix_kanban']}, exec, $fabricSend 'notch.open_notch("kanban")' # Kanban | Default: SUPER + N
 bind = {bind_vars['prefix_launcher']}, {bind_vars['suffix_launcher']}, exec, $fabricSend 'notch.open_notch("launcher")' # App Launcher | Default: SUPER + R
 bind = {bind_vars['prefix_toolbox']}, {bind_vars['suffix_toolbox']}, exec, $fabricSend 'notch.open_notch("tools")' # Toolbox | Default: SUPER + S
 bind = {bind_vars['prefix_overview']}, {bind_vars['suffix_overview']}, exec, $fabricSend 'notch.open_notch("overview")' # Overview | Default: SUPER + TAB
+bind = {bind_vars['prefix_wallpapers']}, {bind_vars['suffix_wallpapers']}, exec, $fabricSend 'notch.open_notch("wallpapers")' # Wallpapers | Default: SUPER + COMMA
 bind = {bind_vars['prefix_emoji']}, {bind_vars['suffix_emoji']}, exec, $fabricSend 'notch.open_notch("emoji")' # Emoji | Default: SUPER + PERIOD
 bind = {bind_vars['prefix_power']}, {bind_vars['suffix_power']}, exec, $fabricSend 'notch.open_notch("power")' # Power Menu | Default: SUPER + ESCAPE
 bind = {bind_vars['prefix_toggle']}, {bind_vars['suffix_toggle']}, exec, $fabricSend 'bar.toggle_hidden()' # Toggle Bar | Default: SUPER CTRL + B
 bind = {bind_vars['prefix_toggle']}, {bind_vars['suffix_toggle']}, exec, $fabricSend 'notch.toggle_hidden()' # Toggle Notch | Default: SUPER CTRL + B
 bind = {bind_vars['prefix_css']}, {bind_vars['suffix_css']}, exec, $fabricSend 'app.set_css()' # Reload CSS | Default: SUPER SHIFT + B
-bind = {bind_vars['prefix_restart_inspector']}, {bind_vars['suffix_restart_inspector']}, exec, killall {data.APP_NAME}; GTK_DEBUG=interactive uwsm app -- python {home}/.config/{data.APP_NAME_CAP}/main.py # Restart with inspector | Default: SUPER CTRL ALT + B
+bind = {bind_vars['prefix_restart_inspector']}, {bind_vars['suffix_restart_inspector']}, exec, killall {APP_NAME}; GTK_DEBUG=interactive uwsm app -- python {home}/.config/{APP_NAME_CAP}/main.py # Restart with inspector | Default: SUPER CTRL ALT + B
 
 # Wallpapers directory: {bind_vars['wallpapers_dir']}
 
-source = {home}/.config/{data.APP_NAME_CAP}/config/hypr/colors.conf
+source = {home}/.config/{APP_NAME_CAP}/config/hypr/colors.conf
 
 layerrule = noanim, fabric
 
@@ -229,7 +249,7 @@ decoration {{
 
 animations {{
     enabled = yes
-    bezier = myBezier, .5, .25, 0, 1
+    bezier = myBezier, 0.4, 0, 0.2, 1
     animation = windows, 1, 2.5, myBezier, popin 80%
     animation = border, 1, 2.5, myBezier
     animation = fade, 1, 2.5, myBezier
@@ -243,7 +263,7 @@ def ensure_face_icon():
     Ensure the face icon exists. If not, copy the default icon.
     """
     face_icon_path = os.path.expanduser("~/.face.icon")
-    default_icon_path = os.path.expanduser(f"~/.config/{data.APP_NAME_CAP}/assets/default.png")
+    default_icon_path = os.path.expanduser(f"~/.config/{APP_NAME_CAP}/assets/default.png")
     if not os.path.exists(face_icon_path) and os.path.exists(default_icon_path):
         shutil.copy(default_icon_path, face_icon_path)
 
@@ -262,35 +282,93 @@ def backup_and_replace(src: str, dest: str, config_name: str):
 
 class HyprConfGUI(Gtk.Window):
     def __init__(self, show_lock_checkbox: bool, show_idle_checkbox: bool):
-        super().__init__(title="Configure Key Binds")
-        self.set_border_width(20)
-        self.set_default_size(500, 450)
+        super().__init__(title="Ax-Shell Settings")
+        self.set_border_width(10)
+        self.set_default_size(500, 550)
         self.set_resizable(False)
 
         self.selected_face_icon = None
+        self.show_lock_checkbox = show_lock_checkbox
+        self.show_idle_checkbox = show_idle_checkbox
 
-        # Use a grid for a more homogeneous layout
+        # Main vertical box to contain the notebook and buttons
+        main_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
+        self.add(main_box)
+
+        # Create notebook for tabs
+        notebook = Gtk.Notebook()
+        notebook.set_margin_top(5)
+        notebook.set_margin_bottom(10)
+        main_box.pack_start(notebook, True, True, 0)
+
+        # Create tabs
+        key_bindings_tab = self.create_key_bindings_tab()
+        notebook.append_page(key_bindings_tab, Gtk.Label(label="Key Bindings"))
+
+        appearance_tab = self.create_appearance_tab()
+        notebook.append_page(appearance_tab, Gtk.Label(label="Appearance"))
+
+        system_tab = self.create_system_tab()
+        notebook.append_page(system_tab, Gtk.Label(label="System"))
+
+        # Button box for Cancel and Accept buttons
+        button_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
+        button_box.set_halign(Gtk.Align.END)
+
+        cancel_btn = Gtk.Button(label="Cancel")
+        cancel_btn.connect("clicked", self.on_cancel)
+        button_box.pack_start(cancel_btn, False, False, 0)
+
+        accept_btn = Gtk.Button(label="Accept")
+        accept_btn.connect("clicked", self.on_accept)
+        button_box.pack_start(accept_btn, False, False, 0)
+
+        main_box.pack_start(button_box, False, False, 0)
+
+    def create_key_bindings_tab(self):
+        """Create tab for key bindings configuration."""
+        scrolled_window = Gtk.ScrolledWindow()
+        scrolled_window.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
+
         grid = Gtk.Grid(column_spacing=10, row_spacing=10)
-        grid.set_margin_top(10)
-        grid.set_margin_bottom(10)
-        grid.set_margin_start(10)
-        grid.set_margin_end(10)
-        self.add(grid)
+        grid.set_margin_top(15)
+        grid.set_margin_bottom(15)
+        grid.set_margin_start(15)
+        grid.set_margin_end(15)
+        scrolled_window.add(grid)
 
-        # Header label spanning across columns
-        header = Gtk.Label(label="Configure Key Bindings")
-        header.set_halign(Gtk.Align.CENTER)
-        grid.attach(header, 0, 0, 4, 1)
+        # Create labels for columns
+        action_label = Gtk.Label(label="Action")
+        action_label.set_halign(Gtk.Align.START)
+        action_label.set_margin_bottom(5)
+        action_label.get_style_context().add_class("heading")
+
+        modifier_label = Gtk.Label(label="Modifier")
+        modifier_label.set_halign(Gtk.Align.START)
+        modifier_label.set_margin_bottom(5)
+        modifier_label.get_style_context().add_class("heading")
+
+        key_label = Gtk.Label(label="Key")
+        key_label.set_halign(Gtk.Align.START)
+        key_label.set_margin_bottom(5)
+        key_label.get_style_context().add_class("heading")
+
+        grid.attach(action_label, 0, 1, 1, 1)
+        grid.attach(modifier_label, 1, 1, 1, 1) 
+        grid.attach(key_label, 3, 1, 1, 1)
 
         self.entries = []
         bindings = [
-            (f"Reload {data.APP_NAME_CAP}", 'prefix_restart', 'suffix_restart'),
+            (f"Reload {APP_NAME_CAP}", 'prefix_restart', 'suffix_restart'),
             ("Message", 'prefix_axmsg', 'suffix_axmsg'),
             ("Dashboard", 'prefix_dash', 'suffix_dash'),
             ("Bluetooth", 'prefix_bluetooth', 'suffix_bluetooth'),
+            ("Pins", 'prefix_pins', 'suffix_pins'),
+            ("Kanban", 'prefix_kanban', 'suffix_kanban'),
             ("App Launcher", 'prefix_launcher', 'suffix_launcher'),
             ("Toolbox", 'prefix_toolbox', 'suffix_toolbox'),
             ("Overview", 'prefix_overview', 'suffix_overview'),
+            ("Wallpapers", 'prefix_wallpapers', 'suffix_wallpapers'),
             ("Emoji Picker", 'prefix_emoji', 'suffix_emoji'),
             ("Power Menu", 'prefix_power', 'suffix_power'),
             ("Toggle Bar and Notch", 'prefix_toggle', 'suffix_toggle'),
@@ -298,8 +376,8 @@ class HyprConfGUI(Gtk.Window):
             ("Restart with inspector", 'prefix_restart_inspector', 'suffix_restart_inspector'),
         ]
 
-        # Populate grid with key binding rows, starting at row 1
-        row = 1
+        # Populate grid with key binding rows, starting at row 2
+        row = 2
         for label_text, prefix_key, suffix_key in bindings:
             # Binding description
             binding_label = Gtk.Label(label=label_text)
@@ -323,45 +401,104 @@ class HyprConfGUI(Gtk.Window):
             self.entries.append((prefix_key, suffix_key, prefix_entry, suffix_entry))
             row += 1
 
-        # Row for Wallpapers Directory chooser
-        wall_label = Gtk.Label(label="Wallpapers Directory")
+        return scrolled_window
+
+    def create_appearance_tab(self):
+        """Create tab for appearance settings."""
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=15)
+        box.set_margin_top(15)
+        box.set_margin_bottom(15)
+        box.set_margin_start(15)
+        box.set_margin_end(15)
+
+        # Wallpapers section
+        wall_section = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=5)
+
+        wall_hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
+        wall_label = Gtk.Label(label="Wallpapers Directory:")
         wall_label.set_halign(Gtk.Align.START)
-        grid.attach(wall_label, 0, row, 1, 1)
         self.wall_dir_chooser = Gtk.FileChooserButton(
             title="Select a folder",
             action=Gtk.FileChooserAction.SELECT_FOLDER
         )
         self.wall_dir_chooser.set_filename(bind_vars['wallpapers_dir'])
-        grid.attach(self.wall_dir_chooser, 1, row, 3, 1)
-        row += 1
+        wall_hbox.pack_start(wall_label, False, False, 0)
+        wall_hbox.pack_start(self.wall_dir_chooser, True, True, 0)
+        wall_section.pack_start(wall_hbox, False, False, 0)
 
-        # Row for Profile Icon selection
-        face_label = Gtk.Label(label="Profile Icon")
+        box.pack_start(wall_section, False, False, 0)
+
+        # Separator
+        separator = Gtk.Separator(orientation=Gtk.Orientation.HORIZONTAL)
+        box.pack_start(separator, False, False, 5)
+
+        # Profile Icon section
+        face_section = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=5)
+
+        face_hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
+        face_label = Gtk.Label(label="Profile Icon:")
         face_label.set_halign(Gtk.Align.START)
-        grid.attach(face_label, 0, row, 1, 1)
         face_btn = Gtk.Button(label="Select Image")
         face_btn.connect("clicked", self.on_select_face_icon)
-        grid.attach(face_btn, 1, row, 3, 1)
-        row += 1
+        
+        # Show current face icon if it exists as a pixbuf of size 24
+        current_face = os.path.expanduser("~/.face.icon")
+        face_image = Gtk.Image()
+        try:
+            if os.path.exists(current_face):
+                pixbuf = GdkPixbuf.Pixbuf.new_from_file(current_face)
+                pixbuf = pixbuf.scale_simple(24, 24, GdkPixbuf.InterpType.BILINEAR)
+            else:
+                pixbuf = Gtk.IconTheme.get_default().load_icon("user-info", 24, 0)
+            face_image.set_from_pixbuf(pixbuf)
+        except Exception:
+            pass
+        face_hbox.pack_start(face_image, False, False, 0)
+            
+        face_hbox.pack_start(face_label, False, False, 0)
+        face_hbox.pack_start(face_btn, True, False, 0)
+        face_section.pack_start(face_hbox, False, False, 0)
+        
+        self.face_status_label = Gtk.Label(label="")
+        face_section.pack_start(self.face_status_label, False, False, 0)
 
-        # Row for optional checkboxes
-        if show_lock_checkbox:
+        box.pack_start(face_section, False, False, 0)
+
+        return box
+
+    def create_system_tab(self):
+        """Create tab for system configurations."""
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=15)
+        box.set_margin_top(15)
+        box.set_margin_bottom(15)
+        box.set_margin_start(15)
+        box.set_margin_end(15)
+
+        # Hypr Configuration section
+        hypr_section = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=5)
+
+        # Checkboxes for Hyprlock and Hypridle
+        if self.show_lock_checkbox:
             self.lock_checkbox = Gtk.CheckButton(label="Replace Hyprlock config")
             self.lock_checkbox.set_active(False)
-            grid.attach(self.lock_checkbox, 0, row, 2, 1)
-        if show_idle_checkbox:
+            hypr_section.pack_start(self.lock_checkbox, False, False, 10)
+        else:
+            self.lock_checkbox = None
+
+        if self.show_idle_checkbox:
             self.idle_checkbox = Gtk.CheckButton(label="Replace Hypridle config")
             self.idle_checkbox.set_active(False)
-            grid.attach(self.idle_checkbox, 2, row, 2, 1)
-        row += 1
+            hypr_section.pack_start(self.idle_checkbox, False, False, 10)
+        else:
+            self.idle_checkbox = None
 
-        # Row for Cancel and Accept buttons, aligned to the right
-        cancel_btn = Gtk.Button(label="Cancel")
-        cancel_btn.connect("clicked", self.on_cancel)
-        accept_btn = Gtk.Button(label="Accept")
-        accept_btn.connect("clicked", self.on_accept)
-        grid.attach(cancel_btn, 2, row, 1, 1)
-        grid.attach(accept_btn, 3, row, 1, 1)
+        box.pack_start(hypr_section, False, False, 0)
+
+        # Spacer to push everything to the top
+        spacer = Gtk.Box()
+        box.pack_start(spacer, True, True, 0)
+
+        return box
 
     def on_select_face_icon(self, widget):
         """
@@ -389,7 +526,7 @@ class HyprConfGUI(Gtk.Window):
 
         if dialog.run() == Gtk.ResponseType.OK:
             self.selected_face_icon = dialog.get_filename()
-            print(f"Face icon selected: {self.selected_face_icon}")
+            self.face_status_label.set_text(f"Selected: {os.path.basename(self.selected_face_icon)}")
         dialog.destroy()
 
     def on_accept(self, widget):
@@ -405,7 +542,7 @@ class HyprConfGUI(Gtk.Window):
         bind_vars['wallpapers_dir'] = self.wall_dir_chooser.get_filename()
 
         # Save the updated bind_vars to a JSON file
-        config_json = os.path.expanduser(f'~/.config/{data.APP_NAME_CAP}/config/config.json')
+        config_json = os.path.expanduser(f'~/.config/{APP_NAME_CAP}/config/config.json')
         os.makedirs(os.path.dirname(config_json), exist_ok=True)
         with open(config_json, 'w') as f:
             json.dump(bind_vars, f)
@@ -424,14 +561,14 @@ class HyprConfGUI(Gtk.Window):
                 print("Error processing face icon:", e)
 
         # Replace hyprlock config if requested
-        if hasattr(self, "lock_checkbox") and self.lock_checkbox.get_active():
-            src_lock = os.path.expanduser(f"~/.config/{data.APP_NAME_CAP}/config/hypr/hyprlock.conf")
+        if self.lock_checkbox and self.lock_checkbox.get_active():
+            src_lock = os.path.expanduser(f"~/.config/{APP_NAME_CAP}/config/hypr/hyprlock.conf")
             dest_lock = os.path.expanduser("~/.config/hypr/hyprlock.conf")
             backup_and_replace(src_lock, dest_lock, "Hyprlock")
 
         # Replace hypridle config if requested
-        if hasattr(self, "idle_checkbox") and self.idle_checkbox.get_active():
-            src_idle = os.path.expanduser(f"~/.config/{data.APP_NAME_CAP}/config/hypr/hypridle.conf")
+        if self.idle_checkbox and self.idle_checkbox.get_active():
+            src_idle = os.path.expanduser(f"~/.config/{APP_NAME_CAP}/config/hypr/hypridle.conf")
             dest_idle = os.path.expanduser("~/.config/hypr/hypridle.conf")
             backup_and_replace(src_idle, dest_idle, "Hypridle")
 
@@ -458,9 +595,9 @@ def start_config():
     ensure_face_icon()
 
     # Write the generated hypr configuration to file
-    hypr_config_dir = os.path.expanduser(f"~/.config/{data.APP_NAME_CAP}/config/hypr/")
+    hypr_config_dir = os.path.expanduser(f"~/.config/{APP_NAME_CAP}/config/hypr/")
     os.makedirs(hypr_config_dir, exist_ok=True)
-    hypr_conf_path = os.path.join(hypr_config_dir, f"{data.APP_NAME}.conf")
+    hypr_conf_path = os.path.join(hypr_config_dir, f"{APP_NAME}.conf")
     with open(hypr_conf_path, "w") as f:
         f.write(generate_hyprconf())
 
@@ -476,7 +613,7 @@ def open_config():
 
     # Check and copy hyprlock config if needed
     dest_lock = os.path.expanduser("~/.config/hypr/hyprlock.conf")
-    src_lock = os.path.expanduser(f"~/.config/{data.APP_NAME_CAP}/config/hypr/hyprlock.conf")
+    src_lock = os.path.expanduser(f"~/.config/{APP_NAME_CAP}/config/hypr/hyprlock.conf")
     os.makedirs(os.path.dirname(dest_lock), exist_ok=True)
     show_lock_checkbox = True
     if not os.path.exists(dest_lock):
@@ -485,7 +622,7 @@ def open_config():
 
     # Check and copy hypridle config if needed
     dest_idle = os.path.expanduser("~/.config/hypr/hypridle.conf")
-    src_idle = os.path.expanduser(f"~/.config/{data.APP_NAME_CAP}/config/hypr/hypridle.conf")
+    src_idle = os.path.expanduser(f"~/.config/{APP_NAME_CAP}/config/hypr/hypridle.conf")
     show_idle_checkbox = True
     if not os.path.exists(dest_idle):
         shutil.copy(src_idle, dest_idle)

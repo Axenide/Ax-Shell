@@ -11,7 +11,7 @@
   min-width: 8px;
   min-height: 8px;
   border-radius: 16px;
-  transition: all 0.25s cubic-bezier(0.5, 0.25, 0, 1);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   background-color: var(--foreground);
 }
 

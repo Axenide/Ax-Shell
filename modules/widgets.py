@@ -1,11 +1,7 @@
-from fabric.widgets.box import Box
-from fabric.widgets.label import Label
-from fabric.widgets.button import Button
-from fabric.widgets.stack import Stack
 import gi
 gi.require_version('Gtk', '3.0')
-from gi.repository import GLib, Gtk, Pango
-import modules.icons as icons
+from fabric.widgets.box import Box
+from fabric.widgets.stack import Stack
 from modules.buttons import Buttons
 from modules.calendar import Calendar
 

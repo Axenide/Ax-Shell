@@ -15,6 +15,7 @@ import modules.icons as icons
 
 # WIP icon resolver (app_id to guessing the icon name)
 from utils.icon_resolver import IconResolver
+from fabric.utils.helpers import get_desktop_applications
 
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gdk, Gtk
@@ -67,9 +68,27 @@ class HyprlandWindowButton(Button):
         # Using the minimum dimension of the button for scaling.
         icon_size_main = int(min(self.size) * 0.5)  # adjust factor as needed
 
+        # Enhanced icon resolution using desktop apps
+        desktop_app = window.find_app(app_id)
+        
+        # Get icon using improved method with fallbacks
+        icon_pixbuf = None
+        if desktop_app:
+            icon_pixbuf = desktop_app.get_icon_pixbuf(size=icon_size_main)
+        
+        if not icon_pixbuf:
+            # Fallback to IconResolver
+            icon_pixbuf = icon_resolver.get_icon_pixbuf(app_id, icon_size_main)
+        
+        if not icon_pixbuf:
+            # Additional fallbacks for common apps
+            icon_pixbuf = icon_resolver.get_icon_pixbuf("application-x-executable-symbolic", icon_size_main)
+            if not icon_pixbuf:
+                icon_pixbuf = icon_resolver.get_icon_pixbuf("image-missing", icon_size_main)
+
         super().__init__(
             name="overview-client-box",
-            image=Image(pixbuf=icon_resolver.get_icon_pixbuf(app_id, icon_size_main)),
+            image=Image(pixbuf=icon_pixbuf),
             tooltip_text=title,
             size=size,
             on_clicked=self.on_button_click,
@@ -85,6 +104,9 @@ class HyprlandWindowButton(Button):
                 context, createSurfaceFromWidget(self)
             ),
         )
+
+        # Store the desktop_app for later use
+        self.desktop_app = desktop_app
 
         self.drag_source_set(
             start_button_mask=Gdk.ModifierType.BUTTON1_MASK,
@@ -104,12 +126,26 @@ class HyprlandWindowButton(Button):
     def update_image(self, image):
         # Compute overlay icon size dynamically.
         icon_size_overlay = int(min(self.size) * 0.6)  # adjust factor as needed
+        
+        # Enhanced icon resolution for overlay
+        icon_pixbuf = None
+        if hasattr(self, 'desktop_app') and self.desktop_app:
+            icon_pixbuf = self.desktop_app.get_icon_pixbuf(size=icon_size_overlay)
+            
+        if not icon_pixbuf:
+            icon_pixbuf = icon_resolver.get_icon_pixbuf(self.app_id, icon_size_overlay)
+            
+        if not icon_pixbuf:
+            icon_pixbuf = icon_resolver.get_icon_pixbuf("application-x-executable-symbolic", icon_size_overlay)
+            if not icon_pixbuf:
+                icon_pixbuf = icon_resolver.get_icon_pixbuf("image-missing", icon_size_overlay)
+                
         self.set_image(
             Overlay(
                 child=image,
                 overlays=Image(
                     name="overview-icon",
-                    pixbuf=icon_resolver.get_icon_pixbuf(self.app_id, icon_size_overlay),
+                    pixbuf=icon_pixbuf,
                     h_align="center",
                     v_align="end",
                     tooltip_text=self.title,
@@ -157,13 +193,119 @@ class Overview(Box):
         super().__init__(name="overview", orientation="v", spacing=8, **kwargs)
         self.workspace_boxes: dict[int, Box] = {}
         self.clients: dict[str, HyprlandWindowButton] = {}
+        
+        # Initialize app registry for better icon resolution
+        self._all_apps = get_desktop_applications()
+        self.app_identifiers = self._build_app_identifiers_map()
+        
+        # Remove the window_class_aliases dictionary completely
 
         connection.connect("event::openwindow", self.do_update)
         connection.connect("event::closewindow", self.do_update)
         connection.connect("event::movewindow", self.do_update)
         self.update()
+        
+    def _normalize_window_class(self, class_name):
+        """Normalize window class by removing common suffixes and lowercase."""
+        if not class_name:
+            return ""
+            
+        normalized = class_name.lower()
+        
+        # Remove common suffixes
+        suffixes = [".bin", ".exe", ".so", "-bin", "-gtk"]
+        for suffix in suffixes:
+            if normalized.endswith(suffix):
+                normalized = normalized[:-len(suffix)]
+                
+        return normalized
+    
+    def _classes_match(self, class1, class2):
+        """Check if two window class names match with stricter comparison."""
+        if not class1 or not class2:
+            return False
+            
+        # Normalize both classes
+        norm1 = self._normalize_window_class(class1)
+        norm2 = self._normalize_window_class(class2)
+        
+        # Direct match after normalization
+        if norm1 == norm2:
+            return True
+            
+        # Don't do substring matching as it's too error-prone
+        # This avoids incorrectly matching flatpak apps and others
+        return False
+        
+    def _build_app_identifiers_map(self):
+        """Build a mapping of app identifiers (class names, executables, names) to DesktopApp objects"""
+        identifiers = {}
+        for app in self._all_apps:
+            # Map by name (lowercase)
+            if app.name:
+                identifiers[app.name.lower()] = app
+                
+            # Map by display name
+            if app.display_name:
+                identifiers[app.display_name.lower()] = app
+                
+            # Map by window class if available
+            if app.window_class:
+                identifiers[app.window_class.lower()] = app
+                
+            # Map by executable name if available
+            if app.executable:
+                exe_basename = app.executable.split('/')[-1].lower()
+                identifiers[exe_basename] = app
+                
+            # Map by command line if available (without parameters)
+            if app.command_line:
+                cmd_base = app.command_line.split()[0].split('/')[-1].lower()
+                identifiers[cmd_base] = app
+                
+        return identifiers
+        
+    def find_app(self, app_identifier):
+        """Return the DesktopApp object by matching any app identifier."""
+        if not app_identifier:
+            return None
+        
+        # Try direct lookup in our identifiers map
+        normalized_id = str(app_identifier).lower()
+        if normalized_id in self.app_identifiers:
+            return self.app_identifiers[normalized_id]
+            
+        # Try with normalized class name
+        norm_id = self._normalize_window_class(normalized_id)
+        if norm_id in self.app_identifiers:
+            return self.app_identifiers[norm_id]
+            
+        # More targeted matching with exact names only
+        for app in self._all_apps:
+            if app.name and app.name.lower() == normalized_id:
+                return app
+            if app.window_class and app.window_class.lower() == normalized_id:
+                return app
+            if app.display_name and app.display_name.lower() == normalized_id:
+                return app
+            # Try with executable basename
+            if app.executable:
+                exe_base = app.executable.split('/')[-1].lower()
+                if exe_base == normalized_id:
+                    return app
+            # Try with command basename
+            if app.command_line:
+                cmd_base = app.command_line.split()[0].split('/')[-1].lower()
+                if cmd_base == normalized_id:
+                    return app
+                
+        return None
 
     def update(self, signal_update=False):
+        # Refresh app registry when updating to ensure latest data
+        self._all_apps = get_desktop_applications()
+        self.app_identifiers = self._build_app_identifiers_map()
+        
         # Remove old clients and workspaces.
         for client in self.clients.values():
             client.destroy()

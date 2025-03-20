@@ -1,27 +1,27 @@
+# Standard library imports
 import contextlib
 
+# Third-party imports
 import gi
-from fabric.core.service import Property, Service, Signal
-from fabric.utils import bulk_connect
 from gi.repository import GLib  # type: ignore
 from loguru import logger
 
+# Fabric imports
+from fabric.core.service import Property, Service, Signal
+from fabric.utils import bulk_connect
 
 class PlayerctlImportError(ImportError):
     """An error to raise when playerctl is not installed."""
-
     def __init__(self, *args):
         super().__init__(
             "Playerctl is not installed, please install it first",
             *args,
         )
 
-
+# Try to import Playerctl, raise custom error if not available
 try:
     gi.require_version("Playerctl", "2.0")
     from gi.repository import Playerctl
-
-    # from gi.repository import Playerctl  # type: ignore
 except ValueError:
     raise PlayerctlImportError
 
