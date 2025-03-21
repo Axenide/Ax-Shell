@@ -20,27 +20,12 @@ class Weather(Box):
         GLib.timeout_add_seconds(600, self.fetch_weather)
         self.fetch_weather()
 
-    def get_location(self):
-        try:
-            response = self.session.get("https://ipinfo.io/json", timeout=5)
-            if response.ok:
-                return response.json().get("city", "")
-            else:
-                print("Error getting location from ipinfo.")
-        except Exception as e:
-            print(f"Error getting location: {e}")
-        return ""
-
     def fetch_weather(self):
         GLib.Thread.new("weather-fetch", self._fetch_weather_thread, None)
         return True
 
     def _fetch_weather_thread(self, data):
-        location = self.get_location()
-        if location:
-            url = f"https://wttr.in/{urllib.parse.quote(location)}?format=%c+%t"
-        else:
-            url = "https://wttr.in/?format=%c+%t"
+        url = "https://wttr.in/?format=%c+%t"
         try:
             response = self.session.get(url, timeout=5)
             if response.ok:
