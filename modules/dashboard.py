@@ -7,7 +7,7 @@ from fabric.widgets.image import Image
 import gi
 gi.require_version('Gtk', '3.0')
 gi.require_version('GdkPixbuf', '2.0')
-from gi.repository import Gtk, GdkPixbuf
+from gi.repository import Gtk, GdkPixbuf, Gdk
 from modules.widgets import Widgets
 from modules.pins import Pins
 from modules.wallpapers import WallpaperSelector
@@ -27,7 +27,9 @@ class Dashboard(Box):
         )
 
         self.notch = kwargs["notch"]
-
+        
+        # Remove the key press setup - Notch will handle this
+        
         self.widgets = Widgets(notch=self.notch)
         self.pins = Pins()
         self.kanban = Kanban()
@@ -123,7 +125,8 @@ class Dashboard(Box):
         
         # Add signal to detect when the visible child changes
         self.stack.connect("notify::visible-child", self.on_visible_child_changed)
-
+        
+        # Just add the stack directly, not in an event box
         self.add(self.switcher)
         self.add(self.stack)
 

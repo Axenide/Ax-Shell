@@ -25,6 +25,7 @@ PACKAGES=(
   playerctl
   python-fabric-git
   python-ijson
+  python-numpy
   python-pillow
   python-psutil
   python-requests

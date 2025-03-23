@@ -41,7 +41,7 @@ class PlayerBox(Box):
 
         self.cover = CircleImage(
             name="player-cover",
-            image_file=f"{data.HOME_DIR}/.face.icon",
+            image_file=os.path.expanduser(f"~/.current.wall"),
             size=162,
             h_align="center",
             v_align="center",

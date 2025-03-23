@@ -74,6 +74,7 @@ curl -fsSL https://raw.githubusercontent.com/Axenide/Ax-Shell/main/install.sh | 
     - `wlinhibit`
     - Python dependencies:
         - ijson
+        - numpy
         - pillow
         - psutil
         - requests
@@ -113,10 +114,11 @@ curl -fsSL https://raw.githubusercontent.com/Axenide/Ax-Shell/main/install.sh | 
 - [x] Screen Recorder
 - [x] OCR
 - [x] Workspaces Overview
+- [x] Vertical Layout
+- [x] Tmux Session Manager
 - [ ] Network Manager
 - [ ] Clipboard Manager
 - [ ] Multimodal AI Assistant
-- [ ] Vertical Layout
 - [ ] Multi-monitor support
 
 ---

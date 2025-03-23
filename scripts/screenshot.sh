@@ -39,10 +39,15 @@ if [ -f "$full_path" ]; then
     # Process as mockup if requested
     if [ "$mockup_mode" = "mockup" ]; then
         temp_file="${full_path%.png}_temp.png"
+        cropped_file="${full_path%.png}_cropped.png"
         mockup_file="${full_path%.png}_mockup.png"
         
+        # First crop the top pixel using a different approach
+        # Use +0+1 to start at y-coordinate 1 (skipping the first pixel row)
+        convert "$full_path" -crop +0+1 +repage "$cropped_file"
+        
         # Create a mockup version with rounded corners, shadow, and transparency
-        convert "$full_path" \
+        convert "$cropped_file" \
             \( +clone -alpha extract -draw 'fill black polygon 0,0 0,20 20,0 fill white circle 20,20 20,0' \
             \( +clone -flip \) -compose Multiply -composite \
             \( +clone -flop \) -compose Multiply -composite \
@@ -53,8 +58,8 @@ if [ -f "$full_path" ]; then
             \( +clone -background black -shadow 60x20+0+10 -alpha set -channel A -evaluate multiply 1 +channel \) \
             +swap -background none -layers merge +repage "$mockup_file"
         
-        # Remove temporary file
-        rm "$temp_file"
+        # Remove temporary files
+        rm "$temp_file" "$cropped_file"
         
         # Replace original screenshot with mockup version
         mv "$mockup_file" "$full_path"

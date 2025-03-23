@@ -78,8 +78,8 @@ class Dock(Window):
         super().__init__(
             name="dock-window",
             layer="top",
-            anchor="bottom center",
-            margin="-8px 0 -4px 0",
+            anchor="bottom center" if not data.VERTICAL else "right center",
+            margin="-8px 0 -4px 0" if not data.VERTICAL else "0 -4px 0 -8px",
             exclusivity="none",
             **kwargs,
         )
@@ -101,7 +101,7 @@ class Dock(Window):
         self.is_hovered = False
 
         # Set up UI containers
-        self.view = Box(name="viewport", orientation="h", spacing=4)
+        self.view = Box(name="viewport", orientation="h" if not data.VERTICAL else "v", spacing=4)
         self.wrapper = Box(name="dock", orientation="v", children=[self.view])
 
         # Main dock container with hover handling
@@ -244,8 +244,8 @@ class Dock(Window):
 
         self.is_hovered = False
         self.delay_hide()
-        # Immediate occlusion check on true leave
-        occlusion_region = (0, data.CURRENT_HEIGHT - OCCLUSION, data.CURRENT_WIDTH, OCCLUSION)
+        # Immediate occlusion check on true leave using simplified format
+        occlusion_region = ("bottom", OCCLUSION) if not data.VERTICAL else ("right", OCCLUSION)
         # Only add occlusion style if not dragging an icon.
         if not self._drag_in_progress and (check_occlusion(occlusion_region) or not self.view.get_children()):
             self.wrapper.add_style_class("occluded")
@@ -336,7 +336,7 @@ class Dock(Window):
             tooltip = instances[0]["title"]
 
         button = Button(
-            child=Box(
+            child= Box(
                 name="dock-icon",
                 orientation="v",
                 h_align="center",
@@ -639,7 +639,7 @@ class Dock(Window):
         children = pinned_buttons
         # Only add separator if both pinned and open buttons exist
         if pinned_buttons and open_buttons:
-            children += [Box(orientation="v", v_expand=True, name="dock-separator")]
+            children += [Box(orientation="v" if not data.VERTICAL else "h", v_expand=not data.VERTICAL, h_expand=data.VERTICAL, name="dock-separator")]
         children += open_buttons
         
         self.view.children = children
@@ -683,7 +683,7 @@ class Dock(Window):
         if self.is_hovered or self._drag_in_progress:
             self.wrapper.remove_style_class("occluded")
             return True
-        occlusion_region = (0, data.CURRENT_HEIGHT - OCCLUSION, data.CURRENT_WIDTH, OCCLUSION)
+        occlusion_region = ("bottom", OCCLUSION) if not data.VERTICAL else ("right", OCCLUSION)
         if check_occlusion(occlusion_region) or not self.view.get_children():
             self.wrapper.add_style_class("occluded")
         else:

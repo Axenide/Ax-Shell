@@ -169,7 +169,8 @@
   margin-left: 4px;
 }
 
-#no-notifications-label {
+#no-notifications-label,
+#no-tmux {
   font-size: 96px;
   color: var(--surface);
 }

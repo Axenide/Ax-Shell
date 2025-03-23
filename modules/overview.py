@@ -85,6 +85,14 @@ class HyprlandWindowButton(Button):
             icon_pixbuf = icon_resolver.get_icon_pixbuf("application-x-executable-symbolic", icon_size_main)
             if not icon_pixbuf:
                 icon_pixbuf = icon_resolver.get_icon_pixbuf("image-missing", icon_size_main)
+                
+        # Ensure icon is scaled to the correct size
+        if icon_pixbuf and (icon_pixbuf.get_width() != icon_size_main or icon_pixbuf.get_height() != icon_size_main):
+            icon_pixbuf = icon_pixbuf.scale_simple(
+                icon_size_main, 
+                icon_size_main, 
+                gi.repository.GdkPixbuf.InterpType.BILINEAR
+            )
 
         super().__init__(
             name="overview-client-box",
@@ -125,7 +133,7 @@ class HyprlandWindowButton(Button):
 
     def update_image(self, image):
         # Compute overlay icon size dynamically.
-        icon_size_overlay = int(min(self.size) * 0.6)  # adjust factor as needed
+        icon_size_overlay = int(min(self.size) * 0.5)  # adjust factor as needed
         
         # Enhanced icon resolution for overlay
         icon_pixbuf = None
@@ -139,6 +147,14 @@ class HyprlandWindowButton(Button):
             icon_pixbuf = icon_resolver.get_icon_pixbuf("application-x-executable-symbolic", icon_size_overlay)
             if not icon_pixbuf:
                 icon_pixbuf = icon_resolver.get_icon_pixbuf("image-missing", icon_size_overlay)
+        
+        # Ensure icon is scaled to the correct size
+        if icon_pixbuf and (icon_pixbuf.get_width() != icon_size_overlay or icon_pixbuf.get_height() != icon_size_overlay):
+            icon_pixbuf = icon_pixbuf.scale_simple(
+                icon_size_overlay, 
+                icon_size_overlay, 
+                gi.repository.GdkPixbuf.InterpType.BILINEAR
+            )
                 
         self.set_image(
             Overlay(

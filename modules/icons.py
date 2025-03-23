@@ -35,6 +35,7 @@ battery: str = "&#xea38;"
 memory: str = "&#xfa97;"
 cpu: str = "&#xef8e;"
 
+
 # AIchat
 reload: str = "&#xf3ae;"
 detach: str = "&#xea99;"
@@ -63,7 +64,12 @@ power_balanced: str = "&#xfa77;"
 power_performance: str = "&#xec45;"
 charging: str = "&#xefef;"
 discharging: str = "&#xefe9;"
-alert: str = "&#xefb4;"
+alert: str = "&#xea06;"
+bat_charging: str = "&#xeeca;"
+bat_discharging: str = "&#xf0a1;"
+bat_low: str = "&#xff1d;"
+bat_full: str = "&#xea38;"
+
 
 # Applets
 wifi_0: str = "&#xeba3;"
@@ -158,6 +164,8 @@ trend_up: str = "&#xf162;"
 trend_down: str = "&#xeb42;"
 arrow_right: str = "&#xea1c;"
 emoji: str = "&#xeaf7;"
+keyboard: str = "&#xebd6;"
+terminal: str = "&#xebef;"
 
 exceptions: list[str] = ['font_family', 'font_weight', 'span']
 

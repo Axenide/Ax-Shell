@@ -8,6 +8,7 @@ from fabric.widgets.label import Label
 from fabric.widgets.overlay import Overlay
 
 import modules.icons as icons
+import config.data as data
 
 from fabric.audio.service import Audio
 from fabric.widgets.scale import Scale
@@ -406,7 +407,7 @@ class ControlSmall(Box):
         children.extend([VolumeSmall(), MicSmall()])
         super().__init__(
             name="control-small",
-            orientation="h",
+            orientation="h" if not data.VERTICAL else "v",
             spacing=4,
             children=children,
             **kwargs,

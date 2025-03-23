@@ -21,12 +21,48 @@ def get_current_workspace():
         print(f"Error getting current workspace: {e}")
     return -1
 
+def get_screen_dimensions():
+    """
+    Get screen dimensions from hyprctl.
+    
+    Returns:
+        tuple: (width, height) of the monitor containing the current workspace
+    """
+    try:
+        # Get current workspace
+        workspace_id = get_current_workspace()
+        
+        # Get monitor information
+        result = subprocess.run(
+            ["hyprctl", "-j", "monitors"],
+            capture_output=True,
+            text=True
+        )
+        monitors = json.loads(result.stdout)
+        
+        # Find the monitor containing our workspace
+        for monitor in monitors:
+            if monitor.get("activeWorkspace", {}).get("id") == workspace_id:
+                return monitor.get("width", 1920), monitor.get("height", 1080)
+                
+        # Fallback to first monitor
+        if monitors:
+            return monitors[0].get("width", 1920), monitors[0].get("height", 1080)
+    except Exception as e:
+        print(f"Error getting screen dimensions: {e}")
+    
+    # Default fallback values
+    return 1920, 1080
+
 def check_occlusion(occlusion_region, workspace=None):
     """
-    Check if a custom occlusion region is occupied by any window on a given workspace.
+    Check if a region is occupied by any window on a given workspace.
 
     Parameters:
-        occlusion_region (tuple): A tuple (x, y, width, height) defining the region to check.
+        occlusion_region: Can be one of:
+            - tuple (side, size): where side is "top", "bottom", "left", or "right"
+              and size is the pixel width of the region
+            - tuple (x, y, width, height): The full region coordinates (legacy format)
         workspace (int, optional): The workspace ID to check. If None, the current workspace is used.
 
     Returns:
@@ -34,6 +70,27 @@ def check_occlusion(occlusion_region, workspace=None):
     """
     if workspace is None:
         workspace = get_current_workspace()
+    
+    # Handle simplified side-based format
+    if isinstance(occlusion_region, tuple) and len(occlusion_region) == 2:
+        side, size = occlusion_region
+        if isinstance(side, str):
+            # Convert side-based format to coordinates
+            screen_width, screen_height = get_screen_dimensions()
+            
+            if side.lower() == "bottom":
+                occlusion_region = (0, screen_height - size, screen_width, size)
+            elif side.lower() == "top":
+                occlusion_region = (0, 0, screen_width, size)
+            elif side.lower() == "left":
+                occlusion_region = (0, 0, size, screen_height)
+            elif side.lower() == "right":
+                occlusion_region = (screen_width - size, 0, size, screen_height)
+    
+    # Ensure occlusion_region is in the correct format (x, y, width, height)
+    if not isinstance(occlusion_region, tuple) or len(occlusion_region) != 4:
+        print(f"Invalid occlusion region format: {occlusion_region}")
+        return False
 
     try:
         result = subprocess.run(

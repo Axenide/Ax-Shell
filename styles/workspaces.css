@@ -1,38 +1,39 @@
 #workspaces {
   padding: 14px;
+  background-color: var(--shadow);
+  margin: 8px;
 }
 
 #workspaces-container {
-  background-color: var(--shadow);
-  /*margin-top: 4px;*/
+  margin: -8px;
 }
 
-#workspaces > button {
+#workspaces>button {
   min-width: 8px;
   min-height: 8px;
   border-radius: 16px;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.25s cubic-bezier(0, 0, 0.25, 1);
   background-color: var(--foreground);
 }
 
-#workspaces > button > label {
+#workspaces>button>label {
   font-size: 0px;
 }
 
-#workspaces > button.empty:hover {
+#workspaces>button.empty:hover {
   background-color: var(--foreground);
 }
 
-#workspaces > button.urgent {
+#workspaces>button.urgent {
   background-color: var(--error_dim);
 }
 
-#workspaces > button.active {
-  min-width: 48px;
-  min-height: 8px;
+#workspaces>button.active {
+  @apply ws_width();
+  @apply ws_height();
   background-color: var(--primary);
 }
 
-#workspaces > button.empty {
+#workspaces>button.empty {
   background-color: alpha(var(--foreground), 0.25);
 }

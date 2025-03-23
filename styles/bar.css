@@ -17,8 +17,8 @@
   /*margin-top: 4px;*/
 }
 
-menu > menuitem > label,
-#date-time > label {
+menu>menuitem>label,
+#date-time>label {
   font-weight: bold;
 }
 
@@ -28,15 +28,20 @@ menu > menuitem > label,
   border-radius: 16px;
 }
 
-menu > menuitem > label,
-#language > label {
+#lang-label {
   font-weight: bold;
+}
+
+#lang-label.icon {
+  color: var(--primary);
+  font-size: 20px;
 }
 
 #weather {
   background-color: var(--shadow);
-  padding: 0 8px;
+  padding: 0 4px;
   border-radius: 16px;
+  min-height: 36px;
 }
 
 #weather-label {
@@ -58,16 +63,16 @@ menu {
   padding: 6px;
 }
 
-menu > menuitem {
+menu>menuitem {
   border-radius: 10px;
   padding: 6px 10px;
 }
 
-menu > menuitem:hover {
+menu>menuitem:hover {
   background-color: var(--primary);
 }
 
-menu > menuitem:hover > label {
+menu>menuitem:hover>label {
   color: var(--shadow);
 }
 
@@ -82,12 +87,13 @@ tooltip {
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
 }
 
-tooltip > * {
+tooltip>* {
   padding: 6px 10px;
   border-radius: 10px;
 }

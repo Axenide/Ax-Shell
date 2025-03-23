@@ -8,6 +8,14 @@
   opacity: 0;
 }
 
+#notch-wrap {
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+#notch-wrap.occluded {
+  margin-top: -38px;
+}
+
 #notch-box.hideshow {
   opacity: 1;
   margin-top: 40px;
@@ -21,7 +29,8 @@
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-#notch-content.launcher {
+#notch-content.launcher,
+#notch-content.tmux {
   padding: 16px;
   min-height: 220px;
   min-width: 480px;
@@ -75,7 +84,8 @@
 #overview,
 #emoji,
 #power-menu,
-#toolbox {
+#toolbox,
+#tmux-manager {
   opacity: 1;
   margin: -1300px;
   transition: all 0.25s cubic-bezier(0.5, 0.25, 0, 1);
@@ -87,7 +97,9 @@
 #overview.open,
 #emoji.open,
 #power-menu.open,
-#toolbox.open {
+#toolbox.open,
+#bluetooth.open,
+#tmux-manager.open {
   opacity: 1;
   margin: 0px;
 }
@@ -141,4 +153,8 @@
 
 #active-window-box {
   margin: 10px;
+}
+
+#vert-comp {
+  min-width: 40px;
 }

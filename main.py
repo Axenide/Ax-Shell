@@ -1,10 +1,9 @@
 import os
 import setproctitle
-
 from fabric import Application
 from fabric.utils import get_relative_path, exec_shell_command_async
 
-from config.data import APP_NAME, CACHE_DIR, CONFIG_FILE, DOCK_ICON_SIZE
+from config.data import APP_NAME, CACHE_DIR, CONFIG_FILE, DOCK_ICON_SIZE, VERTICAL, APP_NAME_CAP
 from modules.bar import Bar
 from modules.corners import Corners
 from modules.dock import Dock
@@ -17,6 +16,11 @@ if __name__ == "__main__":
 
     if not os.path.isfile(CONFIG_FILE):
         exec_shell_command_async(f"python {get_relative_path('../config/config.py')}")
+
+    current_wallpaper = os.path.expanduser("~/.current.wall")
+    if not os.path.exists(current_wallpaper):
+        example_wallpaper = os.path.expanduser(f"~/.config/{APP_NAME_CAP}/assets/wallpapers_example/example-1.jpg")
+        os.symlink(example_wallpaper, current_wallpaper)
     corners = Corners()
     bar = Bar()
     notch = Notch()
@@ -31,8 +35,11 @@ if __name__ == "__main__":
             get_relative_path("main.css"),
             exposed_functions={
                 "overview_width": lambda: f"min-width: {CURRENT_WIDTH * 0.1 * 5 + 92}px;",
-                "overview_height": lambda: f"min-height: {CURRENT_HEIGHT * 0.1 * 2 + 32 + 56}px;",
-                "dock_nmargin": lambda: f"margin-bottom: -{28 + DOCK_ICON_SIZE}px;",
+                "overview_height": lambda: f"min-height: {CURRENT_HEIGHT * 0.1 * 2 + 32 + 64}px;",
+                "dock_nmargin": lambda: f"margin-bottom: -{28 + DOCK_ICON_SIZE}px;" if not VERTICAL else f"margin-right: -{28 + DOCK_ICON_SIZE}px;",
+                "ws_width": lambda: "min-width: 48px;" if not VERTICAL else "min-width: 8px;",
+                "ws_height": lambda: "min-height: 8px;" if not VERTICAL else "min-height: 48px;",
+                "dock_sep": lambda: f"margin: 8px 0;" if not VERTICAL else f"margin: 0 8px;",
             },
         )
     app.set_css = set_css

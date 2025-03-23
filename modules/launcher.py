@@ -15,6 +15,7 @@ import json
 import os
 import re
 import math
+import numpy as np
 import subprocess
 from modules.dock import Dock  # Import the Dock class
 
@@ -46,10 +47,7 @@ class AppLauncher(Box):
             name="search-entry",
             placeholder="Search Applications...",
             h_expand=True,
-            notify_text=lambda entry, *_: (
-                self.update_calculator_viewport() if entry.get_text().startswith("=")
-                else self.arrange_viewport(entry.get_text())
-            ),
+            notify_text=self.notify_text,  # Use the method instead of lambda
             on_activate=lambda entry, *_: self.on_search_entry_activate(entry.get_text()),
             on_key_press_event=self.on_search_entry_key_press,  # Handle key presses
         )
@@ -106,6 +104,28 @@ class AppLauncher(Box):
     def open_launcher(self):
         self._all_apps = get_desktop_applications()
         self.arrange_viewport()
+        
+        # Disable text selection when opening
+        def clear_selection():
+            # Make sure no text gets selected during open
+            entry = self.search_entry
+            if entry.get_text():
+                pos = len(entry.get_text())
+                entry.set_position(pos)
+                entry.select_region(pos, pos)
+            return False
+        
+        # Schedule a selection clear after GTK finishes rendering
+        GLib.idle_add(clear_selection)
+
+    def ensure_initialized(self):
+        """Make sure the launcher is initialized with apps list before opening"""
+        if not hasattr(self, '_initialized'):
+            # Force pre-loading apps
+            self._all_apps = get_desktop_applications()
+            self._initialized = True
+            return True  # Was initialized for first time
+        return False  # Was already initialized
 
     def arrange_viewport(self, query: str = ""):
         if query.startswith("="):
@@ -161,9 +181,9 @@ class AppLauncher(Box):
 
     def bake_application_slot(self, app: DesktopApp, **kwargs) -> Button:
         button = Button(
-            name="app-slot-button",
+            name="slot-button",
             child=Box(
-                name="app-slot-box",
+                name="slot-box",
                 orientation="h",
                 spacing=10,
                 children=[
@@ -248,10 +268,9 @@ class AppLauncher(Box):
                         children[selected_index].clicked()
 
     def on_search_entry_key_press(self, widget, event):
-        if event.keyval in (Gdk.KEY_Return, Gdk.KEY_KP_Enter) and (event.state & Gdk.ModifierType.SHIFT_MASK):
-            self.add_selected_app_to_dock()
-            return True
         text = widget.get_text()
+        
+        # Check if we're in calculator mode
         if text.startswith("="):
             if event.keyval == Gdk.KEY_Down:
                 self.move_selection(1)
@@ -260,16 +279,21 @@ class AppLauncher(Box):
                 self.move_selection(-1)
                 return True
             elif event.keyval in (Gdk.KEY_Return, Gdk.KEY_KP_Enter):
-                # In calculator mode, if a history item is highlighted, copy it.
-                if self.selected_index != -1:
+                # In calculator mode, if a history item is highlighted:
+                if self.selected_index != -1 and self.selected_index < len(self.calc_history):
                     if event.state & Gdk.ModifierType.SHIFT_MASK:
+                        # Shift+Enter deletes the selected calculator history item
                         self.delete_selected_calc_history()
                     else:
+                        # Normal Enter copies the result
                         selected_text = self.calc_history[self.selected_index]
                         self.copy_text_to_clipboard(selected_text)
-                        # Clear selection so new expressions are evaluated on further Return presses.
+                        # Clear selection so new expressions are evaluated on further Return presses
                         self.selected_index = -1
                 else:
+                    # Force reset selection index
+                    self.selected_index = -1
+                    # No item selected, evaluate the expression
                     self.evaluate_calculator_expression(text)
                 return True
             elif event.keyval == Gdk.KEY_Escape:
@@ -284,10 +308,24 @@ class AppLauncher(Box):
             elif event.keyval == Gdk.KEY_Up:
                 self.move_selection(-1)
                 return True
+            elif event.keyval in (Gdk.KEY_Return, Gdk.KEY_KP_Enter) and (event.state & Gdk.ModifierType.SHIFT_MASK):
+                # Only add to dock when in app mode (not calculator mode)
+                self.add_selected_app_to_dock()
+                return True
             elif event.keyval == Gdk.KEY_Escape:
                 self.close_launcher()
                 return True
             return False
+
+    def notify_text(self, entry, *_):
+        """Handle text changes in the search entry"""
+        text = entry.get_text()
+        if text.startswith("="):
+            self.update_calculator_viewport()
+            # Always reset selection when typing a new expression
+            self.selected_index = -1
+        else:
+            self.arrange_viewport(text)
 
     def add_selected_app_to_dock(self):
         """Adds the currently selected application to the dock.json file with comprehensive metadata."""
@@ -362,23 +400,76 @@ class AppLauncher(Box):
             json.dump(self.calc_history, f)
 
     def evaluate_calculator_expression(self, text: str):
+        # Add debug print
+        print(f"Evaluating calculator expression: {text}")
+        
         # Remove the '=' prefix and extra spaces
         expr = text.lstrip("=").strip()
         if not expr:
             return
-        # Replace operators: '^' -> '**', and '×' -> '*'
-        expr = expr.replace("^", "**").replace("×", "*")
-        # Replace factorial: e.g. 5! -> math.factorial(5)
-        expr = re.sub(r'(\d+)!', r'math.factorial(\1)', expr)
+            
+        # Common replacements to make expressions more natural
+        replacements = {
+            "^": "**",            # Power operator
+            "×": "*",             # Multiplication
+            "÷": "/",             # Division
+            "π": "np.pi",         # Pi constant
+            "pi": "np.pi",        # Pi constant (text)
+            "e": "np.e",          # Euler's number
+            "sin(": "np.sin(",    # Sine
+            "cos(": "np.cos(",    # Cosine
+            "tan(": "np.tan(",    # Tangent
+            "log(": "np.log10(",  # Log base 10
+            "ln(": "np.log(",     # Natural log
+            "sqrt(": "np.sqrt(",  # Square root
+            "abs(": "np.abs(",    # Absolute value
+            "exp(": "np.exp("     # Exponential
+        }
+        
+        # Apply all replacements
+        for old, new in replacements.items():
+            expr = expr.replace(old, new)
+            
+        # Replace factorial: e.g. 5! -> np.factorial(5)
+        expr = re.sub(r'(\d+)!', r'np.factorial(\1)', expr)
+        
         # Replace brackets: allow [] and {} as ()
         for old, new in [("[", "("), ("]", ")"), ("{", "("), ("}", ")")]:
             expr = expr.replace(old, new)
+            
+        # Define the safe execution environment
+        safe_dict = {
+            'np': np,
+            'math': math,
+            'arange': np.arange,
+            'linspace': np.linspace,
+            'array': np.array
+        }
+        
         try:
-            result = eval(expr, {"__builtins__": None, "math": math})
+            # Evaluate the expression in the safe environment
+            result = eval(expr, {"__builtins__": None}, safe_dict)
+            
+            # Format the result based on its type
+            if isinstance(result, np.ndarray):
+                if result.size > 10:  # Truncate large arrays
+                    result_str = f"Array of shape {result.shape}"
+                else:
+                    result_str = str(result)
+            elif isinstance(result, (int, float, np.number)):
+                # Format numbers nicely - integers as integers, floats with limited precision
+                if isinstance(result, (int, np.integer)) or result.is_integer():
+                    result_str = str(int(result))
+                else:
+                    result_str = f"{float(result):.10g}"  # Remove trailing zeros
+            else:
+                result_str = str(result)
+                
         except Exception as e:
-            result = f"Error: {e}"
+            result_str = f"Error: {str(e)}"
+            
         # Prepend to history (newest first)
-        self.calc_history.insert(0, f"{text} => {result}")
+        self.calc_history.insert(0, f"{text} => {result_str}")
         self.save_calc_history()
         self.update_calculator_viewport()
 
@@ -387,31 +478,63 @@ class AppLauncher(Box):
         for item in self.calc_history:
             btn = self.create_calc_history_button(item)
             self.viewport.add(btn)
-        # Remove resetting selected_index unconditionally so that a highlighted result isn't lost.
-        # Optionally, only reset if the input is not more than "=".
-        # if self.search_entry.get_text().strip() != "=":
-        #     self.selected_index = -1
+        # Don't reset selection index here automatically
+        # Ensure selection state stays valid
+        if self.selected_index >= len(self.calc_history):
+            self.selected_index = -1
 
     def create_calc_history_button(self, text: str) -> Button:
-        btn = Button(
-            name="app-slot-button",  # reuse existing CSS styling
-            child=Box(
-                name="calc-slot-box",
-                orientation="h",
-                spacing=10,
-                children=[
-                    Label(
-                        name="calc-label",
-                        label=text,
-                        ellipsization="end",
-                        v_align="center",
-                        h_align="center",
-                    ),
-                ],
-            ),
-            tooltip_text=text,
-            on_clicked=lambda *_: self.copy_text_to_clipboard(text),
-        )
+        # Parse the result to create a more readable display
+        if "=>" in text:
+            parts = text.split("=>")
+            expression = parts[0].strip()
+            result = parts[1].strip()
+            
+            # For very long results, truncate for display but keep full in tooltip
+            display_text = text
+            if len(result) > 50:  # Truncate long results
+                display_text = f"{expression} => {result[:47]}..."
+                
+            btn = Button(
+                name="slot-button",  # reuse existing CSS styling
+                child=Box(
+                    name="calc-slot-box",
+                    orientation="h",
+                    spacing=10,
+                    children=[
+                        Label(
+                            name="calc-label",
+                            label=display_text,
+                            ellipsization="end",
+                            v_align="center",
+                            h_align="center",
+                        ),
+                    ],
+                ),
+                tooltip_text=text,
+                on_clicked=lambda *_: self.copy_text_to_clipboard(text),
+            )
+        else:
+            # Fallback for non-calculation entries
+            btn = Button(
+                name="slot-button",
+                child=Box(
+                    name="calc-slot-box",
+                    orientation="h",
+                    spacing=10,
+                    children=[
+                        Label(
+                            name="calc-label",
+                            label=text,
+                            ellipsization="end",
+                            v_align="center",
+                            h_align="center",
+                        ),
+                    ],
+                ),
+                tooltip_text=text,
+                on_clicked=lambda *_: self.copy_text_to_clipboard(text),
+            )
         return btn
 
     def copy_text_to_clipboard(self, text: str):
@@ -425,6 +548,24 @@ class AppLauncher(Box):
 
     def delete_selected_calc_history(self):
         if self.selected_index != -1 and self.selected_index < len(self.calc_history):
-            del self.calc_history[self.selected_index]
+            # Store the current index before deletion
+            current_index = self.selected_index
+            
+            # Delete the item
+            del self.calc_history[current_index]
             self.save_calc_history()
+            
+            # Determine the new selection index
+            # If we deleted the first item, stay at index 0
+            # Otherwise, move to the previous item
+            new_index = 0 if current_index == 0 else current_index - 1
+            
+            # Reset selection before updating viewport
+            self.selected_index = -1
+            
+            # Update the viewport
             self.update_calculator_viewport()
+            
+            # If we still have items, select the determined index
+            if len(self.calc_history) > 0:
+                self.update_selection(min(new_index, len(self.calc_history) - 1))

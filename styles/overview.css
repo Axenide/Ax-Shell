@@ -7,6 +7,7 @@
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
@@ -65,4 +66,5 @@
   background-color: var(--surface);
   border-radius: 10px;
   padding: 4px;
+  margin-bottom: 4px;
 }

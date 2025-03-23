@@ -1,14 +1,11 @@
-# Standard library imports
 import os
 import shutil
 import json
 import sys
 from pathlib import Path
 
-# Add the parent directory to sys.path to allow the direct execution of this script
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-# Third-party imports
 import toml
 from PIL import Image
 import subprocess
@@ -17,14 +14,12 @@ import gi
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk
 
-# Local imports - now using absolute import that will work when executed directly
 from config.data import (
     APP_NAME, APP_NAME_CAP, CONFIG_DIR, HOME_DIR, WALLPAPERS_DIR_DEFAULT
 )
 from fabric.utils.helpers import get_relative_path
 from gi.repository import GdkPixbuf
 
-# Constants
 SOURCE_STRING = f"""
 # {APP_NAME_CAP}
 source = ~/.config/{APP_NAME_CAP}/config/hypr/{APP_NAME}.conf
@@ -46,6 +41,8 @@ DEFAULT_KEYBINDINGS = {
     'suffix_kanban': "N",
     'prefix_launcher': "SUPER",
     'suffix_launcher': "R",
+    'prefix_tmux': "SUPER",
+    'suffix_tmux': "T",
     'prefix_toolbox': "SUPER",
     'suffix_toolbox': "S",
     'prefix_overview': "SUPER",
@@ -63,6 +60,8 @@ DEFAULT_KEYBINDINGS = {
     'wallpapers_dir': WALLPAPERS_DIR_DEFAULT,
     'prefix_restart_inspector': "SUPER CTRL ALT",
     'suffix_restart_inspector': "B",
+    'vertical': False,  # New default for vertical layout
+    'terminal_command': "kitty -e",  # Default terminal command for tmux
 }
 
 bind_vars = DEFAULT_KEYBINDINGS.copy()
@@ -163,7 +162,9 @@ def ensure_matugen_config():
     current_wall = os.path.expanduser("~/.current.wall")
     if not os.path.exists(current_wall):
         image_path = os.path.expanduser(f"~/.config/{APP_NAME_CAP}/assets/wallpapers_example/example-1.jpg")
-        os.system(f"matugen image {image_path}")
+        # Replace os.system with subprocess.run
+        subprocess.run(["matugen", "image", image_path])
+        os.symlink(image_path, os.path.expanduser(f"~/.current.wall"))
 
 def load_bind_vars():
     """
@@ -198,6 +199,7 @@ bind = {bind_vars['prefix_bluetooth']}, {bind_vars['suffix_bluetooth']}, exec, $
 bind = {bind_vars['prefix_pins']}, {bind_vars['suffix_pins']}, exec, $fabricSend 'notch.open_notch("pins")' # Pins | Default: SUPER + Q
 bind = {bind_vars['prefix_kanban']}, {bind_vars['suffix_kanban']}, exec, $fabricSend 'notch.open_notch("kanban")' # Kanban | Default: SUPER + N
 bind = {bind_vars['prefix_launcher']}, {bind_vars['suffix_launcher']}, exec, $fabricSend 'notch.open_notch("launcher")' # App Launcher | Default: SUPER + R
+bind = {bind_vars['prefix_tmux']}, {bind_vars['suffix_tmux']}, exec, $fabricSend 'notch.open_notch("tmux")' # App Launcher | Default: SUPER + T
 bind = {bind_vars['prefix_toolbox']}, {bind_vars['suffix_toolbox']}, exec, $fabricSend 'notch.open_notch("tools")' # Toolbox | Default: SUPER + S
 bind = {bind_vars['prefix_overview']}, {bind_vars['suffix_overview']}, exec, $fabricSend 'notch.open_notch("overview")' # Overview | Default: SUPER + TAB
 bind = {bind_vars['prefix_wallpapers']}, {bind_vars['suffix_wallpapers']}, exec, $fabricSend 'notch.open_notch("wallpapers")' # Wallpapers | Default: SUPER + COMMA
@@ -253,7 +255,7 @@ animations {{
     animation = windows, 1, 2.5, myBezier, popin 80%
     animation = border, 1, 2.5, myBezier
     animation = fade, 1, 2.5, myBezier
-    animation = workspaces, 1, 2.5, myBezier, slidefade 20%
+    animation = workspaces, 1, 2.5, myBezier, {'slidefadevert' if bind_vars['vertical'] else 'slidefade'} 20%
 }}
 """
 
@@ -311,14 +313,15 @@ class HyprConfGUI(Gtk.Window):
         system_tab = self.create_system_tab()
         notebook.append_page(system_tab, Gtk.Label(label="System"))
 
-        display_tab = self.create_display_tab()
-        notebook.append_page(display_tab, Gtk.Label(label="Display"))
-
-        # Button box for Cancel and Accept buttons
+        # Button box for Close and Accept buttons
         button_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
         button_box.set_halign(Gtk.Align.END)
 
-        cancel_btn = Gtk.Button(label="Cancel")
+        reset_btn = Gtk.Button(label="Reset to Defaults")
+        reset_btn.connect("clicked", self.on_reset)
+        button_box.pack_start(reset_btn, False, False, 0)
+
+        cancel_btn = Gtk.Button(label="Close")
         cancel_btn.connect("clicked", self.on_cancel)
         button_box.pack_start(cancel_btn, False, False, 0)
 
@@ -341,17 +344,20 @@ class HyprConfGUI(Gtk.Window):
         scrolled_window.add(grid)
 
         # Create labels for columns
-        action_label = Gtk.Label(label="Action")
+        action_label = Gtk.Label()
+        action_label.set_markup("<b>Action</b>")
         action_label.set_halign(Gtk.Align.START)
         action_label.set_margin_bottom(5)
         action_label.get_style_context().add_class("heading")
 
-        modifier_label = Gtk.Label(label="Modifier")
+        modifier_label = Gtk.Label()
+        modifier_label.set_markup("<b>Modifier</b>")
         modifier_label.set_halign(Gtk.Align.START)
         modifier_label.set_margin_bottom(5)
         modifier_label.get_style_context().add_class("heading")
 
-        key_label = Gtk.Label(label="Key")
+        key_label = Gtk.Label()
+        key_label.set_markup("<b>Key</b>")
         key_label.set_halign(Gtk.Align.START)
         key_label.set_margin_bottom(5)
         key_label.get_style_context().add_class("heading")
@@ -369,6 +375,7 @@ class HyprConfGUI(Gtk.Window):
             ("Pins", 'prefix_pins', 'suffix_pins'),
             ("Kanban", 'prefix_kanban', 'suffix_kanban'),
             ("App Launcher", 'prefix_launcher', 'suffix_launcher'),
+            ("Tmux", 'prefix_tmux', 'suffix_tmux'),
             ("Toolbox", 'prefix_toolbox', 'suffix_toolbox'),
             ("Overview", 'prefix_overview', 'suffix_overview'),
             ("Wallpapers", 'prefix_wallpapers', 'suffix_wallpapers'),
@@ -414,16 +421,25 @@ class HyprConfGUI(Gtk.Window):
         box.set_margin_start(15)
         box.set_margin_end(15)
 
-        # Wallpapers section
+        # Wallpapers section with header
+        wall_header = Gtk.Label()
+        wall_header.set_markup("<b>Wallpapers</b>")
+        wall_header.set_halign(Gtk.Align.START)
+        box.pack_start(wall_header, False, False, 0)
+        
         wall_section = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=5)
+        wall_section.set_margin_start(10)
+        wall_section.set_margin_top(5)
+        wall_section.set_margin_bottom(15)
 
         wall_hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
-        wall_label = Gtk.Label(label="Wallpapers Directory:")
+        wall_label = Gtk.Label(label="Directory:")
         wall_label.set_halign(Gtk.Align.START)
         self.wall_dir_chooser = Gtk.FileChooserButton(
             title="Select a folder",
             action=Gtk.FileChooserAction.SELECT_FOLDER
         )
+        self.wall_dir_chooser.set_tooltip_text("Select the directory containing your wallpaper images")
         self.wall_dir_chooser.set_filename(bind_vars['wallpapers_dir'])
         wall_hbox.pack_start(wall_label, False, False, 0)
         wall_hbox.pack_start(self.wall_dir_chooser, True, True, 0)
@@ -435,37 +451,62 @@ class HyprConfGUI(Gtk.Window):
         separator = Gtk.Separator(orientation=Gtk.Orientation.HORIZONTAL)
         box.pack_start(separator, False, False, 5)
 
-        # Profile Icon section
-        face_section = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=5)
-
-        face_hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
-        face_label = Gtk.Label(label="Profile Icon:")
-        face_label.set_halign(Gtk.Align.START)
-        face_btn = Gtk.Button(label="Select Image")
-        face_btn.connect("clicked", self.on_select_face_icon)
-
-        # Show current face icon if it exists as a pixbuf of size 24
+        # Profile Icon section with header
+        face_header = Gtk.Label()
+        face_header.set_markup("<b>Profile Icon</b>")
+        face_header.set_halign(Gtk.Align.START)
+        box.pack_start(face_header, False, False, 10)
+        
+        face_section = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
+        face_section.set_margin_start(10)
+        
+        # Current icon display
         current_face = os.path.expanduser("~/.face.icon")
+        current_icon_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
+        
+        face_image_frame = Gtk.Frame()
+        face_image_frame.set_shadow_type(Gtk.ShadowType.ETCHED_IN)
         face_image = Gtk.Image()
         try:
             if os.path.exists(current_face):
                 pixbuf = GdkPixbuf.Pixbuf.new_from_file(current_face)
-                pixbuf = pixbuf.scale_simple(24, 24, GdkPixbuf.InterpType.BILINEAR)
+                pixbuf = pixbuf.scale_simple(96, 96, GdkPixbuf.InterpType.BILINEAR)
             else:
-                pixbuf = Gtk.IconTheme.get_default().load_icon("user-info", 24, 0)
+                pixbuf = Gtk.IconTheme.get_default().load_icon("user-info", 96, 0)
             face_image.set_from_pixbuf(pixbuf)
         except Exception:
-            pass
-        face_hbox.pack_start(face_image, False, False, 0)
-
+            face_image.set_from_icon_name("user-info", Gtk.IconSize.DIALOG)
+        
+        face_image_frame.add(face_image)
+        current_icon_box.pack_start(face_image_frame, False, False, 0)
+        face_section.pack_start(current_icon_box, False, False, 0)
+        
+        # Select new icon
+        face_hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
+        face_label = Gtk.Label(label="Select New Icon:")
+        face_label.set_halign(Gtk.Align.START)
+        face_btn = Gtk.Button(label="Browse...")
+        face_btn.set_tooltip_text("Select a square image for your profile icon")
+        face_btn.connect("clicked", self.on_select_face_icon)
         face_hbox.pack_start(face_label, False, False, 0)
-        face_hbox.pack_start(face_btn, True, False, 0)
+        face_hbox.pack_start(face_btn, False, False, 0)
         face_section.pack_start(face_hbox, False, False, 0)
 
         self.face_status_label = Gtk.Label(label="")
+        self.face_status_label.set_halign(Gtk.Align.START)
         face_section.pack_start(self.face_status_label, False, False, 0)
 
         box.pack_start(face_section, False, False, 0)
+
+        # New vertical layout switch added to Appearance tab
+        vertical_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
+        vertical_label = Gtk.Label(label="Vertical Layout")
+        vertical_label.set_halign(Gtk.Align.START)
+        self.vertical_switch = Gtk.Switch()
+        self.vertical_switch.set_active(bind_vars.get('vertical', False))
+        vertical_box.pack_start(vertical_label, True, True, 0)
+        vertical_box.pack_end(self.vertical_switch, False, False, 0)
+        box.pack_start(vertical_box, False, False, 10)
 
         return box
 
@@ -477,23 +518,61 @@ class HyprConfGUI(Gtk.Window):
         box.set_margin_start(15)
         box.set_margin_end(15)
 
+        # Terminal Command section
+        terminal_header = Gtk.Label()
+        terminal_header.set_markup("<b>Terminal Settings</b>")
+        terminal_header.set_halign(Gtk.Align.START)
+        box.pack_start(terminal_header, False, False, 0)
+        
+        terminal_section = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=5)
+        terminal_section.set_margin_start(10)
+        terminal_section.set_margin_top(5)
+        terminal_section.set_margin_bottom(15)
+        
+        terminal_hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
+        terminal_label = Gtk.Label(label="Terminal Command:")
+        terminal_label.set_halign(Gtk.Align.START)
+        self.terminal_entry = Gtk.Entry()
+        self.terminal_entry.set_text(bind_vars['terminal_command'])
+        self.terminal_entry.set_tooltip_text("Command used to launch terminal apps (e.g., 'kitty -e', 'alacritty -e')")
+        terminal_hbox.pack_start(terminal_label, False, False, 0)
+        terminal_hbox.pack_start(self.terminal_entry, True, True, 0)
+        terminal_section.pack_start(terminal_hbox, False, False, 0)
+        
+        # Example hint
+        hint_label = Gtk.Label()
+        hint_label.set_markup("<small>Examples: 'kitty -e', 'alacritty -e', 'foot -e'</small>")
+        hint_label.set_halign(Gtk.Align.START)
+        terminal_section.pack_start(hint_label, False, False, 5)
+        
+        box.pack_start(terminal_section, False, False, 0)
+
         # Hypr Configuration section
         hypr_section = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=5)
 
-        # Checkboxes for Hyprlock and Hypridle
+        # Replacing checkboxes with switches for Hyprlock config
         if self.show_lock_checkbox:
-            self.lock_checkbox = Gtk.CheckButton(label="Replace Hyprlock config")
-            self.lock_checkbox.set_active(False)
-            hypr_section.pack_start(self.lock_checkbox, False, False, 10)
+            lock_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
+            lock_label = Gtk.Label(label="Replace Hyprlock config")
+            lock_label.set_halign(Gtk.Align.START)
+            self.lock_switch = Gtk.Switch()
+            lock_box.pack_start(lock_label, True, True, 0)
+            lock_box.pack_end(self.lock_switch, False, False, 0)
+            hypr_section.pack_start(lock_box, False, False, 10)
         else:
-            self.lock_checkbox = None
+            self.lock_switch = None
 
+        # Replacing checkboxes with switches for Hypridle config
         if self.show_idle_checkbox:
-            self.idle_checkbox = Gtk.CheckButton(label="Replace Hypridle config")
-            self.idle_checkbox.set_active(False)
-            hypr_section.pack_start(self.idle_checkbox, False, False, 10)
+            idle_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
+            idle_label = Gtk.Label(label="Replace Hypridle config")
+            idle_label.set_halign(Gtk.Align.START)
+            self.idle_switch = Gtk.Switch()
+            idle_box.pack_start(idle_label, True, True, 0)
+            idle_box.pack_end(self.idle_switch, False, False, 0)
+            hypr_section.pack_start(idle_box, False, False, 10)
         else:
-            self.idle_checkbox = None
+            self.idle_switch = None
 
         box.pack_start(hypr_section, False, False, 0)
 
@@ -554,6 +633,12 @@ class HyprConfGUI(Gtk.Window):
         # Update wallpaper directory
         bind_vars['wallpapers_dir'] = self.wall_dir_chooser.get_filename()
 
+        # Update vertical setting from the new switch
+        bind_vars['vertical'] = self.vertical_switch.get_active()
+        
+        # Update terminal command
+        bind_vars['terminal_command'] = self.terminal_entry.get_text()
+
         # Save the updated bind_vars to a JSON file
         config_json = os.path.expanduser(f'~/.config/{APP_NAME_CAP}/config/config.json')
         os.makedirs(os.path.dirname(config_json), exist_ok=True)
@@ -573,14 +658,14 @@ class HyprConfGUI(Gtk.Window):
             except Exception as e:
                 print("Error processing face icon:", e)
 
-        # Replace hyprlock config if requested
-        if self.lock_checkbox and self.lock_checkbox.get_active():
+        # Replace hyprlock config if requested using the new switch
+        if self.lock_switch and self.lock_switch.get_active():
             src_lock = os.path.expanduser(f"~/.config/{APP_NAME_CAP}/config/hypr/hyprlock.conf")
             dest_lock = os.path.expanduser("~/.config/hypr/hyprlock.conf")
             backup_and_replace(src_lock, dest_lock, "Hyprlock")
 
-        # Replace hypridle config if requested
-        if self.idle_checkbox and self.idle_checkbox.get_active():
+        # Replace hypridle config if requested using the new switch
+        if self.idle_switch and self.idle_switch.get_active():
             src_idle = os.path.expanduser(f"~/.config/{APP_NAME_CAP}/config/hypr/hypridle.conf")
             dest_idle = os.path.expanduser("~/.config/hypr/hypridle.conf")
             backup_and_replace(src_idle, dest_idle, "Hypridle")
@@ -589,12 +674,59 @@ class HyprConfGUI(Gtk.Window):
         hyprland_config_path = os.path.expanduser("~/.config/hypr/hyprland.conf")
         with open(hyprland_config_path, "r") as f:
             content = f.read()
-        if SOURCE_STRING not in content:
+        if (SOURCE_STRING not in content):
             with open(hyprland_config_path, "a") as f:
                 f.write(SOURCE_STRING)
 
         start_config()
-        self.destroy()
+        subprocess.run(["killall", APP_NAME])
+        subprocess.Popen(
+            ["uwsm", "app", "--", "python", os.path.expanduser(f"~/.config/{APP_NAME_CAP}/main.py")],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            start_new_session=True
+        )
+        # self.destroy()
+
+    def on_reset(self, widget):
+        """
+        Reset all settings to default values.
+        """
+        # Ask for confirmation
+        dialog = Gtk.MessageDialog(
+            transient_for=self,
+            flags=0,
+            message_type=Gtk.MessageType.QUESTION,
+            buttons=Gtk.ButtonsType.YES_NO,
+            text="Reset all settings to defaults?"
+        )
+        dialog.format_secondary_text("This will reset all keybindings and other settings to their default values.")
+        response = dialog.run()
+        dialog.destroy()
+        
+        if response == Gtk.ResponseType.YES:
+            # Reset bind_vars to default values
+            global bind_vars
+            bind_vars = DEFAULT_KEYBINDINGS.copy()
+            
+            # Update UI elements
+            # Update key binding entries
+            for prefix_key, suffix_key, prefix_entry, suffix_entry in self.entries:
+                prefix_entry.set_text(bind_vars[prefix_key])
+                suffix_entry.set_text(bind_vars[suffix_key])
+            
+            # Update wallpaper directory chooser
+            self.wall_dir_chooser.set_filename(bind_vars['wallpapers_dir'])
+            
+            # Update vertical switch
+            self.vertical_switch.set_active(bind_vars.get('vertical', False))
+            
+            # Update terminal command entry
+            self.terminal_entry.set_text(bind_vars['terminal_command'])
+            
+            # Clear face icon selection status
+            self.selected_face_icon = None
+            self.face_status_label.set_text("")
 
     def on_cancel(self, widget):
         self.destroy()
@@ -614,8 +746,8 @@ def start_config():
     with open(hypr_conf_path, "w") as f:
         f.write(generate_hyprconf())
 
-    # Reload Hyprland configuration
-    os.system("hyprctl reload")
+    # Reload Hyprland configuration using subprocess.run instead of os.system
+    subprocess.run(["hyprctl", "reload"])
 
 
 def open_config():

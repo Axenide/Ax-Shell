@@ -5,14 +5,13 @@ from fabric.utils.helpers import exec_shell_command_async, get_relative_path
 import modules.icons as icons
 from gi.repository import Gdk, GLib
 import os
-import modules.data as data
+import config.data as data
 import subprocess
 from loguru import logger
 
 SCREENSHOT_SCRIPT = get_relative_path("../scripts/screenshot.sh")
 OCR_SCRIPT = get_relative_path("../scripts/ocr.sh")
 GAMEMODE_SCRIPT = get_relative_path("../scripts/gamemode.sh")
-GAMEMODE_CHECK_SCRIPT = get_relative_path("../scripts/gamemode_check.sh")
 SCREENRECORD_SCRIPT = get_relative_path("../scripts/screenrecord.sh")
 
 class Toolbox(Box):
@@ -224,13 +223,13 @@ class Toolbox(Box):
         self.close_menu()
 
     def gamemode(self, *args):
-        exec_shell_command_async(f"bash {GAMEMODE_SCRIPT} sf")
+        exec_shell_command_async(f"bash {GAMEMODE_SCRIPT}")
         self.gamemode_check()
         self.close_menu()
 
     def gamemode_check(self):
         try:
-            result = subprocess.run(f"bash {GAMEMODE_CHECK_SCRIPT} sf", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            result = subprocess.run(f"bash {GAMEMODE_SCRIPT} check", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             enabled = result.stdout == b't\n'
         except Exception:
             enabled = False

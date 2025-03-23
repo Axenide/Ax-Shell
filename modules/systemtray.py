@@ -3,10 +3,17 @@ import gi
 gi.require_version("Gray", "0.1")
 from gi.repository import Gray, Gtk, Gdk, GdkPixbuf, GLib
 
+import config.data as data
 
 class SystemTray(Gtk.Box):
     def __init__(self, pixel_size: int = 20, **kwargs) -> None:
-        super().__init__(name="systray", orientation=Gtk.Orientation.HORIZONTAL, spacing=8, **kwargs)
+        orientation = Gtk.Orientation.HORIZONTAL if not data.VERTICAL else Gtk.Orientation.VERTICAL
+        super().__init__(
+            name="systray",
+            orientation=orientation,
+            spacing=8,
+            **kwargs
+        )
         self.set_visible(False)  # Initially hidden when empty.
         self.pixel_size = pixel_size
         self.watcher = Gray.Watcher()
