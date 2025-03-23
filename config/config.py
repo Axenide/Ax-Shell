@@ -311,6 +311,9 @@ class HyprConfGUI(Gtk.Window):
         system_tab = self.create_system_tab()
         notebook.append_page(system_tab, Gtk.Label(label="System"))
 
+        display_tab = self.create_display_tab()
+        notebook.append_page(display_tab, Gtk.Label(label="Display"))
+
         # Button box for Cancel and Accept buttons
         button_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
         button_box.set_halign(Gtk.Align.END)
@@ -354,7 +357,7 @@ class HyprConfGUI(Gtk.Window):
         key_label.get_style_context().add_class("heading")
 
         grid.attach(action_label, 0, 1, 1, 1)
-        grid.attach(modifier_label, 1, 1, 1, 1) 
+        grid.attach(modifier_label, 1, 1, 1, 1)
         grid.attach(key_label, 3, 1, 1, 1)
 
         self.entries = []
@@ -440,7 +443,7 @@ class HyprConfGUI(Gtk.Window):
         face_label.set_halign(Gtk.Align.START)
         face_btn = Gtk.Button(label="Select Image")
         face_btn.connect("clicked", self.on_select_face_icon)
-        
+
         # Show current face icon if it exists as a pixbuf of size 24
         current_face = os.path.expanduser("~/.face.icon")
         face_image = Gtk.Image()
@@ -454,11 +457,11 @@ class HyprConfGUI(Gtk.Window):
         except Exception:
             pass
         face_hbox.pack_start(face_image, False, False, 0)
-            
+
         face_hbox.pack_start(face_label, False, False, 0)
         face_hbox.pack_start(face_btn, True, False, 0)
         face_section.pack_start(face_hbox, False, False, 0)
-        
+
         self.face_status_label = Gtk.Label(label="")
         face_section.pack_start(self.face_status_label, False, False, 0)
 
@@ -497,6 +500,16 @@ class HyprConfGUI(Gtk.Window):
         # Spacer to push everything to the top
         spacer = Gtk.Box()
         box.pack_start(spacer, True, True, 0)
+
+        return box
+
+    def create_display_tab(self):
+        """Create tab for display configurations."""
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=15)
+        box.set_margin_top(15)
+        box.set_margin_bottom(15)
+        box.set_margin_start(15)
+        box.set_margin_end(15)
 
         return box
 

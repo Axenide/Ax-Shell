@@ -14,7 +14,6 @@ from modules.dashboard import Dashboard
 from modules.notifications import NotificationContainer
 from modules.power import PowerMenu
 from modules.overview import Overview
-from modules.hue import Light
 from modules.emoji import EmojiPicker
 from modules.corners import MyCorner
 import config.data as data
@@ -53,8 +52,6 @@ class Notch(Window):
         self.emoji = EmojiPicker(notch=self)
         self.power = PowerMenu(notch=self)
 
-        self.hue = Box()
-
         self.applet_stack = self.dashboard.widgets.applet_stack
         self.nhistory = self.applet_stack.get_children()[0]
         self.btdevices = self.applet_stack.get_children()[1]
@@ -80,7 +77,7 @@ class Notch(Window):
                 truncate=truncate,
             ),
         )
-        
+
         self.active_window_box = CenterBox(
             name="active-window-box",
             h_expand=True,
@@ -147,7 +144,6 @@ class Notch(Window):
                 self.overview,
                 self.emoji,
                 self.power,
-                self.hue,
 
                 self.tools,
             ]
@@ -235,7 +231,7 @@ class Notch(Window):
         self.add_keybinding("Escape", lambda *_: self.close_notch())
         self.add_keybinding("Ctrl Tab", lambda *_: self.dashboard.go_to_next_child())
         self.add_keybinding("Ctrl Shift ISO_Left_Tab", lambda *_: self.dashboard.go_to_previous_child())
-        
+
         self.update_window_icon()
 
     def on_button_enter(self, widget, event):
@@ -264,9 +260,9 @@ class Notch(Window):
             self.notch_box.add_style_class("hidden")
 
 
-        for widget in [self.launcher, self.dashboard, self.notification, self.overview, self.emoji, self.power, self.tools, self.hue]:
+        for widget in [self.launcher, self.dashboard, self.notification, self.overview, self.emoji, self.power, self.tools]:
             widget.remove_style_class("open")
-        for style in ["launcher", "dashboard", "notification", "overview", "emoji", "power", "hue", "tools"]:
+        for style in ["launcher", "dashboard", "notification", "overview", "emoji", "power", "tools"]:
             self.stack.remove_style_class(style)
         self.stack.set_visible_child(self.compact)
 
@@ -387,7 +383,7 @@ class Notch(Window):
                 self.bar.revealer_right.set_reveal_child(False)
                 self.bar.revealer_left.set_reveal_child(False)
                 return
-                
+
         # Handle kanban section
         if widget == "kanban":
             if self.stack.get_visible_child() == self.dashboard and self.dashboard.stack.get_visible_child() == self.dashboard.kanban:
@@ -418,7 +414,7 @@ class Notch(Window):
                 self.bar.revealer_right.set_reveal_child(False)
                 self.bar.revealer_left.set_reveal_child(False)
                 return
-                
+
         # Handle wallpapers section
         if widget == "wallpapers":
             if self.stack.get_visible_child() == self.dashboard and self.dashboard.stack.get_visible_child() == self.dashboard.wallpapers:
@@ -457,7 +453,6 @@ class Notch(Window):
             "emoji": self.emoji,
             "power": self.power,
             "tools": self.tools,
-            "hue": self.hue,
             "dashboard": self.dashboard, # Add dashboard here to ensure its style class is removed
         }
         target_widget = widgets.get(widget, self.dashboard)
@@ -576,57 +571,57 @@ class Notch(Window):
             # Map by name (lowercase)
             if app.name:
                 identifiers[app.name.lower()] = app
-                
+
             # Map by display name
             if app.display_name:
                 identifiers[app.display_name.lower()] = app
-                
+
             # Map by window class if available
             if app.window_class:
                 identifiers[app.window_class.lower()] = app
-                
+
             # Map by executable name if available
             if app.executable:
                 exe_basename = app.executable.split('/')[-1].lower()
                 identifiers[exe_basename] = app
-                
+
             # Map by command line if available (without parameters)
             if app.command_line:
                 cmd_base = app.command_line.split()[0].split('/')[-1].lower()
                 identifiers[cmd_base] = app
-                
+
         return identifiers
 
     def _normalize_window_class(self, class_name):
         """Normalize window class by removing common suffixes and lowercase."""
         if not class_name:
             return ""
-            
+
         normalized = class_name.lower()
-        
+
         # Remove common suffixes
         suffixes = [".bin", ".exe", ".so", "-bin", "-gtk"]
         for suffix in suffixes:
             if normalized.endswith(suffix):
                 normalized = normalized[:-len(suffix)]
-                
+
         return normalized
-    
+
     def find_app(self, app_identifier):
         """Return the DesktopApp object by matching any app identifier."""
         if not app_identifier:
             return None
-        
+
         # Try direct lookup in our identifiers map
         normalized_id = str(app_identifier).lower()
         if normalized_id in self.app_identifiers:
             return self.app_identifiers[normalized_id]
-            
+
         # Try with normalized class name
         norm_id = self._normalize_window_class(normalized_id)
         if norm_id in self.app_identifiers:
             return self.app_identifiers[norm_id]
-            
+
         # More targeted matching with exact names only
         for app in self._all_apps:
             if app.name and app.name.lower() == normalized_id:
@@ -645,7 +640,7 @@ class Notch(Window):
                 cmd_base = app.command_line.split()[0].split('/')[-1].lower()
                 if cmd_base == normalized_id:
                     return app
-                
+
         return None
 
     def update_window_icon(self, *args):
@@ -654,17 +649,17 @@ class Notch(Window):
         label_widget = self.active_window.get_children()[0]
         if not isinstance(label_widget, Gtk.Label):
             return
-            
+
         # Get window title
         title = label_widget.get_text()
         if title == 'Desktop' or not title:
             # If on desktop, hide icon completely
             self.window_icon.set_visible(False)
             return
-        
+
         # For any active window, ensure icon is visible
         self.window_icon.set_visible(True)
-            
+
         # Try to get window class from Hyprland
         from fabric.hyprland.widgets import get_hyprland_connection
         conn = get_hyprland_connection()
@@ -673,25 +668,25 @@ class Notch(Window):
                 import json
                 active_window = json.loads(conn.send_command("j/activewindow").reply.decode())
                 app_id = active_window.get("initialClass", "") or active_window.get("class", "")
-                
+
                 # Find app using icon resolver or desktop apps
                 icon_size = 20
                 desktop_app = self.find_app(app_id)
-                
+
                 # Get icon using improved method with fallbacks
                 icon_pixbuf = None
                 if desktop_app:
                     icon_pixbuf = desktop_app.get_icon_pixbuf(size=icon_size)
-                
+
                 if not icon_pixbuf:
                     # Try non-symbolic icon first (full color)
                     icon_pixbuf = self.icon_resolver.get_icon_pixbuf(app_id, icon_size)
-                
+
                 if not icon_pixbuf and "-" in app_id:
                     # Try with base name (no suffix) for flatpak apps
                     base_app_id = app_id.split("-")[0]
                     icon_pixbuf = self.icon_resolver.get_icon_pixbuf(base_app_id, icon_size)
-                    
+
                 if icon_pixbuf:
                     self.window_icon.set_from_pixbuf(icon_pixbuf)
                 else:
