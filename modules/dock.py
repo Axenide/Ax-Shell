@@ -9,20 +9,13 @@ from fabric.widgets.image import Image
 from fabric.widgets.eventbox import EventBox
 from fabric.widgets.wayland import WaylandWindow as Window
 from fabric.hyprland.widgets import get_hyprland_connection
-from fabric.utils import (
-    exec_shell_command,
-    exec_shell_command_async,
-    idle_add,
-    remove_handler,
-    get_relative_path,
-)
+from fabric.utils import exec_shell_command, exec_shell_command_async, idle_add, remove_handler, get_relative_path
 from fabric.utils.helpers import get_desktop_applications
 
 import config.data as data
 import logging
 
 OCCLUSION = 36 + data.DOCK_ICON_SIZE
-
 
 def read_config():
     """Read and return the full configuration from the JSON file, handling missing file."""
@@ -32,11 +25,7 @@ def read_config():
             data = json.load(file)
 
         # Migration: Convert old format (simple string array) to new format (array of objects with full app data)
-        if (
-            "pinned_apps" in data
-            and data["pinned_apps"]
-            and isinstance(data["pinned_apps"][0], str)
-        ):
+        if "pinned_apps" in data and data["pinned_apps"] and isinstance(data["pinned_apps"][0], str):
             # Get all desktop apps for lookup during migration
             all_apps = get_desktop_applications()
             app_map = {app.name: app for app in all_apps if app.name}
@@ -55,7 +44,7 @@ def read_config():
                         "display_name": app.display_name,
                         "window_class": app.window_class,
                         "executable": app.executable,
-                        "command_line": app.command_line,
+                        "command_line": app.command_line
                     }
                     data["pinned_apps"].append(app_data)
                 else:
@@ -65,7 +54,6 @@ def read_config():
     except (FileNotFoundError, json.JSONDecodeError):
         data = {"pinned_apps": []}  # Default to empty pinned apps
     return data
-
 
 # Credit to Aylur for the createSurfaceFromWidget code
 def createSurfaceFromWidget(widget: Gtk.Widget) -> cairo.ImageSurface:
@@ -81,7 +69,6 @@ def createSurfaceFromWidget(widget: Gtk.Widget) -> cairo.ImageSurface:
     cr.fill()
     widget.draw(cr)
     return surface
-
 
 class Dock(Window):
     # Static registry to track all active dock instances
@@ -104,7 +91,7 @@ class Dock(Window):
         self.pinned = self.config.get("pinned_apps", [])
         self.config_path = get_relative_path("../config/dock.json")
         self.app_map = {}  # Initialize the app map
-        self._all_apps = get_desktop_applications()  # Get all apps for lookup
+        self._all_apps = get_desktop_applications() # Get all apps for lookup
         # Create app identifiers mapping
         self.app_identifiers = self._build_app_identifiers_map()
         self.is_hidden = False
@@ -114,9 +101,7 @@ class Dock(Window):
         self.is_hovered = False
 
         # Set up UI containers
-        self.view = Box(
-            name="viewport", orientation="h" if not data.VERTICAL else "v", spacing=4
-        )
+        self.view = Box(name="viewport", orientation="h" if not data.VERTICAL else "v", spacing=4)
         self.wrapper = Box(name="dock", orientation="v", children=[self.view])
 
         # Main dock container with hover handling
@@ -131,21 +116,19 @@ class Dock(Window):
         self.hover_activator.connect("enter-notify-event", self._on_hover_enter)
         self.hover_activator.connect("leave-notify-event", self._on_hover_leave)
 
-        self.main_box = Box(
-            orientation="v", children=[self.dock_eventbox, self.hover_activator]
-        )
+        self.main_box = Box(orientation="v", children=[self.dock_eventbox, self.hover_activator])
         self.add(self.main_box)
 
         # Drag-and-drop setup for the viewport
         self.view.drag_source_set(
             Gdk.ModifierType.BUTTON1_MASK,
             [Gtk.TargetEntry.new("text/plain", Gtk.TargetFlags.SAME_APP, 0)],
-            Gdk.DragAction.MOVE,
+            Gdk.DragAction.MOVE
         )
         self.view.drag_dest_set(
             Gtk.DestDefaults.ALL,
             [Gtk.TargetEntry.new("text/plain", Gtk.TargetFlags.SAME_APP, 0)],
-            Gdk.DragAction.MOVE,
+            Gdk.DragAction.MOVE
         )
         self.view.connect("drag-data-get", self.on_drag_data_get)
         self.view.connect("drag-data-received", self.on_drag_data_received)
@@ -186,12 +169,12 @@ class Dock(Window):
 
             # Map by executable name if available
             if app.executable:
-                exe_basename = app.executable.split("/")[-1].lower()
+                exe_basename = app.executable.split('/')[-1].lower()
                 identifiers[exe_basename] = app
 
             # Map by command line if available (without parameters)
             if app.command_line:
-                cmd_base = app.command_line.split()[0].split("/")[-1].lower()
+                cmd_base = app.command_line.split()[0].split('/')[-1].lower()
                 identifiers[cmd_base] = app
 
         return identifiers
@@ -207,7 +190,7 @@ class Dock(Window):
         suffixes = [".bin", ".exe", ".so", "-bin", "-gtk"]
         for suffix in suffixes:
             if normalized.endswith(suffix):
-                normalized = normalized[: -len(suffix)]
+                normalized = normalized[:-len(suffix)]
 
         return normalized
 
@@ -262,13 +245,9 @@ class Dock(Window):
         self.is_hovered = False
         self.delay_hide()
         # Immediate occlusion check on true leave using simplified format
-        occlusion_region = (
-            ("bottom", OCCLUSION) if not data.VERTICAL else ("right", OCCLUSION)
-        )
+        occlusion_region = ("bottom", OCCLUSION) if not data.VERTICAL else ("right", OCCLUSION)
         # Only add occlusion style if not dragging an icon.
-        if not self._drag_in_progress and (
-            check_occlusion(occlusion_region) or not self.view.get_children()
-        ):
+        if not self._drag_in_progress and (check_occlusion(occlusion_region) or not self.view.get_children()):
             self.wrapper.add_style_class("occluded")
         return True
 
@@ -284,13 +263,7 @@ class Dock(Window):
         # If we got a dict object with app data (new format)
         if isinstance(app_identifier, dict):
             # Try to find by all available identifiers in priority order
-            for key in [
-                "window_class",
-                "executable",
-                "command_line",
-                "name",
-                "display_name",
-            ]:
+            for key in ["window_class", "executable", "command_line", "name", "display_name"]:
                 if key in app_identifier and app_identifier[key]:
                     app = self.find_app_by_key(app_identifier[key])
                     if app:
@@ -328,17 +301,13 @@ class Dock(Window):
     # Update the dock's app map using DesktopApp objects from the system.
     def update_app_map(self):
         """Updates the mapping of commands to DesktopApp objects."""
-        self._all_apps = get_desktop_applications()  # Refresh all apps
-        self.app_map = {
-            app.name: app for app in self._all_apps if app.name
-        }  # Map app names to DesktopApp objects
-        self.app_identifiers = (
-            self._build_app_identifiers_map()
-        )  # Rebuild identifiers map
+        self._all_apps = get_desktop_applications() # Refresh all apps
+        self.app_map = {app.name: app for app in self._all_apps if app.name} # Map app names to DesktopApp objects
+        self.app_identifiers = self._build_app_identifiers_map()  # Rebuild identifiers map
 
     def create_button(self, app_identifier, instances):
         """Create dock application button"""
-        desktop_app = self.find_app(app_identifier)  # Find app by identifier
+        desktop_app = self.find_app(app_identifier) # Find app by identifier
         icon_img = None
         display_name = None
 
@@ -347,28 +316,18 @@ class Dock(Window):
             display_name = desktop_app.display_name or desktop_app.name
 
         # Extract identifier for fallback
-        id_value = (
-            app_identifier["name"]
-            if isinstance(app_identifier, dict)
-            else app_identifier
-        )
+        id_value = app_identifier["name"] if isinstance(app_identifier, dict) else app_identifier
 
         if not icon_img:
             # Fallback to IconResolver with the app command
-            icon_img = self.icon.get_icon_pixbuf(
-                id_value, data.DOCK_ICON_SIZE
-            )  # Use identifier for fallback
+            icon_img = self.icon.get_icon_pixbuf(id_value, data.DOCK_ICON_SIZE) # Use identifier for fallback
 
-        if not icon_img:  # Double check after exec path try
+        if not icon_img: # Double check after exec path try
             # Fallback icon if no DesktopApp is found
-            icon_img = self.icon.get_icon_pixbuf(
-                "application-x-executable-symbolic", data.DOCK_ICON_SIZE
-            )
+            icon_img = self.icon.get_icon_pixbuf("application-x-executable-symbolic", data.DOCK_ICON_SIZE)
             # Final fallback
             if not icon_img:
-                icon_img = self.icon.get_icon_pixbuf(
-                    "image-missing", data.DOCK_ICON_SIZE
-                )
+                icon_img = self.icon.get_icon_pixbuf("image-missing", data.DOCK_ICON_SIZE)
 
         items = [Image(pixbuf=icon_img)]
 
@@ -377,15 +336,13 @@ class Dock(Window):
             tooltip = instances[0]["title"]
 
         button = Button(
-            child=Box(
+            child= Box(
                 name="dock-icon",
                 orientation="v",
                 h_align="center",
                 children=items,
             ),
-            on_clicked=lambda *a: self.handle_app(
-                app_identifier, instances, desktop_app
-            ),  # Pass desktop_app as well
+            on_clicked=lambda *a: self.handle_app(app_identifier, instances, desktop_app), # Pass desktop_app as well
             tooltip_text=tooltip,
             name="dock-app-button",
         )
@@ -396,13 +353,13 @@ class Dock(Window):
         button.instances = instances
 
         if instances:
-            button.add_style_class("instance")  # Style running apps
+            button.add_style_class("instance") # Style running apps
 
         # Enable DnD for ALL apps
         button.drag_source_set(
             Gdk.ModifierType.BUTTON1_MASK,
             [Gtk.TargetEntry.new("text/plain", Gtk.TargetFlags.SAME_APP, 0)],
-            Gdk.DragAction.MOVE,
+            Gdk.DragAction.MOVE
         )
         button.connect("drag-begin", self.on_drag_begin)
         button.connect("drag-end", self.on_drag_end)  # Connect drag-end to ALL buttons
@@ -411,7 +368,7 @@ class Dock(Window):
         button.drag_dest_set(
             Gtk.DestDefaults.ALL,
             [Gtk.TargetEntry.new("text/plain", Gtk.TargetFlags.SAME_APP, 0)],
-            Gdk.DragAction.MOVE,
+            Gdk.DragAction.MOVE
         )
         button.connect("drag-data-get", self.on_drag_data_get)
         button.connect("drag-data-received", self.on_drag_data_received)
@@ -441,19 +398,10 @@ class Dock(Window):
                 # No desktop entry found, try direct execution
                 if isinstance(app_identifier, dict):
                     # Try command_line first, then executable, then name as last resort
-                    if (
-                        "command_line" in app_identifier
-                        and app_identifier["command_line"]
-                    ):
-                        exec_shell_command_async(
-                            f"nohup {app_identifier['command_line']}"
-                        )
-                    elif (
-                        "executable" in app_identifier and app_identifier["executable"]
-                    ):
-                        exec_shell_command_async(
-                            f"nohup {app_identifier['executable']}"
-                        )
+                    if "command_line" in app_identifier and app_identifier["command_line"]:
+                        exec_shell_command_async(f"nohup {app_identifier['command_line']}")
+                    elif "executable" in app_identifier and app_identifier["executable"]:
+                        exec_shell_command_async(f"nohup {app_identifier['executable']}")
                     elif "name" in app_identifier and app_identifier["name"]:
                         exec_shell_command_async(f"nohup {app_identifier['name']}")
                 elif isinstance(app_identifier, str):
@@ -546,9 +494,7 @@ class Dock(Window):
             elif title := c.get("title", "").lower():
                 # Extract app name from title (common format: "App Name - Document")
                 possible_name = title.split(" - ")[0].strip()
-                if (
-                    possible_name and len(potential_name) > 1
-                ):  # Avoid single letter app names
+                if possible_name and len(potential_name) > 1:  # Avoid single letter app names
                     window_id = possible_name
                 else:
                     window_id = title  # Use full title if we can't extract a good name
@@ -558,9 +504,7 @@ class Dock(Window):
                 window_id = "unknown-app"
 
             # Log window for debugging purposes
-            logging.debug(
-                f"Window detected: {window_id} (from {c.get('initialClass', '')}/{c.get('class', '')}/{c.get('title', '')})"
-            )
+            logging.debug(f"Window detected: {window_id} (from {c.get('initialClass', '')}/{c.get('class', '')}/{c.get('title', '')})")
 
             # Add to running windows - store with both original and normalized keys
             running_windows.setdefault(window_id, []).append(c)
@@ -568,9 +512,7 @@ class Dock(Window):
             # Also store with normalized key for more flexible matching
             normalized_id = self._normalize_window_class(window_id)
             if normalized_id != window_id:
-                running_windows.setdefault(normalized_id, []).extend(
-                    running_windows[window_id]
-                )
+                running_windows.setdefault(normalized_id, []).extend(running_windows[window_id])
 
         # Map pinned apps to their running instances
         pinned_buttons = []
@@ -587,13 +529,7 @@ class Dock(Window):
             possible_identifiers = []
 
             if isinstance(app_data, dict):
-                for key in [
-                    "window_class",
-                    "executable",
-                    "command_line",
-                    "name",
-                    "display_name",
-                ]:
+                for key in ["window_class", "executable", "command_line", "name", "display_name"]:
                     if key in app_data and app_data[key]:
                         possible_identifiers.append(app_data[key].lower())
             elif isinstance(app_data, str):
@@ -604,11 +540,11 @@ class Dock(Window):
                 if app.window_class:
                     possible_identifiers.append(app.window_class.lower())
                 if app.executable:
-                    possible_identifiers.append(app.executable.split("/")[-1].lower())
+                    possible_identifiers.append(app.executable.split('/')[-1].lower())
                 if app.command_line:
                     cmd_parts = app.command_line.split()
                     if cmd_parts:
-                        possible_identifiers.append(cmd_parts[0].split("/")[-1].lower())
+                        possible_identifiers.append(cmd_parts[0].split('/')[-1].lower())
                 if app.name:
                     possible_identifiers.append(app.name.lower())
                 if app.display_name:
@@ -639,9 +575,7 @@ class Dock(Window):
                     if len(identifier) >= 3 and identifier in window_class:
                         instances = running_windows[window_class]
                         matched_class = window_class
-                        logging.debug(
-                            f"Substring match: {identifier} in {window_class}"
-                        )
+                        logging.debug(f"Substring match: {identifier} in {window_class}")
                         break
 
                 if matched_class:
@@ -652,9 +586,7 @@ class Dock(Window):
                 used_window_classes.add(matched_class)
                 # Also mark the normalized version as used
                 used_window_classes.add(self._normalize_window_class(matched_class))
-                logging.debug(
-                    f"Matched pinned app {app_data} to running instances via {matched_class}"
-                )
+                logging.debug(f"Matched pinned app {app_data} to running instances via {matched_class}")
 
             # Create button for this pinned app with any found instances
             pinned_buttons.append(self.create_button(app_data, instances))
@@ -694,7 +626,7 @@ class Dock(Window):
                         "display_name": app.display_name,
                         "window_class": app.window_class,
                         "executable": app.executable,
-                        "command_line": app.command_line,
+                        "command_line": app.command_line
                     }
                     identifier = app_data
                 else:
@@ -707,14 +639,7 @@ class Dock(Window):
         children = pinned_buttons
         # Only add separator if both pinned and open buttons exist
         if pinned_buttons and open_buttons:
-            children += [
-                Box(
-                    orientation="v" if not data.VERTICAL else "h",
-                    v_expand=not data.VERTICAL,
-                    h_expand=data.VERTICAL,
-                    name="dock-separator",
-                )
-            ]
+            children += [Box(orientation="v" if not data.VERTICAL else "h", v_expand=not data.VERTICAL, h_expand=data.VERTICAL, name="dock-separator")]
         children += open_buttons
 
         self.view.children = children
@@ -758,9 +683,7 @@ class Dock(Window):
         if self.is_hovered or self._drag_in_progress:
             self.wrapper.remove_style_class("occluded")
             return True
-        occlusion_region = (
-            ("bottom", OCCLUSION) if not data.VERTICAL else ("right", OCCLUSION)
-        )
+        occlusion_region = ("bottom", OCCLUSION) if not data.VERTICAL else ("right", OCCLUSION)
         if check_occlusion(occlusion_region) or not self.view.get_children():
             self.wrapper.add_style_class("occluded")
         else:
@@ -776,18 +699,14 @@ class Dock(Window):
 
     def on_drag_data_get(self, widget, drag_context, data, info, time):
         """Handle drag start"""
-        target = self._find_drag_target(
-            widget.get_parent() if isinstance(widget, Box) else widget
-        )
+        target = self._find_drag_target(widget.get_parent() if isinstance(widget, Box) else widget)
         if target is not None:
             index = self.view.get_children().index(target)
             data.set_text(str(index), -1)
 
     def on_drag_data_received(self, widget, drag_context, x, y, data, info, time):
         """Handle drop event"""
-        target = self._find_drag_target(
-            widget.get_parent() if isinstance(widget, Box) else widget
-        )
+        target = self._find_drag_target(widget.get_parent() if isinstance(widget, Box) else widget)
         if target is None:
             return
         try:
@@ -810,10 +729,9 @@ class Dock(Window):
                     break
 
             # Detect if we're dragging across the separator (between pinned/unpinned)
-            cross_section_drag = separator_index != -1 and (
-                (source_index < separator_index and target_index > separator_index)
-                or (source_index > separator_index and target_index < separator_index)
-            )
+            cross_section_drag = (separator_index != -1 and
+                                 ((source_index < separator_index and target_index > separator_index) or
+                                  (source_index > separator_index and target_index < separator_index)))
 
             # Move the item in the children list
             child = children.pop(source_index)
@@ -842,9 +760,7 @@ class Dock(Window):
                 window = self.get_window()
                 if window:  # Check if we got a window
                     win_x, win_y, width, height = window.get_geometry()
-                    if not (
-                        win_x <= x <= win_x + width and win_y <= y <= win_y + height
-                    ):
+                    if not (win_x <= x <= win_x + width and win_y <= y <= win_y + height):
                         # Drag ended outside the dock - get app data from the button
                         app_id = widget.app_identifier
                         instances = widget.instances
@@ -857,9 +773,7 @@ class Dock(Window):
                                 app_index = i
                                 break
                             # For dict format, match by name
-                            elif isinstance(pinned_app, dict) and isinstance(
-                                app_id, dict
-                            ):
+                            elif isinstance(pinned_app, dict) and isinstance(app_id, dict):
                                 if pinned_app.get("name") == app_id.get("name"):
                                     app_index = i
                                     break
@@ -870,13 +784,11 @@ class Dock(Window):
                             self.config["pinned_apps"] = self.pinned
                             self.update_pinned_apps_file()
                             self.update_dock()  # Update dock after file save
-                        elif instances:  # Close if running and unpinned
+                        elif instances: # Close if running and unpinned
                             # Close running app (if not pinned)
                             address = instances[0].get("address")
                             if address:
-                                exec_shell_command(
-                                    f"hyprctl dispatch closewindow address:{address}"
-                                )
+                                exec_shell_command(f"hyprctl dispatch closewindow address:{address}")
                                 self.update_dock()  # Update dock after closing window
             self._drag_in_progress = False  # Clear the drag lock
 
@@ -920,7 +832,7 @@ class Dock(Window):
                         "display_name": app.display_name,
                         "window_class": app.window_class,
                         "executable": app.executable,
-                        "command_line": app.command_line,
+                        "command_line": app.command_line
                     }
                     pinned_children.append(app_data)
                 else:
