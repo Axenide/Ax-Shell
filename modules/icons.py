@@ -156,6 +156,8 @@ radar: str = "&#xf017;"
 emoji: str = "&#xeaf7;"
 keyboard: str = "&#xebd6;"
 terminal: str = "&#xebef;"
+timer_off: str = "&#xf146;"
+timer_on: str = "&#xf756;"
 
 exceptions: list[str] = ['font_family', 'font_weight', 'span']
 
