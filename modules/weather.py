@@ -6,13 +6,13 @@ from gi.repository import Gtk, GLib
 from modules.private_data import PrivateData
 
 from fabric.widgets.label import Label
-from fabric.widgets.button import Button
+from fabric.widgets.box import Box
 
 gi.require_version("Gtk", "3.0")
 import modules.icons as icons
 import config.data as data
 
-class Weather(Button):
+class Weather(Box):
     def __init__(self, **kwargs) -> None:
         super().__init__(name="weather", orientation="h", spacing=8, **kwargs)
         self.label = Label(name="weather-label", markup=icons.loader)

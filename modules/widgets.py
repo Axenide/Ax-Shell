@@ -56,7 +56,11 @@ class Widgets(Box):
 
         self.metrics = Metrics()
 
-        self.cgm = MyCgm()
+        self.cgm = Box(
+            name="cgm",
+            h_expand=True,
+            v_expand=True,
+        )
 
         self.notification_history = self.notch.notification_history
 
