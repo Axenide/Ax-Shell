@@ -255,8 +255,8 @@ class Pins(Gtk.Box):
         scrolled_window = ScrolledWindow(child=grid, name="scrolled-window")
         self.pack_start(scrolled_window, True, True, 0)
 
-        # Create 25 cells (5x5)
-        for row in range(5):
+        # Create 30 cells (5x6)
+        for row in range(6):
             for col in range(5):
                 cell = Cell(self)
                 self.cells.append(cell)

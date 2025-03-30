@@ -1,8 +1,6 @@
 #metrics-small {
   background-color: var(--shadow);
   padding: 2px;
-  border-radius: 16px;
-  /*margin-top: 4px;*/
 }
 
 #metrics-circle {
@@ -67,7 +65,6 @@
 #button-bar.upload {
   background-color: var(--yellow);
 }
-
 
 #download-icon-label {
   color: var(--green);

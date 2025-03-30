@@ -479,9 +479,11 @@ class NetworkApplet(Button):
         self.wifi_label = Label(name="network-icon-label", markup="WiFi: Unknown")
 
         self.is_mouse_over = False
+        self.downloading = False  # Track if downloading threshold is reached
+        self.uploading = False    # Track if uploading threshold is reached
 
-        self.download_icon = Label(name="download-icon-label", markup=icons.download)
-        self.upload_icon = Label(name="upload-icon-label", markup=icons.upload)
+        self.download_icon = Label(name="download-icon-label", markup=icons.download, v_align="center", h_align="center", h_expand=True, v_expand=True)
+        self.upload_icon = Label(name="upload-icon-label", markup=icons.upload, v_align="center", h_align="center", h_expand=True, v_expand=True)
 
         self.download_box = Box(
             children=[self.download_icon, self.download_label],
@@ -491,13 +493,21 @@ class NetworkApplet(Button):
             children=[self.upload_label, self.upload_icon],
         )
 
-        self.download_revealer = Revealer(child=self.download_box, transition_type = "slide-right", child_revealed=False)
-        self.upload_revealer = Revealer(child=self.upload_box, transition_type="slide-left" ,child_revealed=False)
+        self.download_revealer = Revealer(child=self.download_box, transition_type = "slide-right" if not data.VERTICAL else "slide-down", child_revealed=False)
+        self.upload_revealer = Revealer(child=self.upload_box, transition_type="slide-left" if not data.VERTICAL else "slide-up",child_revealed=False)
         
 
         self.children = Box(
+            orientation="h" if not data.VERTICAL else "v",
             children=[self.upload_revealer, self.wifi_label, self.download_revealer],
         )
+        
+        if data.VERTICAL:
+            self.download_label.set_visible(False)
+            self.upload_label.set_visible(False)
+            self.upload_icon.set_margin_top(4)
+            self.download_icon.set_margin_bottom(4)
+
         self.last_counters = psutil.net_io_counters()
         self.last_time = time.time()
         invoke_repeater(1000, self.update_network)
@@ -516,68 +526,79 @@ class NetworkApplet(Button):
         self.download_label.set_markup(download_str)
         self.upload_label.set_markup(upload_str)
 
+        # Store current network activity state
         self.downloading = (download_speed >= 10e6)
         self.uploading = (upload_speed >= 2e6)
 
-        # Apply urgent styles regardless of orientation
-        if self.downloading and not self.is_mouse_over:
-            self.download_urgent()
-        if self.uploading and not self.is_mouse_over:
-            self.upload_urgent()
-        
-        if not self.downloading and not self.uploading:
-            self.remove_urgent()
+        # Apply urgent styles based on network activity (if not being hovered)
+        if not self.is_mouse_over:
+            if self.downloading:
+                self.download_urgent()
+            elif self.uploading:
+                self.upload_urgent()
+            else:
+                self.remove_urgent()
 
-        if not data.VERTICAL:
-            # Horizontal mode - original behavior for revealers
-            self.download_revealer.set_reveal_child(self.downloading or self.is_mouse_over)
-            self.upload_revealer.set_reveal_child(self.uploading or self.is_mouse_over)
-        else:
-            # Vertical mode - don't use revealers, change icon instead
-            self.download_revealer.set_reveal_child(False)
-            self.upload_revealer.set_reveal_child(False)
-        
-        if self.network_client and self.network_client.wifi_device:
+        # Revealer behavior with hover consideration only in horizontal mode
+        show_download = self.downloading or (self.is_mouse_over and not data.VERTICAL)
+        show_upload = self.uploading or (self.is_mouse_over and not data.VERTICAL)
+        self.download_revealer.set_reveal_child(show_download)
+        self.upload_revealer.set_reveal_child(show_upload)
+
+        # Check for primary device type (ethernet or wifi)
+        primary_device = None
+        if self.network_client:
+            primary_device = self.network_client.primary_device
+
+        # Create tooltip content based on orientation
+        tooltip_base = ""
+        tooltip_vertical = ""
+
+        # Handle Ethernet connection
+        if primary_device == "wired" and self.network_client.ethernet_device:
+            ethernet_state = self.network_client.ethernet_device.internet
+            # Horizontal mode ethernet icons
+            if ethernet_state == "activated":
+                self.wifi_label.set_markup(icons.world)
+            elif ethernet_state == "activating":
+                self.wifi_label.set_markup(icons.world)
+            else:
+                self.wifi_label.set_markup(icons.world_off)
+            
+            tooltip_base = "Ethernet Connection"
+            tooltip_vertical = f"SSID: Ethernet\nUpload: {upload_str}\nDownload: {download_str}"
+                
+        # Handle WiFi connection
+        elif self.network_client and self.network_client.wifi_device:
             if self.network_client.wifi_device.ssid != "Disconnected":
                 strength = self.network_client.wifi_device.strength
                 
-                if data.VERTICAL:
-                    # Change the WiFi icon based on network activity
-                    if self.downloading:
-                        self.wifi_label.set_markup(icons.download)
-                    elif self.uploading:
-                        self.wifi_label.set_markup(icons.upload)
-                    else:
-                        # Normal WiFi icon based on signal strength
-                        if strength >= 75:
-                            self.wifi_label.set_markup(icons.wifi_3)
-                        elif strength >= 50:
-                            self.wifi_label.set_markup(icons.wifi_2)
-                        elif strength >= 25:
-                            self.wifi_label.set_markup(icons.wifi_1)
-                        else:
-                            self.wifi_label.set_markup(icons.wifi_0)
-                    
-                    # Vertical mode format for tooltip
-                    self.set_tooltip_text(f"SSID: {self.network_client.wifi_device.ssid}\nDownload: {download_str}\nUpload: {upload_str}")
+                # Only horizontal mode wifi icons based on signal strength
+                if strength >= 75:
+                    self.wifi_label.set_markup(icons.wifi_3)
+                elif strength >= 50:
+                    self.wifi_label.set_markup(icons.wifi_2)
+                elif strength >= 25:
+                    self.wifi_label.set_markup(icons.wifi_1)
                 else:
-                    # Original horizontal mode
-                    if strength >= 75:
-                        self.wifi_label.set_markup(icons.wifi_3)
-                    elif strength >= 50:
-                        self.wifi_label.set_markup(icons.wifi_2)
-                    elif strength >= 25:
-                        self.wifi_label.set_markup(icons.wifi_1)
-                    else:
-                        self.wifi_label.set_markup(icons.wifi_0)
+                    self.wifi_label.set_markup(icons.wifi_0)
 
-                    self.set_tooltip_text(self.network_client.wifi_device.ssid)
+                tooltip_base = self.network_client.wifi_device.ssid
+                tooltip_vertical = f"SSID: {self.network_client.wifi_device.ssid}\nUpload: {upload_str}\nDownload: {download_str}"
             else:
                 self.wifi_label.set_markup(icons.world_off)
-                self.set_tooltip_text("Disconnected")
+                tooltip_base = "Disconnected"
+                tooltip_vertical = f"SSID: Disconnected\nUpload: {upload_str}\nDownload: {download_str}"
         else:
             self.wifi_label.set_markup(icons.world_off)
-            self.set_tooltip_text("Disconnected")
+            tooltip_base = "Disconnected"
+            tooltip_vertical = f"SSID: Disconnected\nUpload: {upload_str}\nDownload: {download_str}"
+
+        # Set the appropriate tooltip based on orientation
+        if data.VERTICAL:
+            self.set_tooltip_text(tooltip_vertical)
+        else:
+            self.set_tooltip_text(tooltip_base)
 
         self.last_counters = current_counters
         self.last_time = current_time
@@ -594,7 +615,7 @@ class NetworkApplet(Button):
     def on_mouse_enter(self, *_):
         self.is_mouse_over = True
         if not data.VERTICAL:
-            self.remove_urgent()
+            # Just reveal the panels, don't remove urgency styling anymore
             self.download_revealer.set_reveal_child(True)
             self.upload_revealer.set_reveal_child(True)
         return
@@ -602,9 +623,17 @@ class NetworkApplet(Button):
     def on_mouse_leave(self, *_):
         self.is_mouse_over = False
         if not data.VERTICAL:
-            self.remove_urgent()
-            self.download_revealer.set_reveal_child(False)
-            self.upload_revealer.set_reveal_child(False)
+            # When mouse leaves, only hide revealers if there's no active download/upload
+            self.download_revealer.set_reveal_child(self.downloading)
+            self.upload_revealer.set_reveal_child(self.uploading)
+            
+            # Restore urgency styling based on current network activity
+            if self.downloading:
+                self.download_urgent()
+            elif self.uploading:
+                self.upload_urgent()
+            else:
+                self.remove_urgent()
         return
 
     def upload_urgent(self):
@@ -613,6 +642,7 @@ class NetworkApplet(Button):
         self.upload_label.add_style_class("urgent")
         self.upload_icon.add_style_class("urgent")
         self.download_icon.add_style_class("urgent")
+        self.download_label.add_style_class("urgent")
         self.upload_revealer.set_reveal_child(True)
         self.download_revealer.set_reveal_child(self.downloading)
         return
@@ -623,6 +653,7 @@ class NetworkApplet(Button):
         self.download_label.add_style_class("urgent")
         self.download_icon.add_style_class("urgent")
         self.upload_icon.add_style_class("urgent")
+        self.upload_label.add_style_class("urgent")
         self.download_revealer.set_reveal_child(True)
         self.upload_revealer.set_reveal_child(self.uploading)
         return

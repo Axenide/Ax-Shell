@@ -4,15 +4,32 @@
 > Axenide Ax-shell is much better!
 
 <p align="center">
+<a href="https://github.com/Axenide/Ax-Shell">
   <img src="assets/cover.png">
+  </a>
 </p>
 
-<p align="center"><img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Telegram-Animated-Emojis/main/Activity/Sparkles.webp" alt="Sparkles" width="25" height="25" /> <sup>A ʜᴀᴄᴋᴀʙʟᴇ sʜᴇʟʟ ꜰᴏʀ Hʏᴘʀʟᴀɴᴅ, ᴘᴏᴡᴇʀᴇᴅ ʙʏ <a href="https://github.com/Fabric-Development/fabric/">Fᴀʙʀɪᴄ</a>. </sup><img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Telegram-Animated-Emojis/main/Activity/Sparkles.webp" alt="Sparkles" width="25" height="25" /></p>
-
 <p align="center">
-  <a href="https://github.com/Axenide/Ax-Shell/discussions"><sub><img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Travel%20and%20places/High%20Voltage.png" alt="High Voltage" width="16" height="16" /></sub> Feedback</a> ::
-  <a href="https://github.com/Axenide/Ax-Shell/issues"><sub><img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Symbols/Triangular%20Flag.png" alt="Triangular Flag" width="16" height="16" /></sub> Support</a> ::
-  <a href="https://ko-fi.com/Axenide"><sub><img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Smilies/Sparkling%20Heart.png" alt="Sparkling Heart" width="16" height="16" /></sub> Donate</a>
+  <sub><sup><img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Telegram-Animated-Emojis/main/Activity/Sparkles.webp" alt="Sparkles" width="25" height="25"/></sup></sub>
+  <a href="https://github.com/hyprwm/Hyprland">
+    <img src="https://img.shields.io/badge/A%20hackable%20shell%20for-Hyprland-0092CD?style=for-the-badge&logo=linux&color=0092CD&logoColor=D9E0EE&labelColor=000000" alt="A hackable shell for Hyprland">
+  </a>
+  <a href="https://github.com/Fabric-Development/fabric/">
+    <img src="https://img.shields.io/badge/Powered%20by-Fabric-FAFAFA?style=for-the-badge&logo=python&color=FAFAFA&logoColor=D9E0EE&labelColor=000000" alt="Powered by Fabric">
+  <sub><sup><img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Telegram-Animated-Emojis/main/Activity/Sparkles.webp" alt="Sparkles" width="25" height="25"/></sup></sub>
+  </a>
+  </p>
+
+  <p align="center">
+  <a href="https://github.com/Axenide/Ax-Shell/stargazers">
+    <img src="https://img.shields.io/github/stars/Axenide/Ax-Shell?style=for-the-badge&logo=github&color=E3B341&logoColor=D9E0EE&labelColor=000000" alt="GitHub stars">
+  </a>
+  <a href="https://ko-fi.com/Axenide">
+    <img src="https://img.shields.io/badge/Support me on-Ko--fi-FF6433?style=for-the-badge&logo=kofi&logoColor=white&labelColor=000000" alt="Ko-Fi">
+  </a>
+  <a href="https://discord.com/invite/gHG9WHyNvH">
+    <img src="https://img.shields.io/discord/669048311034150914?style=for-the-badge&logo=discord&logoColor=D9E0EE&labelColor=000000&color=5865F2&label=Discord" alt="Discord">
+  </a>
 </p>
 
 ---
@@ -69,6 +86,7 @@ curl -fsSL https://raw.githubusercontent.com/Axenide/Ax-Shell/main/install.sh | 
     - `swappy`
     - `swww`
     - `tesseract`
+    - `tmux`
     - `uwsm`
     - `wl-clipboard`
     - `wlinhibit`
@@ -94,32 +112,34 @@ curl -fsSL https://raw.githubusercontent.com/Axenide/Ax-Shell/main/install.sh | 
 <h2><sub><img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Travel%20and%20places/Rocket.png" alt="Rocket" width="25" height="25" /></sub> Roadmap</h2>
 
 - [x] App Launcher
+- [x] Bluetooth Manager
 - [x] Calculator
-- [x] Power Menu
-- [x] Dock
-- [x] Emoji Picker
-- [x] Wallpaper Selector
-- [x] System Tray
-- [x] Notifications
-- [x] Terminal
-- [x] Pins
-- [x] Kanban Board
 - [x] Calendar
 - [x] Color Picker
+- [x] Customizable UI
 - [x] Dashboard
-- [x] Bluetooth Manager
-- [x] Power Manager
-- [x] Settings
-- [x] Screenshot
-- [x] Screen Recorder
+- [x] Dock
+- [x] Emoji Picker
+- [x] Kanban Board
+- [x] Notifications
 - [x] OCR
-- [x] Workspaces Overview
-- [x] Vertical Layout
+- [x] Pins
+- [x] Power Manager
+- [x] Power Menu
+- [x] Screen Recorder
+- [x] Screenshot
+- [x] Settings
+- [x] System Tray
+- [x] Terminal
 - [x] Tmux Session Manager
-- [ ] Network Manager
+- [x] Vertical Layout
+- [x] Wallpaper Selector
+- [x] Workspaces Overview
 - [ ] Clipboard Manager
-- [ ] Multimodal AI Assistant
 - [ ] Multi-monitor support
+- [ ] Multimodal AI Assistant
+- [ ] Network Manager
+- [ ] OTP Manager
 
 ---
 

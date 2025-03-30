@@ -133,3 +133,9 @@
   font-size: 20px;
   color: var(--primary);
 }
+
+#app-desc {
+  color: var(--outline);
+  font-size: 12px;
+  font-style: italic;
+}

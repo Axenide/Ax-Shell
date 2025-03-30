@@ -1,6 +1,8 @@
 import subprocess
 import json
 
+import config.data as data
+
 def get_current_workspace():
     """
     Get the current workspace ID using hyprctl.
@@ -43,16 +45,16 @@ def get_screen_dimensions():
         # Find the monitor containing our workspace
         for monitor in monitors:
             if monitor.get("activeWorkspace", {}).get("id") == workspace_id:
-                return monitor.get("width", 1920), monitor.get("height", 1080)
+                return monitor.get("width", data.CURRENT_WIDTH), monitor.get("height", data.CURRENT_HEIGHT)
                 
         # Fallback to first monitor
         if monitors:
-            return monitors[0].get("width", 1920), monitors[0].get("height", 1080)
+            return monitors[0].get("width", data.CURRENT_WIDTH), monitors[0].get("height", data.CURRENT_HEIGHT)
     except Exception as e:
         print(f"Error getting screen dimensions: {e}")
     
     # Default fallback values
-    return 1920, 1080
+    return data.CURRENT_WIDTH, data.CURRENT_HEIGHT
 
 def check_occlusion(occlusion_region, workspace=None):
     """

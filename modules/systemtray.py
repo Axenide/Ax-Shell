@@ -14,14 +14,27 @@ class SystemTray(Gtk.Box):
             spacing=8,
             **kwargs
         )
+        self.enabled = True  # Flag to track if component should be shown
         self.set_visible(False)  # Initially hidden when empty.
         self.pixel_size = pixel_size
         self.watcher = Gray.Watcher()
         self.watcher.connect("item-added", self.on_item_added)
 
+    def set_visible(self, visible):
+        """Override to track external visibility setting"""
+        self.enabled = visible
+        # Only show if enabled AND has children
+        if visible and len(self.get_children()) > 0:
+            super().set_visible(True)
+        else:
+            super().set_visible(False)
+
     def _update_visibility(self):
-        # Update visibility based on the number of child widgets.
-        self.set_visible(len(self.get_children()) > 0)
+        # Update visibility based on the number of child widgets and enabled state
+        if self.enabled and len(self.get_children()) > 0:
+            super().set_visible(True)
+        else:
+            super().set_visible(False)
 
     def on_item_added(self, _, identifier: str):
         item = self.watcher.get_item_for_identifier(identifier)

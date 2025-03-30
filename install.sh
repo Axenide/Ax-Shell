@@ -35,6 +35,7 @@ PACKAGES=(
   swappy
   swww
   tesseract
+  tmux
   unzip
   uwsm
   wl-clipboard

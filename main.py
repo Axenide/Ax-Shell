@@ -36,7 +36,7 @@ if __name__ == "__main__":
             exposed_functions={
                 "overview_width": lambda: f"min-width: {CURRENT_WIDTH * 0.1 * 5 + 92}px;",
                 "overview_height": lambda: f"min-height: {CURRENT_HEIGHT * 0.1 * 2 + 32 + 64}px;",
-                "dock_nmargin": lambda: f"margin-bottom: -{28 + DOCK_ICON_SIZE}px;" if not VERTICAL else f"margin-right: -{28 + DOCK_ICON_SIZE}px;",
+                "dock_nmargin": lambda: f"margin-bottom: -{32 + DOCK_ICON_SIZE}px;" if not VERTICAL else f"margin-right: -{32 + DOCK_ICON_SIZE}px;",
                 "ws_width": lambda: "min-width: 48px;" if not VERTICAL else "min-width: 8px;",
                 "ws_height": lambda: "min-height: 8px;" if not VERTICAL else "min-height: 48px;",
                 "dock_sep": lambda: f"margin: 8px 0;" if not VERTICAL else f"margin: 0 8px;",

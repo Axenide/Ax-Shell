@@ -13,19 +13,16 @@
 #date-time {
   background-color: var(--shadow);
   padding: 8px;
-  border-radius: 16px;
-  /*margin-top: 4px;*/
 }
 
-menu>menuitem>label,
-#date-time>label {
+menu > menuitem > label,
+#date-time > label {
   font-weight: bold;
 }
 
 #language {
   background-color: var(--shadow);
   padding: 8px;
-  border-radius: 16px;
 }
 
 #lang-label {
@@ -40,7 +37,6 @@ menu>menuitem>label,
 #weather {
   background-color: var(--shadow);
   padding: 0 4px;
-  border-radius: 16px;
   min-height: 36px;
 }
 
@@ -51,8 +47,6 @@ menu>menuitem>label,
 #systray {
   background-color: var(--shadow);
   padding: 8px;
-  border-radius: 16px;
-  /*margin-top: 4px;*/
 }
 
 menu {
@@ -63,16 +57,16 @@ menu {
   padding: 6px;
 }
 
-menu>menuitem {
+menu > menuitem {
   border-radius: 10px;
   padding: 6px 10px;
 }
 
-menu>menuitem:hover {
+menu > menuitem:hover {
   background-color: var(--primary);
 }
 
-menu>menuitem:hover>label {
+menu > menuitem:hover > label {
   color: var(--shadow);
 }
 
@@ -93,7 +87,7 @@ tooltip {
   }
 }
 
-tooltip>* {
+tooltip > * {
   padding: 6px 10px;
   border-radius: 10px;
 }
@@ -102,8 +96,6 @@ tooltip>* {
   padding: 4px;
   min-width: 28px;
   min-height: 28px;
-  /*margin-top: 4px;*/
-  border-radius: 16px;
   background-color: var(--shadow);
   transition: all 0.1s ease;
 }

@@ -30,6 +30,7 @@ class Bar(Window):
         )
 
         self.notch = kwargs.get("notch", None)
+        self.component_visibility = data.BAR_COMPONENTS_VISIBILITY
 
         self.workspaces = Workspaces(
             name="workspaces",
@@ -63,7 +64,6 @@ class Bar(Window):
         self.weather = Weather()
         self.smallcgm = SmallCgm()
         self.network = NetworkApplet()
-        # self.systray = SystemTray(name="systray", spacing=8, icon_size=20)
 
         self.lang_label = Label(name="lang-label")
         self.language = Button(name="language", h_align="center", v_align="center", child=self.lang_label)
@@ -105,10 +105,12 @@ class Bar(Window):
         self.button_overview.connect("enter_notify_event", self.on_button_enter)
         self.button_overview.connect("leave_notify_event", self.on_button_leave)
 
-
         self.control = ControlSmall()
         self.metrics = MetricsSmall()
         self.battery = Battery()
+        
+        # Apply visibility settings to components
+        self.apply_component_visibility()
         
         self.rev_right = [
             self.metrics,
@@ -203,19 +205,26 @@ class Bar(Window):
         self.v_all_children.extend(self.v_center_children)
         self.v_all_children.extend(self.v_end_children)
 
+        # Use centered layout when both vertical and centered_bar are enabled
+        is_centered_bar = data.VERTICAL and getattr(data, 'CENTERED_BAR', False)
+        
         self.bar_inner = CenterBox(
             name="bar-inner",
             orientation="h" if not data.VERTICAL else "v",
             h_align="fill",
             v_align="fill",
-            start_children=Box(
+            start_children=None if is_centered_bar else Box(
                 name="start-container",
                 spacing=4,
                 orientation="h" if not data.VERTICAL else "v",
                 children=self.h_start_children if not data.VERTICAL else self.v_start_children,
             ),
-            center_children=None if not data.VERTICAL else Box(orientation="v", spacing=4, children=self.v_center_children),
-            end_children=Box(
+            center_children=Box(
+                orientation="v", 
+                spacing=4, 
+                children=self.v_all_children if is_centered_bar else self.v_center_children
+            ) if data.VERTICAL else None,
+            end_children=None if is_centered_bar else Box(
                 name="end-container",
                 spacing=4,
                 orientation="h" if not data.VERTICAL else "v",
@@ -229,6 +238,68 @@ class Bar(Window):
 
         # self.show_all()
         self.systray._update_visibility()
+
+    def apply_component_visibility(self):
+        """Apply saved visibility settings to all components"""
+        components = {
+            'button_apps': self.button_apps,
+            'systray': self.systray,
+            'control': self.control,
+            'network': self.network,
+            'button_tools': self.button_tools,
+            'button_overview': self.button_overview,
+            'ws_container': self.ws_container,
+            'weather': self.weather,
+            'battery': self.battery,
+            'metrics': self.metrics,
+            'language': self.language,
+            'date_time': self.date_time,
+            'button_power': self.button_power,
+        }
+        
+        for component_name, widget in components.items():
+            if component_name in self.component_visibility:
+                widget.set_visible(self.component_visibility[component_name])
+    
+    def toggle_component_visibility(self, component_name):
+        """Toggle visibility for a specific component"""
+        components = {
+            'button_apps': self.button_apps,
+            'systray': self.systray,
+            'control': self.control,
+            'network': self.network,
+            'button_tools': self.button_tools,
+            'button_overview': self.button_overview,
+            'ws_container': self.ws_container,
+            'weather': self.weather,
+            'battery': self.battery,
+            'metrics': self.metrics,
+            'language': self.language,
+            'date_time': self.date_time,
+            'button_power': self.button_power,
+        }
+        
+        if component_name in components and component_name in self.component_visibility:
+            # Toggle the visibility state
+            self.component_visibility[component_name] = not self.component_visibility[component_name]
+            # Apply the new state
+            components[component_name].set_visible(self.component_visibility[component_name])
+            
+            # Update the configuration
+            config_file = os.path.expanduser(f"~/.config/{data.APP_NAME}/config/config.json")
+            if os.path.exists(config_file):
+                with open(config_file, 'r') as f:
+                    config = json.load(f)
+                
+                # Update the config with the new visibility state
+                config[f'bar_{component_name}_visible'] = self.component_visibility[component_name]
+                
+                with open(config_file, 'w') as f:
+                    json.dump(config, f)
+            
+            return self.component_visibility[component_name]
+        
+        return None
 
     def on_button_enter(self, widget, event):
         window = widget.get_window()
