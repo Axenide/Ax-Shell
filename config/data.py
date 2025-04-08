@@ -26,6 +26,20 @@ CURRENT_HEIGHT = screen.get_height()
 WALLPAPERS_DIR_DEFAULT = get_relative_path("../assets/wallpapers_example")
 CONFIG_FILE = get_relative_path('../config/config.json')
 
+def load_config():
+    """Load the configuration from config.json"""
+    config_path = os.path.expanduser(f"~/.config/{APP_NAME_CAP}/config/config.json")
+    config = {}
+    
+    if os.path.exists(config_path):
+        try:
+            with open(config_path, 'r') as f:
+                config = json.load(f)
+        except Exception as e:
+            print(f"Error loading config: {e}")
+    
+    return config
+
 if os.path.exists(CONFIG_FILE):
     with open(CONFIG_FILE, 'r') as f:
         config = json.load(f)

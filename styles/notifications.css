@@ -169,12 +169,6 @@
   margin-left: 4px;
 }
 
-#no-notifications-label,
-#no-tmux {
-  font-size: 96px;
-  color: var(--surface);
-}
-
 #notif-sep {
   padding: 2px;
   border-radius: 16px;

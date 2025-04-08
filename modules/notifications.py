@@ -395,7 +395,7 @@ class NotificationHistory(Box):
             v_align="fill",
         )
         self.no_notifications_label = Label(
-            name="no-notifications-label",
+            name="no-notif",
             markup=icons.notifications_clear,
             v_align="fill",
             h_align="fill",

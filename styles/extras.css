@@ -1,0 +1,6 @@
+#no-notif,
+#no-tmux,
+#no-clip {
+    font-size: 96px;
+    color: var(--surface);
+}

@@ -10,6 +10,7 @@ import subprocess
 from loguru import logger
 
 SCREENSHOT_SCRIPT = get_relative_path("../scripts/screenshot.sh")
+POMODORO_SCRIPT = get_relative_path("../scripts/pomodoro.sh")
 OCR_SCRIPT = get_relative_path("../scripts/ocr.sh")
 GAMEMODE_SCRIPT = get_relative_path("../scripts/gamemode.sh")
 SCREENRECORD_SCRIPT = get_relative_path("../scripts/screenrecord.sh")
@@ -99,6 +100,16 @@ class Toolbox(Box):
             v_align="center",
         )
 
+        self.btn_pomodoro = Button(
+            name="toolbox-button",
+            child=Label(name="button-label", markup=icons.timer_off),
+            on_clicked=self.pomodoro,
+            h_expand=False,
+            v_expand=False,
+            h_align="center",
+            v_align="center",
+        )
+
         # Enable keyboard focus for the colorpicker button.
         self.btn_color.set_can_focus(True)
         # Connect both mouse and keyboard events.
@@ -147,6 +158,7 @@ class Toolbox(Box):
             self.btn_color,
             Box(name="tool-sep", h_expand=False, v_expand=False, h_align="center", v_align="center"),
             self.btn_gamemode,
+            self.btn_pomodoro,
             self.btn_emoji,
         ]
 
@@ -158,6 +170,7 @@ class Toolbox(Box):
         # Start polling for process state every second.
         self.recorder_timer_id = GLib.timeout_add_seconds(1, self.update_screenrecord_state)
         self.gamemode_updater = GLib.timeout_add_seconds(1, self.gamemode_check)
+        self.pomodoro_updater = GLib.timeout_add_seconds(1, self.pomodoro_check)
 
     def close_menu(self):
         self.notch.close_notch()
@@ -217,6 +230,28 @@ class Toolbox(Box):
         # Launch screenrecord script in detached mode so that it remains running independently of this program.
         exec_shell_command_async(f"bash -c 'nohup bash {SCREENRECORD_SCRIPT} > /dev/null 2>&1 & disown'")
         self.close_menu()
+
+    # Function to run the pomodoro script
+    def pomodoro(self, *args):
+        exec_shell_command_async(f"bash -c 'nohup bash {POMODORO_SCRIPT} > /dev/null 2>&1 & disown'")
+        self.close_menu()
+
+    # Function to check if the pomodoro script is running
+    def pomodoro_check(self):
+        try:
+            result = subprocess.run("pgrep -f pomodoro.sh", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            running = result.returncode == 0
+        except Exception:
+            running = False
+
+        if running:
+            self.btn_pomodoro.get_child().set_markup(icons.timer_on)
+            self.btn_pomodoro.add_style_class("pomodoro")
+        else:
+            self.btn_pomodoro.get_child().set_markup(icons.timer_off)
+            self.btn_pomodoro.remove_style_class("pomodoro")
+
+        return True
 
     def ocr(self, *args):
         exec_shell_command_async(f"bash {OCR_SCRIPT} sf")

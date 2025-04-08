@@ -21,13 +21,23 @@ if __name__ == "__main__":
     if not os.path.exists(current_wallpaper):
         example_wallpaper = os.path.expanduser(f"~/.config/{APP_NAME_CAP}/assets/wallpapers_example/example-1.jpg")
         os.symlink(example_wallpaper, current_wallpaper)
+    
+    # Load configuration
+    from config.data import load_config
+    config = load_config()
+    
     corners = Corners()
     bar = Bar()
     notch = Notch()
     dock = Dock() 
     bar.notch = notch
     notch.bar = bar
-    app = Application(f"{APP_NAME}", bar, notch, dock)
+    
+    # Set corners visibility based on config
+    corners_visible = config.get('corners_visible', True)
+    corners.set_visible(corners_visible)
+    
+    app = Application(f"{APP_NAME}", bar, notch, dock, corners)  # Make sure corners is added to the app
 
     def set_css():
         from config.data import CURRENT_WIDTH, CURRENT_HEIGHT

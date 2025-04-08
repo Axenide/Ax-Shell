@@ -129,8 +129,11 @@ mic_mute: str = "&#xed16;"
 circle_plus: str = "&#xea69;"
 
 # Pins
-copy_plus: str = "&#xfdae;"
 paperclip: str = "&#xeb02;"
+
+# Clipboard Manager
+clipboard: str = "&#xea6f;"
+clip_text: str = "&#xf089;"
 
 # Confirm
 accept: str = "&#xea5e;"
@@ -166,6 +169,8 @@ arrow_right: str = "&#xea1c;"
 emoji: str = "&#xeaf7;"
 keyboard: str = "&#xebd6;"
 terminal: str = "&#xebef;"
+timer_off: str = "&#xf146;"
+timer_on: str = "&#xf756;"
 
 exceptions: list[str] = ['font_family', 'font_weight', 'span']
 

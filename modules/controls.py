@@ -313,7 +313,7 @@ class VolumeSmall(Box):
             self.vol_button.get_child().set_markup(icons.vol_off)
             self.progress_bar.add_style_class("muted")
             self.vol_label.add_style_class("muted")
-            self.set_tooltip_text("0%")
+            self.set_tooltip_text("Muted")
             return
         else:
             self.progress_bar.remove_style_class("muted")
@@ -383,7 +383,7 @@ class MicSmall(Box):
             self.mic_button.get_child().set_markup(icons.mic_mute)
             self.progress_bar.add_style_class("muted")
             self.mic_label.add_style_class("muted")
-            self.set_tooltip_text("0%")
+            self.set_tooltip_text("Muted")
             return
         else:
             self.progress_bar.remove_style_class("muted")

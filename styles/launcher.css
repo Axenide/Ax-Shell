@@ -16,6 +16,7 @@
 }
 
 #close-button,
+#clear-button,
 #config-button,
 #new-session-button {
   background-color: var(--surface);
@@ -25,6 +26,8 @@
 
 #close-button:hover,
 #close-button:focus,
+#clear-button:hover,
+#clear-button:focus,
 #config-button:hover,
 #config-button:focus,
 #new-session-button:hover,
@@ -32,16 +35,19 @@
   background-color: var(--surface-bright);
 }
 
-#close-button:active {
+#close-button:active,
+#clear-button:active {
   background-color: var(--red-dim);
 }
 
-#close-label {
+#close-label,
+#clear-label {
   color: var(--red-dim);
   font-size: 24px;
 }
 
-#close-button:active #close-label {
+#close-button:active #close-label,
+#clear-button:active #clear-label {
   color: var(--shadow);
 }
 
@@ -129,7 +135,8 @@
   color: var(--shadow);
 }
 
-#tmux-icon {
+#tmux-icon,
+#clip-icon {
   font-size: 20px;
   color: var(--primary);
 }
@@ -138,4 +145,8 @@
   color: var(--outline);
   font-size: 12px;
   font-style: italic;
+}
+
+#clip-label {
+  font-weight: bold;
 }

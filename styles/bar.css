@@ -15,8 +15,8 @@
   padding: 8px;
 }
 
-menu > menuitem > label,
-#date-time > label {
+menu>menuitem>label,
+#date-time>label {
   font-weight: bold;
 }
 
@@ -57,16 +57,16 @@ menu {
   padding: 6px;
 }
 
-menu > menuitem {
+menu>menuitem {
   border-radius: 10px;
   padding: 6px 10px;
 }
 
-menu > menuitem:hover {
+menu>menuitem:hover {
   background-color: var(--primary);
 }
 
-menu > menuitem:hover > label {
+menu>menuitem:hover>label {
   color: var(--shadow);
 }
 
@@ -87,7 +87,7 @@ tooltip {
   }
 }
 
-tooltip > * {
+tooltip>* {
   padding: 6px 10px;
   border-radius: 10px;
 }

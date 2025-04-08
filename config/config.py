@@ -23,7 +23,7 @@ from fabric.widgets.scrolledwindow import ScrolledWindow
 from fabric.widgets.image import Image as FabricImage # Alias to avoid clash
 from fabric.widgets.stack import Stack
 from fabric.widgets.scale import Scale
-from fabric.utils.helpers import get_relative_path # If needed for assets
+from fabric.utils.helpers import exec_shell_command, exec_shell_command_async
 
 # Assuming data.py exists in the same directory or is accessible via sys.path
 # If data.py is in ./config/data.py relative to this script's original location:
@@ -65,6 +65,8 @@ DEFAULTS = {
     'suffix_launcher': "R",
     'prefix_tmux': "SUPER",
     'suffix_tmux': "T",
+    'prefix_cliphist': "SUPER",
+    'suffix_cliphist': "V",
     'prefix_toolbox': "SUPER",
     'suffix_toolbox': "S",
     'prefix_overview': "SUPER",
@@ -102,6 +104,7 @@ DEFAULTS = {
     'bar_language_visible': True,
     'bar_date_time_visible': True,
     'bar_button_power_visible': True,
+    'corners_visible': True, # Added default for corners visibility
 }
 
 bind_vars = DEFAULTS.copy()
@@ -284,6 +287,8 @@ def generate_hyprconf() -> str:
     return f"""exec-once = uwsm-app $(python {home}/.config/{APP_NAME_CAP}/main.py)
 exec = pgrep -x "hypridle" > /dev/null || uwsm app -- hypridle
 exec = uwsm app -- swww-daemon
+exec-once =  wl-paste --type text --watch cliphist store
+exec-once =  wl-paste --type image --watch cliphist store
 
 $fabricSend = fabric-cli exec {APP_NAME}
 $axMessage = notify-send "Axenide" "What are you doing?" -i "{home}/.config/{APP_NAME_CAP}/assets/ax.png" -a "Source Code" -A "Be patient. 🍙"
@@ -296,6 +301,7 @@ bind = {bind_vars['prefix_pins']}, {bind_vars['suffix_pins']}, exec, $fabricSend
 bind = {bind_vars['prefix_kanban']}, {bind_vars['suffix_kanban']}, exec, $fabricSend 'notch.open_notch("kanban")' # Kanban | Default: SUPER + N
 bind = {bind_vars['prefix_launcher']}, {bind_vars['suffix_launcher']}, exec, $fabricSend 'notch.open_notch("launcher")' # App Launcher | Default: SUPER + R
 bind = {bind_vars['prefix_tmux']}, {bind_vars['suffix_tmux']}, exec, $fabricSend 'notch.open_notch("tmux")' # App Launcher | Default: SUPER + T
+bind = {bind_vars['prefix_cliphist']}, {bind_vars['suffix_cliphist']}, exec, $fabricSend 'notch.open_notch("cliphist")' # App Launcher | Default: SUPER + V
 bind = {bind_vars['prefix_toolbox']}, {bind_vars['suffix_toolbox']}, exec, $fabricSend 'notch.open_notch("tools")' # Toolbox | Default: SUPER + S
 bind = {bind_vars['prefix_overview']}, {bind_vars['suffix_overview']}, exec, $fabricSend 'notch.open_notch("overview")' # Overview | Default: SUPER + TAB
 bind = {bind_vars['prefix_wallpapers']}, {bind_vars['suffix_wallpapers']}, exec, $fabricSend 'notch.open_notch("wallpapers")' # Wallpapers | Default: SUPER + COMMA
@@ -499,6 +505,7 @@ class HyprConfGUI(Window):
             ("Kanban", 'prefix_kanban', 'suffix_kanban'),
             ("App Launcher", 'prefix_launcher', 'suffix_launcher'),
             ("Tmux", 'prefix_tmux', 'suffix_tmux'),
+            ("Clipboard History", 'prefix_cliphist', 'suffix_cliphist'),
             ("Toolbox", 'prefix_toolbox', 'suffix_toolbox'),
             ("Overview", 'prefix_overview', 'suffix_overview'),
             ("Wallpapers", 'prefix_wallpapers', 'suffix_wallpapers'),
@@ -714,11 +721,11 @@ class HyprConfGUI(Window):
                          h_expand=True)
         vbox.add(separator2)
 
-        # --- Bar Components ---
-        components_header = Label(markup="<b>Bar Components</b>", h_align="start")
+        # --- Modules (renamed from Bar Components) ---
+        components_header = Label(markup="<b>Modules</b>", h_align="start")
         vbox.add(components_header)
 
-        # Create a grid for bar components
+        # Create a grid for bar components and other modules
         components_grid = Gtk.Grid()
         components_grid.set_column_spacing(15)
         components_grid.set_row_spacing(8)
@@ -735,15 +742,30 @@ class HyprConfGUI(Window):
             'button_power': "Power Button",
         }
 
+        # Add corners visibility switch
+        self.corners_switch = Gtk.Switch()
+        self.corners_switch.set_active(bind_vars.get('corners_visible', True))
+        
         # Calculate number of rows needed (we'll use 2 columns)
-        num_components = len(component_display_names)
+        num_components = len(component_display_names) + 1  # +1 for corners
         rows_per_column = (num_components + 1) // 2  # Ceiling division
+        
+        # First add corners to the top of first column
+        corners_label = Label(label="Rounded Corners", h_align="start", v_align="center")
+        components_grid.attach(corners_label, 0, 0, 1, 1)
+        
+        switch_container = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+        switch_container.set_halign(Gtk.Align.START)
+        switch_container.set_valign(Gtk.Align.CENTER)
+        switch_container.add(self.corners_switch)
+        components_grid.attach(switch_container, 1, 0, 1, 1)
         
         # Add components to grid in two columns
         for i, (component_name, display_name) in enumerate(component_display_names.items()):
             # Determine position: first half in column 0, second half in column 2
-            col = 0 if i < rows_per_column else 2
-            row = i % rows_per_column
+            # Start at row 1 to account for corners at row 0
+            row = (i + 1) % rows_per_column  # +1 to start after corners
+            col = 0 if i < (rows_per_column - 1) else 2  # Adjust column calculation
             
             component_label = Label(label=display_name, h_align="start", v_align="center")
             components_grid.attach(component_label, col, row, 1, 1)
@@ -927,6 +949,7 @@ class HyprConfGUI(Window):
         bind_vars['dock_always_occluded'] = self.dock_hover_switch.get_active()
         bind_vars['dock_icon_size'] = int(self.dock_size_scale.value)
         bind_vars['terminal_command'] = self.terminal_entry.get_text()
+        bind_vars['corners_visible'] = self.corners_switch.get_active()
 
         for component_name, switch in self.component_switches.items():
             config_key = f'bar_{component_name}_visible'
@@ -998,36 +1021,18 @@ class HyprConfGUI(Window):
 
         start_config()
 
+        # Restart Ax-Shell using fabric's async command executor
         main_script_path = os.path.expanduser(f"~/.config/{APP_NAME_CAP}/main.py")
-        restart_script_content = f"""#!/bin/bash
-echo "Attempting to restart {APP_NAME}..." > /tmp/ax_shell_restart.log
-killall {APP_NAME} &>> /tmp/ax_shell_restart.log
-sleep 0.5
-echo "Running main script: python {main_script_path}" >> /tmp/ax_shell_restart.log
-python_output=$(python {main_script_path} 2>&1)
-echo "Python script output:" >> /tmp/ax_shell_restart.log
-echo "$python_output" >> /tmp/ax_shell_restart.log
-if command -v uwsm-app &> /dev/null; then
-    echo "Running uwsm-app..." >> /tmp/ax_shell_restart.log
-    uwsm-app "$python_output" &>> /tmp/ax_shell_restart.log &
-else
-    echo "uwsm-app command not found. Cannot start application with uwsm." >> /tmp/ax_shell_restart.log
-fi
-echo "Restart script finished." >> /tmp/ax_shell_restart.log
-"""
-        restart_script_path = "/tmp/ax_shell_restart.sh"
+        kill_cmd = f"killall {APP_NAME}"
+        start_cmd = f"uwsm app -- python {main_script_path}"
+        
         try:
-            with open(restart_script_path, "w") as f:
-                f.write(restart_script_content)
-            os.chmod(restart_script_path, 0o755)
-
-            subprocess.Popen(["/bin/bash", restart_script_path],
-                             start_new_session=True,
-                             stdout=subprocess.DEVNULL,
-                             stderr=subprocess.DEVNULL)
-            print(f"{APP_NAME_CAP} restart initiated in background. Check /tmp/ax_shell_restart.log for details.")
+            # Use fabric's helper to run the command asynchronously
+            exec_shell_command(kill_cmd)
+            exec_shell_command_async(start_cmd)
+            print(f"{APP_NAME_CAP} restart initiated.")
         except Exception as e:
-            print(f"Error creating or running restart script: {e}")
+            print(f"Error restarting {APP_NAME_CAP}: {e}")
 
         print("Configuration applied and reload initiated.")
 
@@ -1067,6 +1072,8 @@ echo "Restart script finished." >> /tmp/ax_shell_restart.log
             for component_name, switch in self.component_switches.items():
                  config_key = f'bar_{component_name}_visible'
                  switch.set_active(bind_vars.get(config_key, True))
+            
+            self.corners_switch.set_active(bind_vars.get('corners_visible', True))
 
             self.selected_face_icon = None
             self.face_status_label.label = ""
