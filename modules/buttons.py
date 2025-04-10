@@ -1,6 +1,5 @@
 import subprocess
 from fabric.widgets.box import Box
-from fabric.widgets.centerbox import CenterBox
 from fabric.widgets.label import Label
 from fabric.widgets.button import Button
 from fabric.utils.helpers import exec_shell_command_async
@@ -261,47 +260,47 @@ class BluetoothButton(Box):
         self.add(self.bluetooth_menu_button)
 
 
-class NightModeButton(Button):
+class PowerSaveButton(Button):
     def __init__(self):
-        self.night_mode_icon = Label(
+        self.power_save_icon = Label(
             name="night-mode-icon",
             markup=icons.night,
         )
-        self.night_mode_label = Label(
+        self.power_save_label = Label(
             name="night-mode-label",
-            label="Night Mode",
+            label="Power Save",
             justification="left",
         )
-        self.night_mode_label_box = Box(children=[self.night_mode_label, Box(h_expand=True)])
-        self.night_mode_status = Label(
+        self.power_save_label_box = Box(children=[self.power_save_label, Box(h_expand=True)])
+        self.power_save_status = Label(
             name="night-mode-status",
             label="Enabled",
             justification="left",
         )
-        self.night_mode_status_box = Box(children=[self.night_mode_status, Box(h_expand=True)])
-        self.night_mode_text = Box(
+        self.power_save_status_box = Box(children=[self.power_save_status, Box(h_expand=True)])
+        self.power_save_text = Box(
             name="night-mode-text",
             orientation="v",
             h_align="start",
             v_align="center",
-            children=[self.night_mode_label_box, self.night_mode_status_box],
+            children=[self.power_save_label_box, self.power_save_status_box],
         )
-        self.night_mode_box = Box(
+        self.power_save_box = Box(
             h_align="start",
             v_align="center",
             spacing=10,
-            children=[self.night_mode_icon, self.night_mode_text],
+            children=[self.power_save_icon, self.power_save_text],
         )
 
         super().__init__(
             name="night-mode-button",
             h_expand=True,
-            child=self.night_mode_box,
+            child=self.power_save_box,
             on_clicked=self.toggle_hyprsunset,
         )
         add_hover_cursor(self)  # <-- Added hover
 
-        self.widgets = [self, self.night_mode_label, self.night_mode_status, self.night_mode_icon]
+        self.widgets = [self, self.power_save_label, self.power_save_status, self.power_save_icon]
         self.check_hyprsunset()
 
     def toggle_hyprsunset(self, *args):
@@ -313,12 +312,12 @@ class NightModeButton(Button):
         try:
             subprocess.check_output(["pgrep", "hyprsunset"])
             exec_shell_command_async("pkill hyprsunset")
-            self.night_mode_status.set_label("Disabled")
+            self.power_save_status.set_label("Disabled")
             for widget in self.widgets:
                 widget.add_style_class("disabled")
         except subprocess.CalledProcessError:
             exec_shell_command_async("hyprsunset -t 3500")
-            self.night_mode_status.set_label("Enabled")
+            self.power_save_status.set_label("Enabled")
             for widget in self.widgets:
                 widget.remove_style_class("disabled")
 
@@ -328,11 +327,11 @@ class NightModeButton(Button):
         """
         try:
             subprocess.check_output(["pgrep", "hyprsunset"])
-            self.night_mode_status.set_label("Enabled")
+            self.power_save_status.set_label("Enabled")
             for widget in self.widgets:
                 widget.remove_style_class("disabled")
         except subprocess.CalledProcessError:
-            self.night_mode_status.set_label("Disabled")
+            self.power_save_status.set_label("Disabled")
             for widget in self.widgets:
                 widget.add_style_class("disabled")
 
@@ -423,13 +422,13 @@ class Buttons(Gtk.Grid):
         # Instantiate each button
         self.network_button = NetworkButton()
         self.bluetooth_button = BluetoothButton(widgets=self.widgets)
-        self.night_mode_button = NightModeButton()
+        self.power_save_button = PowerSaveButton()
         self.caffeine_button = CaffeineButton()
 
         # Attach buttons into the grid (one row, four columns)
         self.attach(self.network_button, 0, 0, 1, 1)
         self.attach(self.bluetooth_button, 1, 0, 1, 1)
-        self.attach(self.night_mode_button, 2, 0, 1, 1)
+        self.attach(self.power_save_button, 2, 0, 1, 1)
         self.attach(self.caffeine_button, 3, 0, 1, 1)
 
         self.show_all()

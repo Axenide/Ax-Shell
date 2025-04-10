@@ -48,7 +48,7 @@ chevron_right: str = "&#xea61;"
 
 # Power
 lock: str = "&#xeae2;"
-suspend: str = "&#xece7;"
+hibernate: str = "&#xece7;"
 logout: str = "&#xeba8;"
 reboot: str = "&#xeb13;"
 shutdown: str = "&#xeb0d;"
@@ -78,7 +78,7 @@ bluetooth_off: str = "&#xeceb;"
 night_off: str = "&#xf162;"
 notifications_off: str = "&#xece9;"
 
-notifications_clear: str = "&#xf814;";
+notifications_clear: str = "&#xf814;"
 
 # Bluetooth
 bluetooth_connected: str = "&#xecea;"

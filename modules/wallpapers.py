@@ -200,7 +200,7 @@ class WallpaperSelector(Box):
         else:
             # Matugen is disabled: run the alternative swww command.
             exec_shell_command_async(
-                f'~/.scripts/wallpapers.sh change {full_path}'
+                f'/home/arsuhinars/.scripts/wallpapers.sh change {full_path}'
             )
 
     def on_scheme_changed(self, combo):

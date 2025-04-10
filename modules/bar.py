@@ -52,7 +52,7 @@ class Bar(Window):
         # self.weather = Weather()
         # self.systray = SystemTray(name="systray", spacing=8, icon_size=20)
 
-        self.date_time = DateTime(name="date-time", formatters=["%d-%m-%Y %H:%M"], h_align="center", v_align="center")
+        self.date_time = DateTime(name="date-time", formatters=["%d %b %Y (%a) %H:%M"], h_align="center", v_align="center")
 
         self.button_apps = Button(
             name="button-bar",

@@ -1,19 +1,13 @@
-import os
 import random
 from fabric.widgets.box import Box
-from fabric.widgets.centerbox import CenterBox
 from fabric.widgets.label import Label
-from fabric.widgets.button import Button
 from fabric.widgets.stack import Stack
 from fabric.widgets.image import Image
 import gi
 gi.require_version('Gtk', '3.0')
 gi.require_version('GdkPixbuf', '2.0')
-from gi.repository import GLib, Gtk, Pango, GdkPixbuf
-import modules.icons as icons
-from modules.buttons import Buttons
+from gi.repository import Gtk, GdkPixbuf
 from modules.widgets import Widgets
-from modules.pins import Pins
 from modules.wallpapers import WallpaperSelector
 from modules.kanban import Kanban
 import modules.data as data
@@ -34,7 +28,7 @@ class Dashboard(Box):
         self.notch = kwargs["notch"]
 
         self.widgets = Widgets(notch=self.notch)
-        self.pins = Pins()
+        # self.pins = Pins()
         self.kanban = Kanban()
         self.wallpapers = WallpaperSelector()
 
@@ -54,10 +48,10 @@ class Dashboard(Box):
             label="Widgets",
         )
 
-        self.label_2 = Label(
-            name="label-2",
-            label="Pins",
-        )
+        # self.label_2 = Label(
+        #     name="label-2",
+        #     label="Pins",
+        # )
 
         self.label_3 = Label(
             name="label-3",
@@ -116,7 +110,7 @@ class Dashboard(Box):
         )
 
         self.stack.add_titled(self.widgets, "widgets", "Widgets")
-        self.stack.add_titled(self.pins, "pins", "Pins")
+        # self.stack.add_titled(self.pins, "pins", "Pins")
         self.stack.add_titled(self.kanban, "kanban", "Kanban")
         self.stack.add_titled(self.wallpapers, "wallpapers", "Wallpapers")
         self.stack.add_titled(self.coming_soon, "coming-soon", "Coming soon...")
