@@ -28,10 +28,10 @@ class PowerMenu(Box):
             v_align="center",
         )
 
-        self.btn_suspend = Button(
+        self.btn_hibernate = Button(
             name="power-menu-button",
-            child=Label(name="button-label", markup=icons.suspend),
-            on_clicked=self.suspend,
+            child=Label(name="button-label", markup=icons.hibernate),
+            on_clicked=self.hibernate,
             h_expand=False,
             v_expand=False,
             h_align="center",
@@ -70,7 +70,7 @@ class PowerMenu(Box):
 
         self.buttons = [
             self.btn_lock,
-            self.btn_suspend,
+            self.btn_hibernate,
             self.btn_logout,
             self.btn_reboot,
             self.btn_shutdown,
@@ -90,9 +90,9 @@ class PowerMenu(Box):
         exec_shell_command_async("loginctl lock-session")
         self.close_menu()
 
-    def suspend(self, *args):
-        print("Suspending system...")
-        exec_shell_command_async("systemctl suspend")
+    def hibernate(self, *args):
+        print("Hibernating system...")
+        exec_shell_command_async("systemctl hibernate")
         self.close_menu()
 
     def logout(self, *args):
