@@ -10,10 +10,9 @@ from fabric.widgets.button import Button
 from fabric.widgets.circularprogressbar import CircularProgressBar
 from fabric.widgets.overlay import Overlay
 from fabric.widgets.stack import Stack
-from fabric.utils.helpers import exec_shell_command_async
 from widgets.circle_image import CircleImage
 import modules.icons as icons
-import modules.data as data
+import config.data as data
 from services.mpris import MprisPlayerManager, MprisPlayer
 
 from modules.cavalcade import SpectrumRender
@@ -42,7 +41,7 @@ class PlayerBox(Box):
 
         self.cover = CircleImage(
             name="player-cover",
-            image_file=f"{data.HOME_DIR}/.current.wall",
+            image_file=os.path.expanduser(f"~/.current.wall"),
             size=162,
             h_align="center",
             v_align="center",

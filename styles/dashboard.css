@@ -25,23 +25,23 @@
   min-height: 28px;
 }
 
-#switcher.stack-switcher > * {
+#switcher.stack-switcher>* {
   background-color: var(--shadow);
   padding: 4px;
   border-radius: 20px;
   transition: all 0.1s ease;
 }
 
-#switcher.stack-switcher > *:checked {
+#switcher.stack-switcher>*:checked {
   background-color: var(--surface);
 }
 
-#switcher.stack-switcher > *:active,
-#switcher.stack-switcher > *:hover {
+#switcher.stack-switcher>*:active,
+#switcher.stack-switcher>*:hover {
   background-color: var(--surface-bright);
 }
 
-#switcher.stack-switcher > *:focus {
+#switcher.stack-switcher>*:focus {
   background-color: var(--surface-bright);
 }
 
@@ -49,7 +49,7 @@
   font-weight: bold;
 }
 
-#switcher.stack-switcher > *:checked label {
+#switcher.stack-switcher>*:checked label {
   color: var(--primary);
 }
 

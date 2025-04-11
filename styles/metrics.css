@@ -1,8 +1,6 @@
 #metrics-small {
   background-color: var(--shadow);
-  padding: 4px;
-  border-radius: 16px;
-  margin-top: 4px;
+  padding: 2px;
 }
 
 #metrics-circle {
@@ -19,7 +17,7 @@
 }
 
 #metrics-icon {
-  font-size: 20px;
+  font-size: 16px;
 }
 
 #metrics-icon.alert {
@@ -35,3 +33,66 @@
   min-width: 4px;
 }
 
+#network-icon-label {
+  color: var(--foreground);
+  font-size: 20px;
+  padding: 4px;
+  border-radius: 11px;
+  transition: all 0.1s ease;
+}
+
+#download-label {
+  color: var(--green);
+  font-size: 14px;
+  font-weight: bold;
+  padding: 4px;
+  border-radius: 11px;
+  transition: all 0.1s ease;
+}
+
+#download-label.urgent {
+  color: var(--shadow);
+}
+
+#network-icon-label.urgent {
+  color: var(--shadow);
+}
+
+#button-bar.download {
+  background-color: var(--green);
+}
+
+#button-bar.upload {
+  background-color: var(--yellow);
+}
+
+#download-icon-label {
+  color: var(--green);
+  font-size: 16px;
+}
+
+#download-icon-label.urgent {
+  color: var(--shadow);
+}
+
+#upload-icon-label {
+  color: var(--yellow);
+  font-size: 16px;
+}
+
+#upload-label {
+  color: var(--yellow);
+  font-size: 14px;
+  font-weight: bold;
+  padding: 4px;
+  border-radius: 11px;
+  transition: all 0.1s ease;
+}
+
+#upload-label.urgent {
+  color: var(--shadow);
+}
+
+#upload-icon-label.urgent {
+  color: var(--shadow);
+}

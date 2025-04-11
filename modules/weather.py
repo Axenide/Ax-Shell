@@ -1,57 +1,70 @@
 import gi
-import requests
-import threading
 import urllib.parse
-from gi.repository import Gtk, GLib
+import requests
+from gi.repository import GLib
 
 from fabric.widgets.label import Label
-from fabric.widgets.box import Box
+from fabric.widgets.button import Button
 
 gi.require_version("Gtk", "3.0")
-
 import modules.icons as icons
+import config.data as data
 
-class Weather(Box):
+class Weather(Button):
     def __init__(self, **kwargs) -> None:
         super().__init__(name="weather", orientation="h", spacing=8, **kwargs)
         self.label = Label(name="weather-label", markup=icons.loader)
         self.add(self.label)
         self.show_all()
-        # Update every 10 mins
+        self.enabled = True  # Add a flag to track if the component should be shown
+        self.session = requests.Session()  # Reuse HTTP connection
+        # Update every 10 minutes
         GLib.timeout_add_seconds(600, self.fetch_weather)
         self.fetch_weather()
 
-    def get_location(self):
-        try:
-            response = requests.get("https://ipinfo.io/json")
-            if response.status_code == 200:
-                data = response.json()
-                return data.get("city", "")
-            else:
-                print("Error getting location from ipinfo.")
-        except Exception as e:
-            print(f"Error getting location: {e}")
-        return ""
+    def set_visible(self, visible):
+        """Override to track external visibility setting"""
+        self.enabled = visible
+        # Only update actual visibility if weather data is available
+        if visible and hasattr(self, 'has_weather_data') and self.has_weather_data:
+            super().set_visible(True)
+        else:
+            super().set_visible(visible)
 
     def fetch_weather(self):
-        threading.Thread(target=self._fetch_weather_thread, daemon=True).start()
+        GLib.Thread.new("weather-fetch", self._fetch_weather_thread, None)
         return True
 
-    def _fetch_weather_thread(self):
-        location = self.get_location()
-        if location:
-            # URL encode the location to make it URL friendly.
-            encoded_location = urllib.parse.quote(location)
-            url = f"https://wttr.in/{encoded_location}?format=%c+%t"
-        else:
-            url = "https://wttr.in/?format=%c+%t"
+    def _fetch_weather_thread(self, user_data):
+        # Let wttr.in determine location based on IP
+        url = "https://wttr.in/?format=%c+%t" if not data.VERTICAL else "https://wttr.in/?format=%c"
+        # Get detailed info for tooltip
+        tooltip_url = "https://wttr.in/?format=%l:+%C,+%t+(%f),+Humidity:+%h,+Wind:+%w"
+        
         try:
-            response = requests.get(url)
-            if response.status_code == 200:
+            response = self.session.get(url, timeout=5)
+            if response.ok:
                 weather_data = response.text.strip()
-                GLib.idle_add(self.label.set_label, weather_data.replace(" ", ""))
+                if "Unknown" in weather_data:
+                    self.has_weather_data = False
+                    GLib.idle_add(super().set_visible, False)
+                else:
+                    self.has_weather_data = True
+                    # Get tooltip data
+                    tooltip_response = self.session.get(tooltip_url, timeout=5)
+                    if tooltip_response.ok:
+                        tooltip_text = tooltip_response.text.strip()
+                        GLib.idle_add(self.set_tooltip_text, tooltip_text)
+                    
+                    # Only show if enabled externally
+                    GLib.idle_add(super().set_visible, self.enabled)
+                    GLib.idle_add(self.label.set_label, weather_data.replace(" ", ""))
             else:
+                self.has_weather_data = False
                 GLib.idle_add(self.label.set_markup, f"{icons.cloud_off} Unavailable")
+                GLib.idle_add(super().set_visible, False)
         except Exception as e:
-            print(f"Error al obtener clima: {e}")
+            self.has_weather_data = False
+            print(f"Error fetching weather: {e}")
             GLib.idle_add(self.label.set_markup, f"{icons.cloud_off} Error")
+            GLib.idle_add(super().set_visible, False)

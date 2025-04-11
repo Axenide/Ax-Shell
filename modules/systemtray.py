@@ -3,18 +3,38 @@ import gi
 gi.require_version("Gray", "0.1")
 from gi.repository import Gray, Gtk, Gdk, GdkPixbuf, GLib
 
+import config.data as data
 
 class SystemTray(Gtk.Box):
     def __init__(self, pixel_size: int = 20, **kwargs) -> None:
-        super().__init__(name="systray", orientation=Gtk.Orientation.HORIZONTAL, spacing=8, **kwargs)
+        orientation = Gtk.Orientation.HORIZONTAL if not data.VERTICAL else Gtk.Orientation.VERTICAL
+        super().__init__(
+            name="systray",
+            orientation=orientation,
+            spacing=8,
+            **kwargs
+        )
+        self.enabled = True  # Flag to track if component should be shown
         self.set_visible(False)  # Initially hidden when empty.
         self.pixel_size = pixel_size
         self.watcher = Gray.Watcher()
         self.watcher.connect("item-added", self.on_item_added)
 
+    def set_visible(self, visible):
+        """Override to track external visibility setting"""
+        self.enabled = visible
+        # Only show if enabled AND has children
+        if visible and len(self.get_children()) > 0:
+            super().set_visible(True)
+        else:
+            super().set_visible(False)
+
     def _update_visibility(self):
-        # Update visibility based on the number of child widgets.
-        self.set_visible(len(self.get_children()) > 0)
+        # Update visibility based on the number of child widgets and enabled state
+        if self.enabled and len(self.get_children()) > 0:
+            super().set_visible(True)
+        else:
+            super().set_visible(False)
 
     def on_item_added(self, _, identifier: str):
         item = self.watcher.get_item_for_identifier(identifier)

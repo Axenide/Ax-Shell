@@ -5,7 +5,7 @@ from collections.abc import Iterable
 from typing import cast, overload, Literal
 from OpenGL.GL.shaders import compileShader, compileProgram
 
-from fabric import Application, Signal, Property
+from fabric import Signal, Property
 from fabric.widgets.widget import Widget
 
 gi.require_version("Gtk", "3.0")

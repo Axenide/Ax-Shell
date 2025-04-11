@@ -17,11 +17,15 @@ media: str = "&#xf00d;"
 
 #Toolbox
 
-toolbox: str = "&#xebca;"       # toolbox
-ssfull: str = "&#xeaea;"    # camera
-ssregion: str = "&#xf201;"    # camera
-screenrecord: str = "&#xeafa;"  # video
-ocr: str = "&#xfcc3;"          # text-recognition
+toolbox: str = "&#xebca;"
+ssfull: str = "&#xec3c;"
+ssregion: str = "&#xf201;"
+screenshots: str = "&#xeb0a;"
+screenrecord: str = "&#xed22;"
+recordings: str = "&#xeafa;"
+ocr: str = "&#xfcc3;"
+gamemode: str = "&#xf026;"
+gamemode_off: str = "&#xf111;"
 close : str = "&#xeb55;"
 
 # Circles
@@ -30,6 +34,7 @@ disk: str = "&#xea88;"
 battery: str = "&#xea38;"
 memory: str = "&#xfa97;"
 cpu: str = "&#xef8e;"
+
 
 # AIchat
 reload: str = "&#xf3ae;"
@@ -59,7 +64,12 @@ power_balanced: str = "&#xfa77;"
 power_performance: str = "&#xec45;"
 charging: str = "&#xefef;"
 discharging: str = "&#xefe9;"
-alert: str = "&#xefb4;"
+alert: str = "&#xea06;"
+bat_charging: str = "&#xeeca;"
+bat_discharging: str = "&#xf0a1;"
+bat_low: str = "&#xff1d;"
+bat_full: str = "&#xea38;"
+
 
 # Applets
 wifi_0: str = "&#xeba3;"
@@ -79,6 +89,9 @@ night_off: str = "&#xf162;"
 notifications_off: str = "&#xece9;"
 
 notifications_clear: str = "&#xf814;"
+
+download: str = "&#xea96;"
+upload: str = "&#xeb47;"
 
 # Bluetooth
 bluetooth_connected: str = "&#xecea;"
@@ -111,8 +124,11 @@ mic_mute: str = "&#xed16;"
 circle_plus: str = "&#xea69;"
 
 # Pins
-copy_plus: str = "&#xfdae;"
 paperclip: str = "&#xeb02;"
+
+# Clipboard Manager
+clipboard: str = "&#xea6f;"
+clip_text: str = "&#xf089;"
 
 # Confirm
 accept: str = "&#xea5e;"
@@ -140,6 +156,11 @@ palette: str = "&#xeb01;"
 cloud_off: str = "&#xed3e;"
 loader: str = "&#xeca3;"
 radar: str = "&#xf017;"
+emoji: str = "&#xeaf7;"
+keyboard: str = "&#xebd6;"
+terminal: str = "&#xebef;"
+timer_off: str = "&#xf146;"
+timer_on: str = "&#xf756;"
 
 exceptions: list[str] = ['font_family', 'font_weight', 'span']
 

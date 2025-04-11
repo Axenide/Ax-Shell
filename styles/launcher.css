@@ -1,4 +1,5 @@
 #search-entry,
+#session-name-entry,
 #search-entry-walls {
   font-weight: bold;
   background-color: var(--surface);
@@ -8,13 +9,16 @@
 }
 
 #search-entry selection,
-#search-entry-walls selection {
+#search-entry-walls selection,
+#session-name-entry selection {
   color: var(--background);
   background-color: var(--primary);
 }
 
 #close-button,
-#config-button {
+#clear-button,
+#config-button,
+#new-session-button {
   background-color: var(--surface);
   border-radius: 16px;
   padding: 8px;
@@ -22,34 +26,44 @@
 
 #close-button:hover,
 #close-button:focus,
+#clear-button:hover,
+#clear-button:focus,
 #config-button:hover,
-#config-button:focus {
+#config-button:focus,
+#new-session-button:hover,
+#new-session-button:focus {
   background-color: var(--surface-bright);
 }
 
-#close-button:active {
+#close-button:active,
+#clear-button:active {
   background-color: var(--red-dim);
 }
 
-#close-label {
+#close-label,
+#clear-label {
   color: var(--red-dim);
   font-size: 24px;
 }
 
-#close-button:active #close-label {
+#close-button:active #close-label,
+#clear-button:active #clear-label {
   color: var(--shadow);
 }
 
-#config-button:active {
+#config-button:active,
+#new-session-button:active {
   background-color: var(--primary);
 }
 
-#config-label {
+#config-label,
+#new-session-label {
   color: var(--primary);
   font-size: 24px;
 }
 
-#config-button:active #config-label {
+#config-button:active #config-label,
+#new-session-button:active #new-session-label {
   color: var(--shadow);
 }
 
@@ -71,7 +85,7 @@
   background-color: var(--primary);
 }
 
-#app-slot-button {
+#slot-button {
   border-radius: 16px;
   padding: 16px;
   transition: padding 0.1s ease;
@@ -82,20 +96,21 @@
   0% {
     opacity: 0;
   }
+
   100% {
     opacity: 1;
   }
 }
 
-#app-slot-button:hover,
-#app-slot-button:focus,
-#app-slot-button:selected,
-#app-slot-button.selected {
+#slot-button:hover,
+#slot-button:focus,
+#slot-button:selected,
+#slot-button.selected {
   background-color: var(--surface-bright);
   padding-left: 20px;
 }
 
-#app-slot-button:active {
+#slot-button:active {
   background-color: var(--primary);
 }
 
@@ -109,13 +124,29 @@
   font-weight: bold;
 }
 
-#app-slot-button:hover #app-label,
-#app-slot-button:focus #app-label,
-#app-slot-button:selected #app-label,
-#app-slot-button.selected #app-label {
+#slot-button:hover #app-label,
+#slot-button:focus #app-label,
+#slot-button:selected #app-label,
+#slot-button.selected #app-label {
   color: var(--primary);
 }
 
-#app-slot-button:active #app-label {
+#slot-button:active #app-label {
   color: var(--shadow);
+}
+
+#tmux-icon,
+#clip-icon {
+  font-size: 20px;
+  color: var(--primary);
+}
+
+#app-desc {
+  color: var(--outline);
+  font-size: 12px;
+  font-style: italic;
+}
+
+#clip-label {
+  font-weight: bold;
 }

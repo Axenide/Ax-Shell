@@ -5,13 +5,17 @@ import os
 import subprocess
 import json
 import cairo
+import re
+import urllib.request
+import urllib.parse
+import tempfile
 from pathlib import Path
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 
 from fabric.widgets.box import Box
 from fabric.widgets.label import Label
-from fabric.widgets.scrolledwindow import ScrolledWindow  # <-- new import
+from fabric.widgets.scrolledwindow import ScrolledWindow
 
 import modules.icons as icons
 
@@ -32,6 +36,59 @@ def open_file(filepath):
         subprocess.Popen(["xdg-open", filepath])
     except Exception as e:
         print("Error opening file:", e)
+
+def open_url(url):
+    try:
+        subprocess.Popen(["xdg-open", url])
+    except Exception as e:
+        print("Error opening URL:", e)
+
+def is_url(text):
+    # Simple URL validation pattern
+    url_pattern = re.compile(
+        r'^(https?|ftp)://'  # http://, https://, ftp://
+        r'(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+(?:[A-Z]{2,6}\.?|[A-Z0-9-]{2,}\.?)|'  # domain
+        r'localhost|'  # localhost
+        r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})'  # or IP
+        r'(?::\d+)?'  # optional port
+        r'(?:/?|[/?]\S+)$', re.IGNORECASE)
+    return bool(url_pattern.match(text))
+
+def get_favicon_url(url):
+    """Extract the base domain from a URL and construct a favicon URL."""
+    parsed_url = urllib.parse.urlparse(url)
+    base_url = f"{parsed_url.scheme}://{parsed_url.netloc}"
+    return f"{base_url}/favicon.ico"
+
+def download_favicon(url, callback):
+    """Download a favicon asynchronously and call the callback with the result."""
+    favicon_url = get_favicon_url(url)
+    
+    def do_download():
+        temp_file = None
+        try:
+            # Create a temporary file to store the favicon
+            temp_fd, temp_path = tempfile.mkstemp(suffix='.ico')
+            os.close(temp_fd)
+            
+            # Download the favicon
+            urllib.request.urlretrieve(favicon_url, temp_path)
+            
+            # If successful, pass the path to the callback
+            GLib.idle_add(callback, temp_path)
+        except Exception as e:
+            print(f"Error downloading favicon: {e}")
+            # If there's an error, call the callback with None
+            if temp_file and os.path.exists(temp_file):
+                try:
+                    os.remove(temp_file)
+                except:
+                    pass
+            GLib.idle_add(callback, None)
+        return False  # Don't repeat
+    
+    # Schedule the download operation with GLib instead of threading
+    GLib.idle_add(do_download)
 
 class FileChangeHandler(FileSystemEventHandler):
     def __init__(self, app):
@@ -71,6 +128,9 @@ class Cell(Gtk.EventBox):
         self.content_type = content_type
         self.box = Box(name="pin-cell-box", orientation="v", spacing=4)
         self.add(self.box)
+        
+        # Store favicon path for cleanup
+        self.favicon_temp_path = None
 
         target_dest = Gtk.TargetEntry.new("text/uri-list", 0, 0)
         self.drag_dest_set(Gtk.DestDefaults.ALL, [target_dest], Gdk.DragAction.COPY)
@@ -90,8 +150,17 @@ class Cell(Gtk.EventBox):
         self.update_display()
 
     def update_display(self):
+        # Clean up any previous favicon temp file
+        if self.favicon_temp_path and os.path.exists(self.favicon_temp_path):
+            try:
+                os.remove(self.favicon_temp_path)
+                self.favicon_temp_path = None
+            except Exception as e:
+                print(f"Error removing temp favicon: {e}")
+        
         for child in self.box.get_children():
             self.box.remove(child)
+        
         if self.content is None:
             label = Label(name="pin-add", markup=icons.paperclip)
             self.box.pack_start(label, True, True, 0)
@@ -102,11 +171,61 @@ class Cell(Gtk.EventBox):
                 label = Label(name="pin-file", label=os.path.basename(self.content), justification="center", ellipsization="middle")
                 self.box.pack_start(label, False, False, 0)
             elif self.content_type == 'text':
-                label = Label(name="pin-text", label=self.content.split('\n')[0], justification="center", ellipsization="end", line_wrap="word-char")
-                self.box.pack_start(label, True, True, 0)
+                if is_url(self.content):
+                    # Create container for icon first
+                    icon_container = Box(name="pin-icon-container", orientation="v")
+                    self.box.pack_start(icon_container, True, True, 0)
+                    
+                    # Initially use the world icon in the container
+                    url_icon = Label(name="pin-url-icon", markup=icons.world)
+                    icon_container.pack_start(url_icon, True, True, 0)
+                    
+                    # Add the domain name label below the icon
+                    domain = re.sub(r'^https?://', '', self.content)
+                    domain = domain.split('/')[0]
+                    label = Label(name="pin-url", label=domain, justification="center", ellipsization="end")
+                    self.box.pack_start(label, False, False, 0)
+                    
+                    # Try to fetch the favicon asynchronously
+                    download_favicon(
+                        self.content, 
+                        lambda path: self.update_favicon(icon_container, url_icon, path)
+                    )
+                else:
+                    # Regular text display
+                    label = Label(name="pin-text", label=self.content.split('\n')[0], justification="center", ellipsization="end", line_wrap="word-char")
+                    self.box.pack_start(label, True, True, 0)
         self.box.show_all()
         if not self.app.loading_state:
             self.app.save_state()
+    
+    def update_favicon(self, container, icon_widget, favicon_path):
+        """Update the icon with the downloaded favicon or keep the default."""
+        if not favicon_path or not os.path.exists(favicon_path):
+            # Keep the default icon if favicon couldn't be downloaded
+            return
+        
+        try:
+            # Store the path for later cleanup
+            self.favicon_temp_path = favicon_path
+            
+            # Create a pixbuf from the favicon file
+            pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(
+                favicon_path, width=48, height=48, preserve_aspect_ratio=True)
+            
+            # Remove the old icon widget from the container
+            container.remove(icon_widget)
+            
+            # Create and add a new image widget with the favicon to the container
+            img = Gtk.Image.new_from_pixbuf(pixbuf)
+            img.set_name("pin-favicon")
+            container.pack_start(img, True, True, 0)
+            
+            # Make sure it's visible
+            container.show_all()
+        except Exception as e:
+            print(f"Error setting favicon: {e}")
+            # If anything fails, the original icon_widget is still in place
 
     def get_file_preview(self, filepath):
         try:
@@ -203,8 +322,19 @@ class Cell(Gtk.EventBox):
                     self.clear_cell()
             elif self.content_type == 'text':
                 if event.button == 1:
-                    clipboard = Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD)
-                    clipboard.set_text(self.content, -1)
+                    # Add special handling for URLs
+                    if is_url(self.content):
+                        # Put URL in clipboard
+                        clipboard = Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD)
+                        clipboard.set_text(self.content, -1)
+                        
+                        # If CTRL is not pressed, open the URL
+                        if not (event.state & Gdk.ModifierType.CONTROL_MASK):
+                            open_url(self.content)
+                    else:
+                        # Regular text behavior - just copy to clipboard
+                        clipboard = Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD)
+                        clipboard.set_text(self.content, -1)
                 elif event.button == 3:
                     self.clear_cell()
         return True
@@ -225,6 +355,14 @@ class Cell(Gtk.EventBox):
         dialog.destroy()
 
     def clear_cell(self):
+        # Clean up favicon temp file if it exists
+        if self.favicon_temp_path and os.path.exists(self.favicon_temp_path):
+            try:
+                os.remove(self.favicon_temp_path)
+                self.favicon_temp_path = None
+            except Exception as e:
+                print(f"Error removing temp favicon: {e}")
+        
         self.content = None
         self.content_type = None
         self.update_display()
@@ -255,8 +393,8 @@ class Pins(Gtk.Box):
         scrolled_window = ScrolledWindow(child=grid, name="scrolled-window")
         self.pack_start(scrolled_window, True, True, 0)
 
-        # Create 25 cells (5x5)
-        for row in range(5):
+        # Create 30 cells (5x6)
+        for row in range(6):
             for col in range(5):
                 cell = Cell(self)
                 self.cells.append(cell)
@@ -329,5 +467,13 @@ class Pins(Gtk.Box):
         drag_context.finish(True, False, time)
 
     def stop_monitoring(self):
+        # Clean up any temp favicon files
+        for cell in self.cells:
+            if hasattr(cell, 'favicon_temp_path') and cell.favicon_temp_path and os.path.exists(cell.favicon_temp_path):
+                try:
+                    os.remove(cell.favicon_temp_path)
+                except Exception:
+                    pass
+                    
         self.observer.stop()
         self.observer.join()

@@ -1,5 +1,5 @@
 #action-button {
-  border-radius: 20px;
+  border-radius: 16px;
   background-color: var(--surface);
   padding: 8px;
 }
@@ -43,7 +43,7 @@
   padding: 16px;
   background-color: var(--shadow);
   margin: 8px;
-  min-width: 336px;
+  min-width: 330px;
 }
 
 #boxed-notification-revealer {
@@ -57,7 +57,7 @@
 #notif-close-button {
   background-color: var(--surface);
   border-radius: 16px;
-  padding: 4px;
+  padding: 8px;
 }
 
 #notif-close-button:hover,
@@ -71,7 +71,7 @@
 
 #notif-close-label {
   color: var(--red-dim);
-  font-size: 20px;
+  font-size: 16px;
 }
 
 #notif-close-button:active #notif-close-label {
@@ -115,14 +115,16 @@
 
 #notification-history scrollbar.vertical slider {
   background: var(--primary);
-  border-radius: 16px;
+  border-radius: 8px;
   min-width: 16px;
+  min-height: 48px;
   margin: 4px;
 }
 
 #notification-history scrollbar.vertical trough {
   background: var(--surface);
   border: none;
+  border-radius: 12px;
   margin: 4px;
 }
 
@@ -167,14 +169,20 @@
   margin-left: 4px;
 }
 
-#no-notifications-label {
-  font-size: 96px;
-  color: var(--surface);
-}
-
 #notif-sep {
   padding: 2px;
   border-radius: 16px;
   background-color: var(--surface-bright);
   margin: 0 8px;
+}
+
+#notif-date-sep {
+  padding: 4px;
+  border-radius: 12px;
+  background-color: var(--surface);
+}
+
+#notif-date-sep-label {
+  color: var(--outline);
+  font-weight: bold;
 }

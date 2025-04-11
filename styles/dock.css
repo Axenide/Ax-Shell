@@ -1,0 +1,69 @@
+#dock {
+  background-color: var(--shadow);
+  padding: 8px;
+  margin: 8px 8px 7px 8px;
+  border-radius: 20px 20px 0 0;
+  transition: all 0.25s cubic-bezier(0.5, 0.25, 0, 1);
+}
+
+#dock.vertical {
+  margin: 8px 79px 8px 8px;
+  border-radius: 20px 0 0 20px;
+}
+
+#dock-full {
+  transition: all 0.25s cubic-bezier(0.5, 0.25, 0, 1);
+  opacity: 1;
+}
+
+#dock-full.occluded {
+  @apply dock_nmargin();
+  /* opacity: 0; */
+}
+
+#dock-separator {
+  padding: 1px;
+  @apply dock_sep();
+  border-radius: 16px;
+  background-color: var(--surface-bright);
+}
+
+#dock-app-button {
+  padding: 4px;
+  border-radius: 12px;
+}
+
+#dock-app-button:hover,
+#dock-app-button:hover.instance {
+  background-color: var(--surface-bright);
+  border-top: 1px solid var(--primary);
+  padding-top: 3px;
+}
+
+#dock-app-button:active,
+#dock-app-button:active.instance {
+  background-color: var(--primary);
+}
+
+#dock-app-button.instance {
+  background: linear-gradient(to top, transparent, var(--surface-bright));
+  border-bottom: 1px solid var(--surface);
+  border-top: 1px solid var(--outline);
+  padding: 3px 4px;
+}
+
+#dock-corner-left {
+  margin: 0 -8px 7px 0;
+}
+
+#dock-corner-right {
+  margin: 0 0 7px -8px;
+}
+
+#dock-corner-top {
+  margin: 0 79px -8px 0;
+}
+
+#dock-corner-bottom {
+  margin: -8px 79px 0 0;
+}

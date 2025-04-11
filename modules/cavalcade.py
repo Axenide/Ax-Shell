@@ -1,6 +1,5 @@
 import os
 import struct
-import threading
 import subprocess
 import re
 import ctypes
@@ -11,6 +10,7 @@ from loguru import logger
 from math import pi
 
 from fabric.widgets.overlay import Overlay
+from fabric.utils.helpers import get_relative_path
 
 import configparser
 
@@ -19,7 +19,7 @@ def get_bars(file_path):
     config.read(file_path)
     return int(config['general']['bars'])
 
-CAVA_CONFIG = os.path.expanduser("~/.config/Ax-Shell/config/cavalcade/cava.ini")
+CAVA_CONFIG = get_relative_path("../config/cavalcade/cava.ini")
 
 bars = get_bars(CAVA_CONFIG)
 
@@ -46,7 +46,7 @@ class Cava:
         self.bars = bars
         self.path = "/tmp/cava.fifo"
 
-        self.cava_config_file = os.path.expanduser("~/.config/Ax-Shell/config/cavalcade/cava.ini")
+        self.cava_config_file = CAVA_CONFIG
         self.data_handler = mainapp.draw.update
         self.command = ["cava", "-p", self.cava_config_file]
         self.state = self.NONE
@@ -59,6 +59,10 @@ class Cava:
 
         if not os.path.exists(self.path):
             os.mkfifo(self.path)
+
+        self.fifo_fd = None
+        self.fifo_dummy_fd = None
+        self.io_watch_id = None
 
     def _run_process(self):
         logger.debug("Launching cava process...")
@@ -75,32 +79,38 @@ class Cava:
         except Exception:
             logger.exception("Fail to launch cava")
 
-    def _start_reader_thread(self):
-        logger.debug("Activate cava stream handler")
-        self.thread = threading.Thread(target=self._read_output)
-        self.thread.daemon = True
-        self.thread.start()
+    def _start_io_reader(self):
+        logger.debug("Activating GLib IO watch for cava stream handler")
+        # Open FIFO in non-blocking mode for reading
+        self.fifo_fd = os.open(self.path, os.O_RDONLY | os.O_NONBLOCK)
+        # Open dummy write end to prevent getting an EOF on our FIFO
+        self.fifo_dummy_fd = os.open(self.path, os.O_WRONLY | os.O_NONBLOCK)
+        self.io_watch_id = GLib.io_add_watch(self.fifo_fd, GLib.IO_IN, self._io_callback)
 
-    def _read_output(self):
-        fifo = open(self.path, "rb")
+    def _io_callback(self, source, condition):
         chunk = self.byte_size * self.bars  # number of bytes for given format
-        fmt = self.byte_type * self.bars  # pack of given format
-        while True:
-            data = fifo.read(chunk)
-            if len(data) < chunk:
-                break
-            sample = [i / self.byte_norm for i in struct.unpack(fmt, data)]
-            GLib.idle_add(self.data_handler, sample)
-        fifo.close()
-        GLib.idle_add(self._on_stop)
+        try:
+            data = os.read(self.fifo_fd, chunk)
+        except OSError as e:
+            # logger.error("Error reading FIFO: {}".format(e))
+            return False
+
+        # When no data is read, do not remove the IO watch immediately.
+        if len(data) < chunk:
+            # Instead of closing the FIFO, we log a warning and continue.
+            # logger.warning("Incomplete data packet received (expected {} bytes, got {}). Waiting for more data...".format(chunk, len(data)))
+            # Returning True keeps the IO watch active. A real EOF will only occur when the writer closes.
+            return True
+
+        fmt = self.byte_type * self.bars  # format string for struct.unpack
+        sample = [i / self.byte_norm for i in struct.unpack(fmt, data)]
+        GLib.idle_add(self.data_handler, sample)
+        return True
 
     def _on_stop(self):
         logger.debug("Cava stream handler deactivated")
         if self.state == self.RESTARTING:
-            if not self.thread.isAlive():
-                self.start()
-            else:
-                logger.error("Can't restart cava, old handler still alive")
+            self.start()
         elif self.state == self.RUNNING:
             self.state = self.NONE
             logger.error("Cava process was unexpectedly terminated.")
@@ -108,7 +118,7 @@ class Cava:
 
     def start(self):
         """Launch cava"""
-        self._start_reader_thread()
+        self._start_io_reader()
         self._run_process()
 
     def restart(self):
@@ -127,12 +137,19 @@ class Cava:
         self.state = self.CLOSING
         if self.process.poll() is None:
             self.process.kill()
-        os.remove(self.path)
+        if self.io_watch_id:
+            GLib.source_remove(self.io_watch_id)
+        if self.fifo_fd:
+            os.close(self.fifo_fd)
+        if self.fifo_dummy_fd:
+            os.close(self.fifo_dummy_fd)
+        if os.path.exists(self.path):
+            os.remove(self.path)
 
 class AttributeDict(dict):
     """Dictionary with keys as attributes. Does nothing but easy reading"""
     def __getattr__(self, attr):
-        return self.get(attr,3)
+        return self.get(attr, 3)
 
     def __setattr__(self, attr, value):
         self[attr] = value
@@ -173,18 +190,13 @@ class Spectrum:
             self.audio_sample = [0] * self.sizes.number
             self.area.queue_draw()
 
-    # noinspection PyUnusedLocal
     def redraw(self, widget, cr):
         """Draw spectrum graph"""
         cr.set_source_rgba(*self.color)
-        # cr.set_source_rgba(170/255, 170/255, 1, 1)
-
         dx = 3
 
-        center_y = self.sizes.area.height / 2  # Centro vertical del área de dibujo
+        center_y = self.sizes.area.height / 2  # center vertical of the drawing area
         for i, value in enumerate(self.audio_sample):
-
-            # width = self.sizes.bar.width + int(i < self.sizes.wcpi)
             width = self.sizes.area.width / self.sizes.number - self.sizes.padding
             radius = width / 2
             height = max(self.sizes.bar.height * min(value, 1), self.sizes.zero) / 2
@@ -193,22 +205,19 @@ class Spectrum:
 
             height = min(height, self.max_height)
 
-            # Dibujar rectángulo
+            # Draw rectangle and arcs for rounded ends
             cr.rectangle(dx, center_y - height, width, height * 2)
             cr.arc(dx + radius, center_y - height, radius, 0, 2 * pi)
             cr.arc(dx + radius, center_y + height, radius, 0, 2 * pi)
 
             cr.close_path()
-            # cr.rectangle(0, center_y, self.sizes.area.width, 20)
-
             dx += width + self.sizes.padding
         cr.fill()
 
-    # noinspection PyUnusedLocal
     def size_update(self, *args):
         """Update drawing geometry"""
         self.sizes.number = bars
-        self.sizes.padding = 100/bars
+        self.sizes.padding = 100 / bars
         self.sizes.zero = 0
 
         self.sizes.area.width = self.area.get_allocated_width()
@@ -217,13 +226,12 @@ class Spectrum:
         tw = self.sizes.area.width - self.sizes.padding * (self.sizes.number - 1)
         self.sizes.bar.width = max(int(tw / self.sizes.number), 1)
         self.sizes.bar.height = self.sizes.area.height
-        # self.sizes.wcpi = tw % self.sizes.number  # width correction point index
 
     def color_update(self):
-        """Set drawing color according current settings by reading primary color from CSS"""
+        """Set drawing color according to current settings by reading primary color from CSS"""
         color = "#a5c8ff"  # default value
         try:
-            with open(os.path.expanduser("~/.config/Ax-Shell/styles/colors.css"), "r") as f:
+            with open(get_relative_path("../styles/colors.css"), "r") as f:
                 content = f.read()
                 m = re.search(r"--primary:\s*(#[0-9a-fA-F]{6})", content)
                 if m:
@@ -235,7 +243,7 @@ class Spectrum:
         blue = int(color[5:7], 16) / 255
         self.color = Gdk.RGBA(red=red, green=green, blue=blue, alpha=1.0)
 
-class SpectrumRender():
+class SpectrumRender:
     def __init__(self, mode=None, **kwargs):
         super().__init__(**kwargs)
         self.mode = mode
@@ -250,4 +258,3 @@ class SpectrumRender():
         box.set_size_request(180, 40)
         box.add_overlay(self.draw.area)
         return box
-

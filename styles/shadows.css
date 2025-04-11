@@ -1,5 +1,5 @@
 #button-bar,
-#workspaces-container,
+#workspaces,
 #notch-content,
 #date-time,
 #systray,
@@ -8,7 +8,9 @@
 #notification-stack-box,
 #nav-button,
 #metrics-small,
-#weather {
+#weather,
+#language,
+#dock {
   box-shadow: 0 0 4px alpha(black, 0.5);
 }
 
@@ -19,4 +21,3 @@
 #boxed-revealer {
   margin: -10px;
 }
-
