@@ -9,12 +9,11 @@ from fabric.hyprland.widgets import Workspaces, WorkspaceButton, Language, get_h
 from fabric.hyprland.service import HyprlandEvent
 from fabric.utils.helpers import exec_shell_command_async
 from gi.repository import Gdk
-from modules.systemtray import SystemTray
 import modules.icons as icons
 import config.data as data
 from modules.metrics import MetricsSmall, Battery, NetworkApplet
 from modules.controls import ControlSmall
-from modules.weather import Weather
+from modules.systemtray import SystemTray
 
 class Bar(Window):
     def __init__(self, **kwargs):
@@ -60,7 +59,7 @@ class Bar(Window):
         self.button_tools.connect("leave_notify_event", self.on_button_leave)
 
         # self.weather = Weather()
-        # self.systray = SystemTray(name="systray", spacing=8, icon_size=20)
+        self.systray = SystemTray()
         self.network = NetworkApplet()
 
         self.lang_label = Label(name="lang-label")
@@ -135,7 +134,7 @@ class Bar(Window):
         )
         
         self.rev_left = [
-            self.weather,
+            # self.weather,
             self.network,
         ]
 
@@ -188,7 +187,7 @@ class Bar(Window):
         self.v_center_children = [
             self.button_overview,
             self.ws_container,
-            self.weather,
+            # self.weather,
         ]
         
         self.v_end_children = [
@@ -248,7 +247,7 @@ class Bar(Window):
             'button_tools': self.button_tools,
             'button_overview': self.button_overview,
             'ws_container': self.ws_container,
-            'weather': self.weather,
+            # 'weather': self.weather,
             'battery': self.battery,
             'metrics': self.metrics,
             'language': self.language,
@@ -270,7 +269,7 @@ class Bar(Window):
             'button_tools': self.button_tools,
             'button_overview': self.button_overview,
             'ws_container': self.ws_container,
-            'weather': self.weather,
+            # 'weather': self.weather,
             'battery': self.battery,
             'metrics': self.metrics,
             'language': self.language,
