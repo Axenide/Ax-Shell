@@ -128,7 +128,7 @@ class NotificationBox(Box):
         )
         self.notification = notification
         self.uuid = str(uuid.uuid4())
-        self.timeout_ms = timeout_ms
+        self.timeout_ms = self.notification.timeout if self.notification.timeout is not -1 else timeout_ms
         self._timeout_id = None
         self._container = None
         self.cached_image_path = None

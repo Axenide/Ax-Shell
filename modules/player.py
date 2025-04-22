@@ -38,10 +38,11 @@ class PlayerBox(Box):
     def __init__(self, mpris_player=None):
         super().__init__(orientation="v", h_align="fill", spacing=0, h_expand=False, v_expand=True)
         self.mpris_player = mpris_player
+        self._progress_timer_id = None  # Initialize timer ID
 
         self.cover = CircleImage(
             name="player-cover",
-            image_file=os.path.expanduser(f"~/.current.wall"),
+            image_file=os.path.expanduser("~/.current.wall"),
             size=162,
             h_align="center",
             v_align="center",
@@ -133,17 +134,22 @@ class PlayerBox(Box):
         )
         self.add(self.player_box)
         if mpris_player:
-            self._apply_mpris_properties()
+            self._apply_mpris_properties()  # This will handle starting the timer if needed
             self.prev.connect("clicked", self._on_prev_clicked)
             self.play_pause.connect("clicked", self._on_play_pause_clicked)
             self.backward.connect("clicked", self._on_backward_clicked)
             self.forward.connect("clicked", self._on_forward_clicked)
             self.next.connect("clicked", self._on_next_clicked)
-            if mpris_player.can_seek:
-                GLib.timeout_add(1000, self._update_progress)
             self.mpris_player.connect("changed", self._on_mpris_changed)
         else:
             self.play_pause.get_child().set_markup(icons.stop)
+            # Ensure buttons are disabled visually if no player
+            self.backward.add_style_class("disabled")
+            self.forward.add_style_class("disabled")
+            self.prev.add_style_class("disabled")
+            self.next.add_style_class("disabled")
+            self.progressbar.set_value(0.0)
+            self.time.set_text("--:-- / --:--")
 
     def _apply_mpris_properties(self):
         mp = self.mpris_player
@@ -173,17 +179,43 @@ class PlayerBox(Box):
             monitor.connect("changed", self.on_wallpaper_changed)
             self._wallpaper_monitor = monitor
         self.update_play_pause_icon()
+        # Keep progress bar and time visible always
         self.progressbar.set_visible(True)
         self.time.set_visible(True)
+
         player_name = mp.player_name.lower() if hasattr(mp, "player_name") and mp.player_name else ""
-        if player_name == "firefox" or (hasattr(mp, "can_seek") and not mp.can_seek):
-            self.progressbar.set_visible(False)
-            self.time.set_visible(False)
-            self.backward.set_visible(False)
-            self.forward.set_visible(False)
+        can_seek = hasattr(mp, "can_seek") and mp.can_seek
+
+        if player_name == "firefox" or not can_seek:
+            # Disable seeking buttons and reset progress/time display
+            self.backward.add_style_class("disabled")
+            self.forward.add_style_class("disabled")
+            self.progressbar.set_value(0.0)
+            self.time.set_text("--:-- / --:--")
+            # Stop the timer if it's running
+            if self._progress_timer_id:
+                GLib.source_remove(self._progress_timer_id)
+                self._progress_timer_id = None
         else:
-            self.backward.set_visible(True)
-            self.forward.set_visible(True)
+            # Enable seeking buttons
+            self.backward.remove_style_class("disabled")
+            self.forward.remove_style_class("disabled")
+            # Start the timer if it's not already running
+            if not self._progress_timer_id:
+                self._progress_timer_id = GLib.timeout_add(1000, self._update_progress)
+            # Initial progress update if possible
+            self._update_progress()  # Call once for immediate update
+
+        # Enable/disable prev/next based on capabilities
+        if hasattr(mp, "can_go_previous") and mp.can_go_previous:
+             self.prev.remove_style_class("disabled")
+        else:
+             self.prev.add_style_class("disabled")
+
+        if hasattr(mp, "can_go_next") and mp.can_go_next:
+             self.next.remove_style_class("disabled")
+        else:
+             self.next.add_style_class("disabled")
 
     def _set_cover_image(self, image_path):
         if image_path and os.path.isfile(image_path):
@@ -235,12 +267,14 @@ class PlayerBox(Box):
             self.update_play_pause_icon()
 
     def _on_backward_clicked(self, button):
-        if self.mpris_player and self.mpris_player.can_seek:
+        # Only seek if player exists, can seek, and button is not disabled
+        if self.mpris_player and self.mpris_player.can_seek and "disabled" not in self.backward.get_style_context().list_classes():
             new_pos = max(0, self.mpris_player.position - 5000000)  # 5 seconds backward
             self.mpris_player.position = new_pos
 
     def _on_forward_clicked(self, button):
-        if self.mpris_player and self.mpris_player.can_seek:
+        # Only seek if player exists, can seek, and button is not disabled
+        if self.mpris_player and self.mpris_player.can_seek and "disabled" not in self.forward.get_style_context().list_classes():
             new_pos = self.mpris_player.position + 5000000  # 5 seconds forward
             self.mpris_player.position = new_pos
 
@@ -249,8 +283,14 @@ class PlayerBox(Box):
             self.mpris_player.next()
 
     def _update_progress(self):
-        if not self.mpris_player:
-            return False
+        # Timer is now only active if can_seek is true, so no need for the initial check
+        if not self.mpris_player:  # Still need to check if player exists
+            # Should not happen if timer logic is correct, but good safeguard
+            if self._progress_timer_id:
+                GLib.source_remove(self._progress_timer_id)
+                self._progress_timer_id = None
+            return False  # Stop timer
+
         try:
             current = self.mpris_player.position
         except Exception:
@@ -259,10 +299,18 @@ class PlayerBox(Box):
             total = int(self.mpris_player.length or 0)
         except Exception:
             total = 0
-        progress = (current / total) if total > 0 else 0
+
+        # Prevent division by zero or invalid updates
+        if total <= 0:
+            progress = 0.0
+            self.time.set_text("--:-- / --:--")
+            # Don't stop the timer here, length might become available later
+        else:
+            progress = (current / total)
+            self.time.set_text(f"{self._format_time(current)} / {self._format_time(total)}")
+
         self.progressbar.set_value(progress)
-        self.time.set_text(f"{self._format_time(current)} / {self._format_time(total)}")
-        return True
+        return True  # Continue the timer
 
     def _format_time(self, us):
         seconds = int(us / 1000000)
@@ -280,10 +328,18 @@ class PlayerBox(Box):
         # Debounce metadata updates to avoid excessive work on the main thread.
         if not hasattr(self, "_update_pending") or not self._update_pending:
             self._update_pending = True
-            GLib.timeout_add(100, self._apply_mpris_properties_debounced)
+            # Use idle_add for potentially faster UI response than timeout_add(100)
+            GLib.idle_add(self._apply_mpris_properties_debounced)
 
     def _apply_mpris_properties_debounced(self):
-        self._apply_mpris_properties()
+        # Ensure player still exists before applying properties
+        if self.mpris_player:
+            self._apply_mpris_properties()
+        else:
+            # Player vanished, ensure timer is stopped if it was running
+            if self._progress_timer_id:
+                GLib.source_remove(self._progress_timer_id)
+                self._progress_timer_id = None
         self._update_pending = False
         return False
 
@@ -327,7 +383,7 @@ class Player(Box):
         mp = MprisPlayer(player)
         pb = PlayerBox(mpris_player=mp)
         self.player_stack.add_titled(pb, mp.player_name, mp.player_name)
-        GLib.timeout_add(1000, pb._update_progress)
+        # Timer is now started conditionally within PlayerBox.__init__
         self.switcher.set_visible(True)
         GLib.idle_add(lambda: self._update_switcher_for_player(mp.player_name))
         GLib.idle_add(self._replace_switcher_labels)

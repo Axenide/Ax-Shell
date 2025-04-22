@@ -1,4 +1,5 @@
 import calendar
+import subprocess
 from datetime import datetime, timedelta
 import gi
 import modules.icons as icons
@@ -11,6 +12,14 @@ from gi.repository import Gtk, GLib
 class Calendar(Gtk.Box):
     def __init__(self):
         super().__init__(orientation=Gtk.Orientation.VERTICAL, spacing=8, name="calendar")
+
+        try:
+            origin_date = datetime.fromisoformat(subprocess.check_output(["locale", "week-1stday"]).decode("utf-8")[:-1])
+            date = origin_date + timedelta(days=int(subprocess.check_output(["locale", "first_weekday"])) - 1)
+            self.first_weekday = date.weekday()
+        except Exception as e:
+            print(f"Error getting locale first weekday: {e}")
+            self.first_weekday = 0
 
         self.current_year = datetime.now().year
         self.current_month = datetime.now().month
@@ -142,7 +151,7 @@ class Calendar(Gtk.Box):
 
     def create_month_view(self, year, month):
         grid = Gtk.Grid(column_homogeneous=True, row_homogeneous=False, name="calendar-grid")
-        cal = calendar.Calendar(firstweekday=6)
+        cal = calendar.Calendar(firstweekday=self.first_weekday)
         month_days = cal.monthdayscalendar(year, month)
         # Ensure 6 rows for consistency.
         while len(month_days) < 6:
@@ -182,7 +191,7 @@ class Calendar(Gtk.Box):
 
     def get_weekday_initials(self):
         # Returns localized weekday initials.
-        return [datetime(2023, 1, i + 1).strftime("%a")[:1] for i in range(7)]
+        return [datetime(2024, 1, i + 1 + self.first_weekday).strftime("%a")[:1] for i in range(7)]
 
     def on_prev_month_clicked(self, widget):
         if self.current_month == 1:
