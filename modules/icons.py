@@ -34,7 +34,7 @@ disk: str = "&#xea88;"
 battery: str = "&#xea38;"
 memory: str = "&#xfa97;"
 cpu: str = "&#xef8e;"
-
+gpu: str = "&#xf233;"
 
 # AIchat
 reload: str = "&#xf3ae;"

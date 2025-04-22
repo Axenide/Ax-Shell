@@ -39,8 +39,10 @@ PACKAGES=(
   tmux
   unzip
   uwsm
+  webp-pixbuf-loader
   wl-clipboard
   wlinhibit
+  nvtop
 )
 
 # Prevent running as root

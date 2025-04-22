@@ -89,6 +89,7 @@ curl -fsSL https://raw.githubusercontent.com/Axenide/Ax-Shell/main/install.sh | 
     - `tesseract`
     - `tmux`
     - `uwsm`
+    - `webp-pixbuf-loader`
     - `wl-clipboard`
     - `wlinhibit`
     - Python dependencies:
