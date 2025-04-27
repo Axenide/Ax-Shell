@@ -8,6 +8,7 @@ import os
 import config.data as data
 import subprocess
 from loguru import logger
+import threading
 
 SCREENSHOT_SCRIPT = get_relative_path("../scripts/screenshot.sh")
 POMODORO_SCRIPT = get_relative_path("../scripts/pomodoro.sh")
@@ -238,19 +239,24 @@ class Toolbox(Box):
 
     # Function to check if the pomodoro script is running
     def pomodoro_check(self):
-        try:
-            result = subprocess.run("pgrep -f pomodoro.sh", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            running = result.returncode == 0
-        except Exception:
-            running = False
+        def check():
+            try:
+                result = subprocess.run("pgrep -f pomodoro.sh", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                running = result.returncode == 0
+            except Exception:
+                running = False
 
-        if running:
-            self.btn_pomodoro.get_child().set_markup(icons.timer_on)
-            self.btn_pomodoro.add_style_class("pomodoro")
-        else:
-            self.btn_pomodoro.get_child().set_markup(icons.timer_off)
-            self.btn_pomodoro.remove_style_class("pomodoro")
-
+            def update_ui():
+                if running:
+                    self.btn_pomodoro.get_child().set_markup(icons.timer_on)
+                    self.btn_pomodoro.add_style_class("pomodoro")
+                else:
+                    self.btn_pomodoro.get_child().set_markup(icons.timer_off)
+                    self.btn_pomodoro.remove_style_class("pomodoro")
+                return False
+            GLib.idle_add(update_ui)
+            return False
+        GLib.idle_add(lambda: threading.Thread(target=check).start())
         return True
 
     def ocr(self, *args):
@@ -263,17 +269,22 @@ class Toolbox(Box):
         self.close_menu()
 
     def gamemode_check(self):
-        try:
-            result = subprocess.run(f"bash {GAMEMODE_SCRIPT} check", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            enabled = result.stdout == b't\n'
-        except Exception:
-            enabled = False
+        def check():
+            try:
+                result = subprocess.run(f"bash {GAMEMODE_SCRIPT} check", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                enabled = result.stdout == b't\n'
+            except Exception:
+                enabled = False
 
-        if enabled:
-            self.btn_gamemode.get_child().set_markup(icons.gamemode_off)
-        else:
-            self.btn_gamemode.get_child().set_markup(icons.gamemode)
-
+            def update_ui():
+                if enabled:
+                    self.btn_gamemode.get_child().set_markup(icons.gamemode_off)
+                else:
+                    self.btn_gamemode.get_child().set_markup(icons.gamemode)
+                return False
+            GLib.idle_add(update_ui)
+            return False
+        GLib.idle_add(lambda: threading.Thread(target=check).start())
         return True
 
     def ssregion(self, *args):
@@ -309,27 +320,24 @@ class Toolbox(Box):
         return False
 
     def update_screenrecord_state(self):
-        """
-        Checks if the 'gpu-screen-recorder' process is running.
-        If it is, updates the btn_screenrecord icon to icons.stop and adds the 'recording' style class.
-        Otherwise, sets the icon back to icons.screenrecord and removes the 'recording' style class.
-        This function is called periodically every second.
-        """
-        try:
-            # Use pgrep with -f to check for the process name anywhere in the command line
-            result = subprocess.run("pgrep -f gpu-screen-recorder", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            running = result.returncode == 0
-        except Exception:
-            running = False
+        def check():
+            try:
+                result = subprocess.run("pgrep -f gpu-screen-recorder", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                running = result.returncode == 0
+            except Exception:
+                running = False
 
-        if running:
-            self.btn_screenrecord.get_child().set_markup(icons.stop)
-            self.btn_screenrecord.add_style_class("recording")
-        else:
-            self.btn_screenrecord.get_child().set_markup(icons.screenrecord)
-            self.btn_screenrecord.remove_style_class("recording")
-        
-        # Return True to keep this callback active.
+            def update_ui():
+                if running:
+                    self.btn_screenrecord.get_child().set_markup(icons.stop)
+                    self.btn_screenrecord.add_style_class("recording")
+                else:
+                    self.btn_screenrecord.get_child().set_markup(icons.screenrecord)
+                    self.btn_screenrecord.remove_style_class("recording")
+                return False
+            GLib.idle_add(update_ui)
+            return False
+        GLib.idle_add(lambda: threading.Thread(target=check).start())
         return True
 
     def open_screenshots_folder(self, *args):

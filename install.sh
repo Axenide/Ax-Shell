@@ -14,10 +14,10 @@ PACKAGES=(
   gnome-bluetooth-3.0
   gobject-introspection
   gpu-screen-recorder
-  grimblast
   hypridle
   hyprlock
   hyprpicker
+  hyprshot
   hyprsunset
   imagemagick
   libnotify

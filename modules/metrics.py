@@ -1,9 +1,10 @@
-import re
 import subprocess
 import json
+import logging
+import time
+from gi.repository import GLib
 
 import psutil
-from gi.repository import GLib
 
 from fabric.core.fabricator import Fabricator
 from fabric.widgets.box import Box
@@ -13,14 +14,16 @@ from fabric.widgets.eventbox import EventBox
 from fabric.widgets.label import Label
 from fabric.widgets.overlay import Overlay
 from fabric.widgets.revealer import Revealer
-from fabric.core.fabricator import Fabricator
-from fabric.utils.helpers import exec_shell_command_async, invoke_repeater
+from fabric.utils.helpers import invoke_repeater
 from fabric.widgets.scale import Scale
 
 import modules.icons as icons
 import config.data as data
 from services.network import NetworkClient
-import time
+
+# Setup logger
+logger = logging.getLogger(__name__)
+# logging.basicConfig(...) if needed
 
 class MetricsProvider:
     """
@@ -36,17 +39,18 @@ class MetricsProvider:
         self.bat_percent = 0.0
         self.bat_charging = None
 
-        # Updates every 1 second
+        self._gpu_update_running = False
+
+        # Updates every 1 second (1000 milliseconds)
         GLib.timeout_add_seconds(1, self._update)
 
     def _update(self):
-        # Get non-blocking usage percentages (interval=0)
-        # The first call may return 0, but subsequent calls will provide consistent values.
         self.cpu = psutil.cpu_percent(interval=0)
         self.mem = psutil.virtual_memory().percent
         self.disk = [psutil.disk_usage(path).percent for path in data.BAR_METRICS_DISKS]
-        info = self.get_gpu_info()
-        self.gpu = [int(v["gpu_util"][:-1]) for v in info]
+
+        if not self._gpu_update_running:
+            self._start_gpu_update_async()
 
         battery = psutil.sensors_battery()
         if battery is None:
@@ -56,7 +60,61 @@ class MetricsProvider:
             self.bat_percent = battery.percent
             self.bat_charging = battery.power_plugged
 
-        return True
+        return True  # keep the timeout
+
+    def _start_gpu_update_async(self):
+        """Starts a new GLib thread to run nvtop in the background."""
+        self._gpu_update_running = True
+        # GLib.Thread.new(name, func, data) starts the thread immediately
+        GLib.Thread.new("nvtop-thread", lambda _: self._run_nvtop_in_thread(), None)
+
+    def _run_nvtop_in_thread(self):
+        """Runs nvtop via subprocess in a separate GLib thread."""
+        output = None
+        error_message = None
+        try:
+            result = subprocess.check_output(["nvtop", "-s"], text=True, timeout=10)
+            output = result
+        except FileNotFoundError:
+            error_message = "nvtop command not found."
+            logger.warning(error_message)
+        except subprocess.CalledProcessError as e:
+            error_message = f"nvtop failed with exit code {e.returncode}: {e.stderr.strip()}"
+            logger.error(error_message)
+        except subprocess.TimeoutExpired:
+            error_message = "nvtop command timed out."
+            logger.error(error_message)
+        except Exception as e:
+            error_message = f"Unexpected error running nvtop: {e}"
+            logger.error(error_message)
+
+        GLib.idle_add(self._process_gpu_output, output, error_message)
+        self._gpu_update_running = False
+
+    def _process_gpu_output(self, output, error_message):
+        """Process nvtop JSON output on the main loop."""
+        try:
+            if error_message:
+                logger.error(f"GPU update failed: {error_message}")
+                self.gpu = []
+            elif output:
+                info = json.loads(output)
+                try:
+                    self.gpu = [int(v["gpu_util"][:-1]) for v in info]
+                except (KeyError, ValueError, TypeError) as e:
+                    logger.error(f"Failed parsing nvtop JSON: {e}")
+                    self.gpu = []
+            else:
+                logger.warning("nvtop returned no output.")
+                self.gpu = []
+        except json.JSONDecodeError as e:
+            logger.error(f"JSON decode error: {e}")
+            self.gpu = []
+        except Exception as e:
+            logger.error(f"Error processing nvtop output: {e}")
+            self.gpu = []
+
+        return False  # remove idle source
 
     def get_metrics(self):
         return (self.cpu, self.mem, self.disk, self.gpu)
@@ -66,12 +124,26 @@ class MetricsProvider:
 
     def get_gpu_info(self):
         try:
-            return json.loads(subprocess.check_output(["nvtop", "-s"]))
-        except:
+            result = subprocess.check_output(["nvtop", "-s"], text=True, timeout=5)
+            return json.loads(result)
+        except FileNotFoundError:
+            logger.warning("nvtop not found; GPU info unavailable.")
+            return []
+        except subprocess.CalledProcessError as e:
+            logger.error(f"nvtop init sync failed: {e}")
+            return []
+        except subprocess.TimeoutExpired:
+            logger.error("nvtop init call timed out.")
+            return []
+        except json.JSONDecodeError as e:
+            logger.error(f"Init JSON parse error: {e}")
+            return []
+        except Exception as e:
+            logger.error(f"Unexpected error during GPU init: {e}")
             return []
 
-# Global instance to share data between both widgets.
 shared_provider = MetricsProvider()
+
 
 class SingularMetric:
     def __init__(self, id, name, icon):
@@ -116,6 +188,7 @@ class Metrics(Box):
         visible = getattr(data, "METRICS_VISIBLE", {'cpu': True, 'ram': True, 'disk': True, 'gpu': True})
         disks = [SingularMetric("disk", f"DISK ({path})" if len(data.BAR_METRICS_DISKS) != 1 else "DISK", icons.disk)
                  for path in data.BAR_METRICS_DISKS] if visible.get('disk', True) else []
+        # Use the synchronous get_gpu_info here for initial count
         gpu_info = shared_provider.get_gpu_info()
         gpus = [SingularMetric(f"gpu", f"GPU ({v['device_name']})" if len(gpu_info) != 1 else "GPU", icons.gpu)
                 for v in gpu_info] if visible.get('gpu', True) else []
@@ -141,19 +214,24 @@ class Metrics(Box):
         for x in self.scales:
             self.add(x)
 
+        # Update status periodically
         GLib.timeout_add_seconds(1, self.update_status)
 
     def update_status(self):
         cpu, mem, disks, gpus = shared_provider.get_metrics()
-        idx = 0
+        # idx = 0 # This variable is not used
         if self.cpu:
             self.cpu.usage.value = cpu / 100.0
         if self.ram:
             self.ram.usage.value = mem / 100.0
         for i, disk in enumerate(self.disk):
-            disk.usage.value = disks[i] / 100.0
+            # Ensure index is within bounds for disks list
+            if i < len(disks):
+                disk.usage.value = disks[i] / 100.0
         for i, gpu in enumerate(self.gpu):
-            gpu.usage.value = gpus[i] / 100.0
+             # Ensure index is within bounds for gpus list
+            if i < len(gpus):
+                gpu.usage.value = gpus[i] / 100.0
         return True
 
 class SingularMetricSmall:
@@ -208,6 +286,7 @@ class MetricsSmall(Button):
         visible = getattr(data, "METRICS_SMALL_VISIBLE", {'cpu': True, 'ram': True, 'disk': True, 'gpu': True})
         disks = [SingularMetricSmall("disk", f"DISK ({path})" if len(data.BAR_METRICS_DISKS) != 1 else "DISK", icons.disk)
                  for path in data.BAR_METRICS_DISKS] if visible.get('disk', True) else []
+        # Use the synchronous get_gpu_info here for initial count
         gpu_info = shared_provider.get_gpu_info()
         gpus = [SingularMetricSmall(f"gpu", f"GPU ({v['device_name']})" if len(gpu_info) != 1 else "GPU", icons.gpu)
                 for v in gpu_info] if visible.get('gpu', True) else []
@@ -236,8 +315,8 @@ class MetricsSmall(Button):
         self.connect("enter-notify-event", self.on_mouse_enter)
         self.connect("leave-notify-event", self.on_mouse_leave)
 
-        GLib.timeout_add_seconds(1, self.update_metrics)
         # Actualización de métricas cada segundo
+        GLib.timeout_add_seconds(1, self.update_metrics)
 
         # Estado inicial de los revealers y variables para la gestión del hover
         self.hide_timer = None
@@ -285,7 +364,7 @@ class MetricsSmall(Button):
 
     def update_metrics(self):
         cpu, mem, disks, gpus = shared_provider.get_metrics()
-        idx = 0
+        # idx = 0 # This variable is not used
         if self.cpu:
             self.cpu.circle.set_value(cpu / 100.0)
             self.cpu.level.set_label(self._format_percentage(int(cpu)))
@@ -293,11 +372,15 @@ class MetricsSmall(Button):
             self.ram.circle.set_value(mem / 100.0)
             self.ram.level.set_label(self._format_percentage(int(mem)))
         for i, disk in enumerate(self.disk):
-            disk.circle.set_value(disks[i] / 100.0)
-            disk.level.set_label(self._format_percentage(int(disks[i])))
+            # Ensure index is within bounds for disks list
+            if i < len(disks):
+                disk.circle.set_value(disks[i] / 100.0)
+                disk.level.set_label(self._format_percentage(int(disks[i])))
         for i, gpu in enumerate(self.gpu):
-            gpu.circle.set_value(gpus[i] / 100.0)
-            gpu.level.set_label(self._format_percentage(int(gpus[i])))
+            # Ensure index is within bounds for gpus list
+            if i < len(gpus):
+                gpu.circle.set_value(gpus[i] / 100.0)
+                gpu.level.set_label(self._format_percentage(int(gpus[i])))
 
         # Tooltip: only show enabled metrics
         tooltip_metrics = []
@@ -312,7 +395,7 @@ class MetricsSmall(Button):
 class Battery(Button):
     def __init__(self, **kwargs):
         super().__init__(name="metrics-small", **kwargs)
-        
+
         # Create the main box for metrics widgets
         main_box = Box(
             name="metrics-small",
@@ -354,7 +437,7 @@ class Battery(Button):
 
         # Set the main box as the button's child
         self.add(main_box)
-        
+
         # Connect events directly to the button
         self.connect("enter-notify-event", self.on_mouse_enter)
         self.connect("leave-notify-event", self.on_mouse_leave)
@@ -413,7 +496,7 @@ class Battery(Button):
             self.bat_circle.set_value(value / 100)
         percentage = int(value)
         self.bat_level.set_label(self._format_percentage(percentage))
-        
+
         # Apply alert styling if battery is low, regardless of charging status
         if percentage <= 15:
             self.bat_icon.add_style_class("alert")
@@ -421,7 +504,7 @@ class Battery(Button):
         else:
             self.bat_icon.remove_style_class("alert")
             self.bat_circle.remove_style_class("alert")
-        
+
         # Choose the icon based on charging state first, then battery level
         if percentage == 100:
             self.bat_icon.set_markup(icons.battery)
@@ -438,7 +521,7 @@ class Battery(Button):
         else:
             self.bat_icon.set_markup(icons.battery)
             charging_status = "Battery"
-            
+
         # Set a descriptive tooltip with battery percentage
         self.set_tooltip_markup(f"{charging_status}" if not data.VERTICAL else f"{charging_status}: {percentage}%")
 
@@ -467,13 +550,13 @@ class NetworkApplet(Button):
 
         self.download_revealer = Revealer(child=self.download_box, transition_type = "slide-right" if not data.VERTICAL else "slide-down", child_revealed=False)
         self.upload_revealer = Revealer(child=self.upload_box, transition_type="slide-left" if not data.VERTICAL else "slide-up",child_revealed=False)
-        
+
 
         self.children = Box(
             orientation="h" if not data.VERTICAL else "v",
             children=[self.upload_revealer, self.wifi_label, self.download_revealer],
         )
-        
+
         if data.VERTICAL:
             self.download_label.set_visible(False)
             self.upload_label.set_visible(False)
@@ -536,15 +619,15 @@ class NetworkApplet(Button):
                 self.wifi_label.set_markup(icons.world)
             else:
                 self.wifi_label.set_markup(icons.world_off)
-            
+
             tooltip_base = "Ethernet Connection"
             tooltip_vertical = f"SSID: Ethernet\nUpload: {upload_str}\nDownload: {download_str}"
-                
+
         # Handle WiFi connection
         elif self.network_client and self.network_client.wifi_device:
             if self.network_client.wifi_device.ssid != "Disconnected":
                 strength = self.network_client.wifi_device.strength
-                
+
                 # Only horizontal mode wifi icons based on signal strength
                 if strength >= 75:
                     self.wifi_label.set_markup(icons.wifi_3)
@@ -583,7 +666,7 @@ class NetworkApplet(Button):
             return f"{speed / 1024:.1f} KB/s"
         else:
             return f"{speed / (1024 * 1024):.1f} MB/s"
-        
+
     def on_mouse_enter(self, *_):
         self.is_mouse_over = True
         if not data.VERTICAL:
@@ -591,14 +674,14 @@ class NetworkApplet(Button):
             self.download_revealer.set_reveal_child(True)
             self.upload_revealer.set_reveal_child(True)
         return
-    
+
     def on_mouse_leave(self, *_):
         self.is_mouse_over = False
         if not data.VERTICAL:
             # When mouse leaves, only hide revealers if there's no active download/upload
             self.download_revealer.set_reveal_child(self.downloading)
             self.upload_revealer.set_reveal_child(self.uploading)
-            
+
             # Restore urgency styling based on current network activity
             if self.downloading:
                 self.download_urgent()
@@ -618,7 +701,7 @@ class NetworkApplet(Button):
         self.upload_revealer.set_reveal_child(True)
         self.download_revealer.set_reveal_child(self.downloading)
         return
-    
+
     def download_urgent(self):
         self.add_style_class("download")
         self.wifi_label.add_style_class("urgent")
@@ -629,7 +712,7 @@ class NetworkApplet(Button):
         self.download_revealer.set_reveal_child(True)
         self.upload_revealer.set_reveal_child(self.uploading)
         return
-    
+
     def remove_urgent(self):
         self.remove_style_class("download")
         self.remove_style_class("upload")

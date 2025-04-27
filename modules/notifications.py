@@ -128,11 +128,20 @@ class NotificationBox(Box):
         )
         self.notification = notification
         self.uuid = str(uuid.uuid4())
-        self.timeout_ms = self.notification.timeout if self.notification.timeout is not -1 else timeout_ms
+        # If timeout_ms is explicitly 0 (historical), use 0.
+        # Otherwise, use the notification's timeout if available, else the default timeout_ms.
+        if timeout_ms == 0:
+            self.timeout_ms = 0
+        else:
+            # Safely get timeout from the live notification object, default to -1 if not present
+            live_timeout = getattr(self.notification, 'timeout', -1)
+            self.timeout_ms = live_timeout if live_timeout != -1 else timeout_ms # Use default if live_timeout is -1
         self._timeout_id = None
         self._container = None
         self.cached_image_path = None
-        self.start_timeout()
+        # Only start the timeout timer if the calculated timeout is greater than 0
+        if self.timeout_ms > 0:
+            self.start_timeout()
 
         if self.notification.image_pixbuf:
             cache_path = cache_notification_pixbuf(self)
