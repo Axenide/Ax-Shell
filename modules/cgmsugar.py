@@ -34,7 +34,7 @@ class MyCgm(Box):
 class SmallCgm(Overlay):
     def __init__(self, **kwargs):
         main_box = Box(
-            name="smallcgm",
+            name="metrics-small",
             spacing=0,
             orientation="h",
             visible=True,

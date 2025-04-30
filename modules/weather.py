@@ -47,7 +47,7 @@ class Weather(Box):
         return ""
 
     def fetch_weather(self):
-        GLib.Thread.new("weather-fetch", self._fetch_weather_thread, None)
+        GLib.Thread.new("weather-fetch", self._fetch_weather_thread)
         return True
 
     def _fetch_weather_thread(self):
