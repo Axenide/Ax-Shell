@@ -317,6 +317,7 @@ class Notch(Window):
 
     def close_notch(self):
         self.set_keyboard_mode("none")
+        self.notch_box.remove_style_class("open")
 
         GLib.idle_add(self._show_overview_children, False)
 
@@ -338,6 +339,7 @@ class Notch(Window):
 
     def open_notch(self, widget):
         self.notch_wrap.remove_style_class("occluded")
+        self.notch_box.add_style_class("open")
         
         # Handle tmux manager
         if widget == "tmux":

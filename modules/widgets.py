@@ -79,6 +79,7 @@ class Widgets(Box):
             name="applet-stack",
             h_expand=True,
             v_expand=True,
+            h_align="fill",
             children=[
                 self.applet_stack,
             ]

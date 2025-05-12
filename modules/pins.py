@@ -379,7 +379,7 @@ class Pins(Gtk.Box):
         self.cells = []
 
         # Create a grid with 5 rows and 5 columns
-        grid = Gtk.Grid(row_spacing=10, column_spacing=10)
+        grid = Gtk.Grid(row_spacing=8, column_spacing=8, name="pin-grid")
         grid.set_column_homogeneous(True)
         grid.set_row_homogeneous(True)
 
@@ -390,7 +390,7 @@ class Pins(Gtk.Box):
         # self.pack_start(scrolled_window, True, True, 0)
 
         # With the Fabric ScrolledWindow:
-        scrolled_window = ScrolledWindow(child=grid, name="scrolled-window")
+        scrolled_window = ScrolledWindow(child=grid, name="scrolled-window", style_classes="pins")
         self.pack_start(scrolled_window, True, True, 0)
 
         # Create 30 cells (5x6)

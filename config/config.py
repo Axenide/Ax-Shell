@@ -3,14 +3,16 @@ import shutil
 import json
 import sys
 from pathlib import Path
-import subprocess
+import subprocess # Add subprocess
+import threading # Add threading
+import time # Add time for logging
 
 import toml
 from PIL import Image
 import gi
 
 gi.require_version('Gtk', '3.0')
-from gi.repository import Gtk, GdkPixbuf # Keep Gtk for Switch, FileChooserButton, Expander, Grid
+from gi.repository import Gtk, GdkPixbuf, GLib # Add GLib
 
 # Fabric Imports
 from fabric import Application
@@ -23,7 +25,7 @@ from fabric.widgets.scrolledwindow import ScrolledWindow
 from fabric.widgets.image import Image as FabricImage # Alias to avoid clash
 from fabric.widgets.stack import Stack
 from fabric.widgets.scale import Scale
-from fabric.utils.helpers import exec_shell_command, exec_shell_command_async
+from fabric.utils.helpers import exec_shell_command, exec_shell_command_async # Ensure async helper is imported
 
 # Assuming data.py exists in the same directory or is accessible via sys.path
 # If data.py is in ./config/data.py relative to this script's original location:
@@ -90,6 +92,8 @@ DEFAULTS = {
     'dock_enabled': True,
     'dock_icon_size': 28,
     'dock_always_occluded': False, # Added default
+    'bar_workspace_show_number': False, # Added default for workspace number visibility
+    'bar_workspace_use_chinese_numerals': False, # Added default for Chinese numerals
     # Defaults for bar components (assuming True initially)
     'bar_button_apps_visible': True,
     'bar_systray_visible': True,
@@ -239,14 +243,20 @@ def ensure_matugen_config():
             image_path = os.path.realpath(current_wall) if os.path.islink(current_wall) else current_wall
         
         # Run matugen to generate the color files
+        # Run matugen asynchronously
         print(f"Generating color theme from wallpaper: {image_path}")
         try:
-            subprocess.run(["matugen", "image", image_path], check=True)
-            print("Color theme generated successfully")
-        except subprocess.CalledProcessError as e:
-            print(f"Error generating color theme: {e}")
+            # Use exec_shell_command_async instead of subprocess.run
+            # Ensure the image path is properly quoted for the shell command
+            matugen_cmd = f"matugen image '{image_path}'"
+            exec_shell_command_async(matugen_cmd)
+            print("Matugen color theme generation initiated.")
+            # Note: We can't easily check for success here asynchronously without callbacks.
         except FileNotFoundError:
             print("Error: matugen command not found. Please install matugen.")
+        except Exception as e:
+            # Catch potential errors during command initiation
+            print(f"Error initiating matugen: {e}")
 
 
 def load_bind_vars():
@@ -723,6 +733,38 @@ class HyprConfGUI(Window):
         )
         layout_grid.attach(self.dock_size_scale, 1, 2, 3, 1)
 
+        # Workspace Number (Row 3)
+        ws_num_label = Label(label="Show Workspace Numbers", h_align="start", v_align="center")
+        layout_grid.attach(ws_num_label, 0, 3, 1, 1) # Attach to row 3, col 0
+
+        # Container for switch to prevent stretching
+        ws_num_switch_container = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+        ws_num_switch_container.set_halign(Gtk.Align.START)
+        ws_num_switch_container.set_valign(Gtk.Align.CENTER)
+
+        self.ws_num_switch = Gtk.Switch()
+        self.ws_num_switch.set_active(bind_vars.get('bar_workspace_show_number', False))
+        self.ws_num_switch.connect("notify::active", self.on_ws_num_changed) # Connect signal
+        ws_num_switch_container.add(self.ws_num_switch)
+
+        layout_grid.attach(ws_num_switch_container, 1, 3, 1, 1) # Attach to row 3, col 1
+
+        # Chinese Numerals (Row 3, Col 2-3) - Change attachment row and columns
+        ws_chinese_label = Label(label="Use Chinese Numerals", h_align="start", v_align="center")
+        layout_grid.attach(ws_chinese_label, 2, 3, 1, 1) # Attach to Row 3, Col 2
+
+        # Container for switch
+        ws_chinese_switch_container = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+        ws_chinese_switch_container.set_halign(Gtk.Align.START)
+        ws_chinese_switch_container.set_valign(Gtk.Align.CENTER)
+
+        self.ws_chinese_switch = Gtk.Switch()
+        self.ws_chinese_switch.set_active(bind_vars.get('bar_workspace_use_chinese_numerals', False))
+        self.ws_chinese_switch.set_sensitive(self.ws_num_switch.get_active()) # Initially sensitive based on number switch
+        ws_chinese_switch_container.add(self.ws_chinese_switch)
+
+        layout_grid.attach(ws_chinese_switch_container, 3, 3, 1, 1) # Attach to Row 3, Col 3
+
         # --- Separator ---
         separator2 = Box(style="min-height: 1px; background-color: alpha(@fg_color, 0.2); margin: 5px 0px;",
                          h_expand=True)
@@ -994,6 +1036,13 @@ class HyprConfGUI(Window):
         vbox.add(Box(v_expand=True))
         return vbox
 
+    def on_ws_num_changed(self, switch, gparam):
+        """Callback when 'Show Workspace Numbers' switch changes."""
+        is_active = switch.get_active()
+        self.ws_chinese_switch.set_sensitive(is_active)
+        if not is_active:
+            self.ws_chinese_switch.set_active(False) # Turn off Chinese if numbers are off
+
     def on_vertical_changed(self, switch, gparam):
         """Callback for vertical switch."""
         is_active = switch.get_active()
@@ -1047,113 +1096,188 @@ class HyprConfGUI(Window):
 
     def on_accept(self, widget):
         """
-        Save the configuration and update the necessary files without closing the window.
+        Gather settings and start a background thread to save, configure, and reload.
         """
+        # --- Step 1: Gather all settings synchronously ---
+        current_bind_vars = {} # Use a temporary dict to store gathered values
         for prefix_key, suffix_key, prefix_entry, suffix_entry in self.entries:
-            bind_vars[prefix_key] = prefix_entry.get_text()
-            bind_vars[suffix_key] = suffix_entry.get_text()
+            current_bind_vars[prefix_key] = prefix_entry.get_text()
+            current_bind_vars[suffix_key] = suffix_entry.get_text()
 
-        bind_vars['wallpapers_dir'] = self.wall_dir_chooser.get_filename()
-        bind_vars['vertical'] = self.vertical_switch.get_active()
-        bind_vars['centered_bar'] = self.centered_switch.get_active()
-        bind_vars['dock_enabled'] = self.dock_switch.get_active()
-        bind_vars['dock_always_occluded'] = self.dock_hover_switch.get_active()
-        bind_vars['dock_icon_size'] = int(self.dock_size_scale.value)
-        bind_vars['terminal_command'] = self.terminal_entry.get_text()
-        bind_vars['corners_visible'] = self.corners_switch.get_active()
+        current_bind_vars['wallpapers_dir'] = self.wall_dir_chooser.get_filename()
+        current_bind_vars['vertical'] = self.vertical_switch.get_active()
+        current_bind_vars['centered_bar'] = self.centered_switch.get_active()
+        current_bind_vars['dock_enabled'] = self.dock_switch.get_active()
+        current_bind_vars['dock_always_occluded'] = self.dock_hover_switch.get_active()
+        current_bind_vars['dock_icon_size'] = int(self.dock_size_scale.value)
+        current_bind_vars['terminal_command'] = self.terminal_entry.get_text()
+        current_bind_vars['corners_visible'] = self.corners_switch.get_active()
+        current_bind_vars['bar_workspace_show_number'] = self.ws_num_switch.get_active()
+        current_bind_vars['bar_workspace_use_chinese_numerals'] = self.ws_chinese_switch.get_active()
 
         for component_name, switch in self.component_switches.items():
             config_key = f'bar_{component_name}_visible'
-            bind_vars[config_key] = switch.get_active()
+            current_bind_vars[config_key] = switch.get_active()
 
-        # Save metrics visibility
-        bind_vars['metrics_visible'] = {k: s.get_active() for k, s in self.metrics_switches.items()}
-        bind_vars['metrics_small_visible'] = {k: s.get_active() for k, s in self.metrics_small_switches.items()}
+        current_bind_vars['metrics_visible'] = {k: s.get_active() for k, s in self.metrics_switches.items()}
+        current_bind_vars['metrics_small_visible'] = {k: s.get_active() for k, s in self.metrics_small_switches.items()}
 
-        bind_vars['bar_metrics_disks'] = []
-        for entry in self.disk_entries.children:
-            bind_vars['bar_metrics_disks'].append(entry.children[0].get_text())
+        current_bind_vars['bar_metrics_disks'] = [
+            entry.children[0].get_text() for entry in self.disk_entries.children
+        ]
 
-        config_json = os.path.expanduser(f'~/.config/{APP_NAME_CAP}/config/config.json')
-        os.makedirs(os.path.dirname(config_json), exist_ok=True)
-        try:
-            with open(config_json, 'w') as f:
-                json.dump(bind_vars, f, indent=4)
-        except Exception as e:
-            print(f"Error saving config.json: {e}")
+        # Store state of lock/idle switches and selected icon path
+        selected_icon_path = self.selected_face_icon # Copy path for the thread
+        replace_lock = self.lock_switch and self.lock_switch.get_active()
+        replace_idle = self.idle_switch and self.idle_switch.get_active()
 
+        # Reset GUI state immediately (safe to do before starting thread)
         if self.selected_face_icon:
+             self.selected_face_icon = None # Clear the selection state
+             self.face_status_label.label = "" # Clear the status label
+
+        # --- Step 2: Define the background task ---
+        def _apply_and_reload_task_thread():
+            start_time = time.time()
+            print(f"{start_time:.4f}: Background task started.")
+            global bind_vars
+            # Update global bind_vars (used by generate_hyprconf in start_config)
+            # This assumes bind_vars is primarily written here and read elsewhere.
+            # If multiple threads modified bind_vars, locking would be needed.
+            bind_vars = current_bind_vars
+
+            # Save config.json
+            config_json = os.path.expanduser(f'~/.config/{APP_NAME_CAP}/config/config.json')
+            os.makedirs(os.path.dirname(config_json), exist_ok=True)
             try:
-                img = Image.open(self.selected_face_icon)
-                side = min(img.size)
-                left = (img.width - side) // 2
-                top = (img.height - side) // 2
-                right = left + side
-                bottom = top + side
-                cropped_img = img.crop((left, top, right, bottom))
-                face_icon_dest = os.path.expanduser("~/.face.icon")
-                cropped_img.save(face_icon_dest, format='PNG')
-                print(f"Face icon saved to {face_icon_dest}")
-                pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(face_icon_dest, 64, 64)
-                self.face_image.set_from_pixbuf(pixbuf)
-
+                with open(config_json, 'w') as f:
+                    json.dump(bind_vars, f, indent=4)
+                print(f"{time.time():.4f}: Saved config.json.")
             except Exception as e:
-                print(f"Error processing face icon: {e}")
-            finally:
-                self.selected_face_icon = None
-                self.face_status_label.label = ""
+                print(f"Error saving config.json: {e}")
 
-        if self.lock_switch and self.lock_switch.get_active():
-            src_lock = os.path.expanduser(f"~/.config/{APP_NAME_CAP}/config/hypr/hyprlock.conf")
-            dest_lock = os.path.expanduser("~/.config/hypr/hyprlock.conf")
-            if os.path.exists(src_lock):
-                backup_and_replace(src_lock, dest_lock, "Hyprlock")
-            else:
-                print(f"Warning: Source hyprlock config not found at {src_lock}")
+            # Process face icon if selected
+            if selected_icon_path:
+                print(f"{time.time():.4f}: Processing face icon...")
+                try:
+                    img = Image.open(selected_icon_path)
+                    side = min(img.size)
+                    left = (img.width - side) // 2
+                    top = (img.height - side) // 2
+                    right = left + side
+                    bottom = top + side
+                    cropped_img = img.crop((left, top, right, bottom))
+                    face_icon_dest = os.path.expanduser("~/.face.icon")
+                    cropped_img.save(face_icon_dest, format='PNG')
+                    print(f"{time.time():.4f}: Face icon saved to {face_icon_dest}")
+                    # Schedule GUI update for the image widget back on the main thread
+                    GLib.idle_add(self._update_face_image_widget, face_icon_dest)
+                except Exception as e:
+                    print(f"Error processing face icon: {e}")
+                print(f"{time.time():.4f}: Finished processing face icon.")
 
-        if self.idle_switch and self.idle_switch.get_active():
-            src_idle = os.path.expanduser(f"~/.config/{APP_NAME_CAP}/config/hypr/hypridle.conf")
-            dest_idle = os.path.expanduser("~/.config/hypr/hypridle.conf")
-            if os.path.exists(src_idle):
-                 backup_and_replace(src_idle, dest_idle, "Hypridle")
-            else:
-                print(f"Warning: Source hypridle config not found at {src_idle}")
+            # Replace hyprlock/hypridle configs if requested (sync file I/O)
+            if replace_lock:
+                print(f"{time.time():.4f}: Replacing hyprlock config...")
+                src_lock = os.path.expanduser(f"~/.config/{APP_NAME_CAP}/config/hypr/hyprlock.conf")
+                dest_lock = os.path.expanduser("~/.config/hypr/hyprlock.conf")
+                if os.path.exists(src_lock):
+                    backup_and_replace(src_lock, dest_lock, "Hyprlock")
+                else:
+                    print(f"Warning: Source hyprlock config not found at {src_lock}")
+                print(f"{time.time():.4f}: Finished replacing hyprlock config.")
 
-        hyprland_config_path = os.path.expanduser("~/.config/hypr/hyprland.conf")
+            if replace_idle:
+                print(f"{time.time():.4f}: Replacing hypridle config...")
+                src_idle = os.path.expanduser(f"~/.config/{APP_NAME_CAP}/config/hypr/hypridle.conf")
+                dest_idle = os.path.expanduser("~/.config/hypr/hypridle.conf")
+                if os.path.exists(src_idle):
+                     backup_and_replace(src_idle, dest_idle, "Hypridle")
+                else:
+                    print(f"Warning: Source hypridle config not found at {src_idle}")
+                print(f"{time.time():.4f}: Finished replacing hypridle config.")
+
+            # Append source string to hyprland.conf if needed (sync file I/O)
+            print(f"{time.time():.4f}: Checking/Appending hyprland.conf source string...")
+            hyprland_config_path = os.path.expanduser("~/.config/hypr/hyprland.conf")
+            try:
+                needs_append = True
+                if os.path.exists(hyprland_config_path):
+                    with open(hyprland_config_path, "r") as f:
+                        content = f.read()
+                        if SOURCE_STRING.strip() in content:
+                            needs_append = False
+                else:
+                     os.makedirs(os.path.dirname(hyprland_config_path), exist_ok=True)
+
+                if needs_append:
+                    with open(hyprland_config_path, "a") as f:
+                        f.write("\n" + SOURCE_STRING)
+                    print(f"Appended source string to {hyprland_config_path}")
+            except Exception as e:
+                 print(f"Error updating {hyprland_config_path}: {e}")
+            print(f"{time.time():.4f}: Finished checking/appending hyprland.conf source string.")
+
+            # Run final config steps (includes async matugen/hyprctl reload)
+            print(f"{time.time():.4f}: Running start_config()...")
+            start_config()
+            print(f"{time.time():.4f}: Finished start_config().")
+
+            # Restart Ax-Shell using subprocess.Popen for better detachment
+            print(f"{time.time():.4f}: Initiating Ax-Shell restart using Popen...")
+            main_script_path = os.path.expanduser(f"~/.config/{APP_NAME_CAP}/main.py")
+            kill_cmd = f"killall {APP_NAME}"
+            # Use shell=True carefully, but it's often needed for commands like killall
+            # Redirect output to prevent blocking
+            start_cmd_list = ["uwsm", "app", "--", "/home/mathias/.config/Ax-Shell/.venv/bin/python", main_script_path] # Use list form for Popen
+
+            try:
+                # Kill existing process (wait briefly for it to finish)
+                print(f"{time.time():.4f}: Executing kill: {kill_cmd}")
+                kill_proc = subprocess.Popen(kill_cmd, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                kill_proc.wait(timeout=2) # Wait max 2 seconds for killall
+                print(f"{time.time():.4f}: killall process finished (or timed out).")
+
+                # Start the new process, detached
+                print(f"{time.time():.4f}: Executing start: {' '.join(start_cmd_list)}")
+                subprocess.Popen(
+                    start_cmd_list,
+                    stdout=subprocess.DEVNULL, # Redirect stdout
+                    stderr=subprocess.DEVNULL, # Redirect stderr
+                    start_new_session=True    # Crucial for detaching
+                )
+                print(f"{APP_NAME_CAP} restart initiated via Popen.")
+            except subprocess.TimeoutExpired:
+                print(f"Warning: killall command timed out.")
+            except FileNotFoundError as e:
+                 print(f"Error restarting {APP_NAME_CAP}: Command not found ({e})")
+            except Exception as e:
+                print(f"Error restarting {APP_NAME_CAP} via Popen: {e}")
+            print(f"{time.time():.4f}: Ax-Shell restart commands issued via Popen.")
+
+            end_time = time.time()
+            print(f"{end_time:.4f}: Background configuration and reload task finished (Total time: {end_time - start_time:.4f}s).")
+
+        # --- Step 3: Start the thread ---
+        thread = threading.Thread(target=_apply_and_reload_task_thread)
+        thread.daemon = True # Allow application to exit even if thread is running
+        thread.start()
+
+        print("Configuration apply/reload task started in background.")
+
+    # Add helper method to update face image widget from the background thread
+    def _update_face_image_widget(self, icon_path):
+        """Safely update the face image widget from the main GTK thread."""
         try:
-            needs_append = True
-            if os.path.exists(hyprland_config_path):
-                with open(hyprland_config_path, "r") as f:
-                    content = f.read()
-                    if SOURCE_STRING.strip() in content:
-                        needs_append = False
-            else:
-                 os.makedirs(os.path.dirname(hyprland_config_path), exist_ok=True)
-
-            if needs_append:
-                with open(hyprland_config_path, "a") as f:
-                    f.write("\n" + SOURCE_STRING)
-                print(f"Appended source string to {hyprland_config_path}")
-
+            # Check if the widget still exists before updating
+            if self.face_image and self.face_image.get_window():
+                pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(icon_path, 64, 64)
+                self.face_image.set_from_pixbuf(pixbuf)
         except Exception as e:
-             print(f"Error updating {hyprland_config_path}: {e}")
-
-        start_config()
-
-        # Restart Ax-Shell using fabric's async command executor
-        main_script_path = os.path.expanduser(f"~/.config/{APP_NAME_CAP}/main.py")
-        kill_cmd = f"killall {APP_NAME}"
-        start_cmd = f"uwsm app -- /home/mathias/.config/Ax-Shell/.venv/bin/python {main_script_path}"
-        
-        try:
-            # Use fabric's helper to run the command asynchronously
-            exec_shell_command(kill_cmd)
-            exec_shell_command_async(start_cmd)
-            print(f"{APP_NAME_CAP} restart initiated.")
-        except Exception as e:
-            print(f"Error restarting {APP_NAME_CAP}: {e}")
-
-        print("Configuration applied and reload initiated.")
+            print(f"Error reloading face icon preview: {e}")
+            if self.face_image and self.face_image.get_window():
+                self.face_image.set_from_icon_name("image-missing", 64)
+        return False # Return False to ensure GLib.idle_add runs the callback only once
 
     def on_reset(self, widget):
         """
@@ -1187,6 +1311,9 @@ class HyprConfGUI(Window):
             self.dock_hover_switch.set_sensitive(self.dock_switch.get_active())
             self.dock_size_scale.value = bind_vars.get('dock_icon_size', 28)
             self.terminal_entry.set_text(bind_vars['terminal_command'])
+            self.ws_num_switch.set_active(bind_vars.get('bar_workspace_show_number', False))
+            self.ws_chinese_switch.set_active(bind_vars.get('bar_workspace_use_chinese_numerals', False)) # Reset Chinese switch
+            self.ws_chinese_switch.set_sensitive(self.ws_num_switch.get_active()) # Reset sensitivity
 
             for component_name, switch in self.component_switches.items():
                  config_key = f'bar_{component_name}_visible'
@@ -1239,8 +1366,11 @@ def start_config():
     """
     Run final configuration steps: ensure necessary configs, write the hyprconf, and reload.
     """
+    print(f"{time.time():.4f}: start_config: Ensuring matugen config...")
     ensure_matugen_config()
+    print(f"{time.time():.4f}: start_config: Ensuring face icon...")
     ensure_face_icon()
+    print(f"{time.time():.4f}: start_config: Generating hypr conf...")
 
     hypr_config_dir = os.path.expanduser(f"~/.config/{APP_NAME_CAP}/config/hypr/")
     os.makedirs(hypr_config_dir, exist_ok=True)
@@ -1251,16 +1381,19 @@ def start_config():
         print(f"Generated Hyprland config at {hypr_conf_path}")
     except Exception as e:
         print(f"Error writing Hyprland config: {e}")
+    print(f"{time.time():.4f}: start_config: Finished generating hypr conf.")
 
+    # Use async reload
+    print(f"{time.time():.4f}: start_config: Initiating hyprctl reload...")
     try:
-        subprocess.run(["hyprctl", "reload"], check=True, capture_output=True)
-        print("Hyprland configuration reloaded.")
-    except subprocess.CalledProcessError as e:
-         print(f"Error reloading Hyprland: {e}\nstderr: {e.stderr.decode()}")
+        exec_shell_command_async("hyprctl reload")
+        print(f"{time.time():.4f}: start_config: Hyprland configuration reload initiated.")
     except FileNotFoundError:
          print("Error: hyprctl command not found. Cannot reload Hyprland.")
     except Exception as e:
-         print(f"An unexpected error occurred during hyprctl reload: {e}")
+         # Catch potential errors during command initiation
+         print(f"An error occurred initiating hyprctl reload: {e}")
+    print(f"{time.time():.4f}: start_config: Finished initiating hyprctl reload.")
 
 
 def open_config():

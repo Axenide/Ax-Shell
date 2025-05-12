@@ -1,8 +1,11 @@
 #notch-box {
-  margin: 10px;
-  margin-top: 0px;
-  transition: all 0.5s cubic-bezier(0.5, 0.25, 0, 1);
+  margin: 0 60px 10px 60px;
+  /* border-radius: 0 0 20px 20px; */
 }
+
+/* #notch-box.open { */
+/*   border-radius: 0 0 36px 36px; */
+/* } */
 
 #notch-box.hidden {
   opacity: 0;
@@ -45,9 +48,14 @@
 
 #notch-content.dashboard {
   padding: 16px;
-  min-height: 450px;
-  min-width: 1050px;
+  min-height: 432px;
+  min-width: 1065px;
   border-radius: 0 0 36px 36px;
+}
+
+#dashboard {
+  min-height: 400px;
+  min-width: 1033px;
 }
 
 #notch-content.overview {
@@ -59,7 +67,7 @@
 
 #notch-content.tools {
   min-height: 84px;
-  min-width: 632px;
+  min-width: 688px;
   /* Changed to include pomodoro btn */
   border-radius: 0 0 36px 36px;
 }

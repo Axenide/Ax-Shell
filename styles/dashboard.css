@@ -13,7 +13,7 @@
 }
 
 #container-sub-1 {
-    min-width: 750px;
+  /* min-width: 750px; */
 }
 
 #box-3 {
@@ -26,7 +26,7 @@
 }
 
 #switcher.stack-switcher > * {
-  background-color: var(--shadow);
+  /* background-color: var(--shadow); */
   padding: 4px;
   border-radius: 20px;
   transition: all 0.1s ease;
@@ -170,9 +170,9 @@
 }
 
 #applet-stack {
-    min-width: 420px;
-    border-radius: 20px;
-    border: 4px solid var(--surface);
-    padding: 4px;
-    min-width: 478px;
+  /* min-width: 420px; */
+  border-radius: 20px;
+  border: 4px solid var(--surface);
+  padding: 4px;
+  /* min-width: 478px; */
 }

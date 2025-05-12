@@ -31,3 +31,13 @@
     font-family: "Zed Sans";
     border-radius: 16px;
 }
+
+#applet-stack,
+#calendar,
+#header,
+#player,
+#metrics,
+#pin-cell-box,
+#kanban-header {
+  background-color: alpha(black, 0.5);
+}

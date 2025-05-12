@@ -43,6 +43,7 @@
   padding: 16px;
   background-color: var(--shadow);
   margin: 8px;
+  margin-bottom: 0;
   min-width: 330px;
 }
 
@@ -51,7 +52,7 @@
 }
 
 #notification-navigation {
-  padding: 4px;
+  padding: 16px;
 }
 
 #notif-close-button {

@@ -21,6 +21,9 @@ class Calendar(Gtk.Box):
             print(f"Error getting locale first weekday: {e}")
             self.first_weekday = 0
 
+        self.set_halign(Gtk.Align.CENTER)
+        self.set_hexpand(False)
+
         self.current_year = datetime.now().year
         self.current_month = datetime.now().month
         self.current_day = datetime.now().day

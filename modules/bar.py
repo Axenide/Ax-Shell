@@ -6,6 +6,8 @@ from fabric.widgets.button import Button
 from fabric.widgets.revealer import Revealer
 from fabric.widgets.wayland import WaylandWindow as Window
 from fabric.hyprland.widgets import Workspaces, WorkspaceButton, Language, get_hyprland_connection
+import os
+import json
 from fabric.hyprland.service import HyprlandEvent
 from fabric.utils.helpers import exec_shell_command_async
 from gi.repository import Gdk
@@ -17,12 +19,19 @@ from modules.controls import ControlSmall
 from modules.weather import Weather
 from modules.cgmsugar import SmallCgm
 
+CHINESE_NUMERALS = ["一", "二", "三", "四", "五", "六", "七", "八", "九", "〇"]
+
 class Bar(Window):
     def __init__(self, **kwargs):
         super().__init__(
             name="bar",
             layer="top",
-            anchor="left top right" if not data.VERTICAL else "top left bottom",
+            anchor = (
+                "left top right"
+                if not data.VERTICAL
+                else "left" if data.CENTERED_BAR
+                else "top left bottom"
+            ),
             margin="-4px -4px -8px -4px" if not data.VERTICAL else "-4px -8px -4px -4px",
             exclusivity="auto",
             visible=True,
@@ -39,12 +48,36 @@ class Bar(Window):
             v_align="fill",
             orientation="h" if not data.VERTICAL else "v",
             spacing=8,
-            buttons=[WorkspaceButton(id=i, label="") for i in range(1, 11)],
+            # Use data module to determine the label
+            buttons=[
+                WorkspaceButton(id=i, label=None)
+                for i in range(1, 11)
+            ],
         )
-        
+
+        self.workspaces_num = Workspaces(
+            name="workspaces-num",
+            invert_scroll=True,
+            empty_scroll=True,
+            v_align="fill",
+            orientation="h" if not data.VERTICAL else "v",
+            spacing=0 if not data.BAR_WORKSPACE_USE_CHINESE_NUMERALS else 4,
+            buttons=[
+                WorkspaceButton(
+                    h_expand=False,
+                    v_expand=False,
+                    h_align="center",
+                    v_align="center",
+                    id=i,
+                    label= CHINESE_NUMERALS[i-1] if data.BAR_WORKSPACE_USE_CHINESE_NUMERALS and 1 <= i <= len(CHINESE_NUMERALS) else str(i)
+                )
+                for i in range(1, 11)
+            ],
+        )
+
         self.ws_container = Box(
             name="workspaces-container",
-            children=self.workspaces,
+            children=self.workspaces if not data.BAR_WORKSPACE_SHOW_NUMBER else self.workspaces_num,
         )
 
         self.button_tools = Button(
@@ -238,6 +271,7 @@ class Bar(Window):
 
         # self.show_all()
         self.systray._update_visibility()
+        self.chinese_numbers()
 
     def apply_component_visibility(self):
         """Apply saved visibility settings to all components"""
@@ -341,3 +375,9 @@ class Bar(Window):
             self.bar_inner.add_style_class("hidden")
         else:
             self.bar_inner.remove_style_class("hidden")
+
+    def chinese_numbers(self):
+        if data.BAR_WORKSPACE_USE_CHINESE_NUMERALS:
+            self.workspaces_num.add_style_class("chinese")
+        else:
+            self.workspaces_num.remove_style_class("chinese")

@@ -53,9 +53,9 @@ class PlayerBox(Box):
             h_align="center",
             v_align="center",
         )
-        self.title = Label(name="player-title", ellipsization="end")
-        self.album = Label(name="player-album", ellipsization="end")
-        self.artist = Label(name="player-artist", ellipsization="end")
+        self.title = Label(name="player-title", h_expand=True, h_align="fill", ellipsization="end", max_chars_width=1)
+        self.album = Label(name="player-album", h_expand=True, h_align="fill", ellipsization="end", max_chars_width=1)
+        self.artist = Label(name="player-artist", h_expand=True, h_align="fill", ellipsization="end", max_chars_width=1)
         self.progressbar = CircularProgressBar(
             name="player-progress",
             size=198,
@@ -122,7 +122,7 @@ class PlayerBox(Box):
         self.player_box = Box(
             name="player-box",
             orientation="v",
-            spacing=4,
+            spacing=8,
             children=[
                 self.overlay_container,
                 self.title,

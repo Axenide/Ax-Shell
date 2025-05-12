@@ -276,7 +276,7 @@ class MetricsSmall(Button):
 
         # Create the main box for metrics widgets
         main_box = Box(
-            name="metrics-small",
+            # name="metrics-small",
             spacing=0,
             orientation="h" if not data.VERTICAL else "v",
             visible=True,
@@ -398,7 +398,7 @@ class Battery(Button):
 
         # Create the main box for metrics widgets
         main_box = Box(
-            name="metrics-small",
+            # name="metrics-small",
             spacing=0,
             orientation="h",
             visible=True,

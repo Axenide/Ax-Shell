@@ -1,12 +1,12 @@
 #calendar {
-  background-color: var(--shadow);
+  /* background-color: var(--shadow); */
   border-radius: 20px;
   border: 4px solid var(--surface);
   padding: 4px;
 }
 
 #header {
-  background-color: var(--shadow);
+  /* background-color: var(--shadow); */
   border-radius: 12px;
   border: 2px solid var(--surface);
   padding: 4px;

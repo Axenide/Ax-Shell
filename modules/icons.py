@@ -20,6 +20,7 @@ media: str = "&#xf00d;"
 toolbox: str = "&#xebca;"
 ssfull: str = "&#xec3c;"
 ssregion: str = "&#xf201;"
+sswindow: str = "&#xeaea;"
 screenshots: str = "&#xeb0a;"
 screenrecord: str = "&#xed22;"
 recordings: str = "&#xeafa;"
@@ -171,6 +172,7 @@ keyboard: str = "&#xebd6;"
 terminal: str = "&#xebef;"
 timer_off: str = "&#xf146;"
 timer_on: str = "&#xf756;"
+spy: str = "&#xf227;"
 
 exceptions: list[str] = ['font_family', 'font_weight', 'span']
 

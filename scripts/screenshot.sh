@@ -21,6 +21,7 @@ function print_error {
         s  : snip selected region
         sf : snip selected region (frozen)
         m  : print focused monitor
+        w  : snip focused window
 EOF
 }
 
@@ -29,6 +30,7 @@ p) hyprshot -s -m output -o "$save_dir" -f "$save_file" ;;
 s) hyprshot -s -m region -o "$save_dir" -f "$save_file" ;;
 sf) hyprshot -s -z -m region -o "$save_dir" -f "$save_file" ;;
 m) hyprshot -s -m output -m active -o "$save_dir" -f "$save_file" ;;
+w) hyprshot -s -m window -o "$save_dir" -f "$save_file" ;; # Added window capture
 *)
     print_error
     exit 1
@@ -48,21 +50,12 @@ if [ -f "$full_path" ]; then
     # Process as mockup if requested
     if [ "$mockup_mode" = "mockup" ]; then
         temp_file="${full_path%.png}_temp.png"
-        cropped_file="${full_path%.png}_cropped.png"
         mockup_file="${full_path%.png}_mockup.png"
         mockup_success=true # Flag to track success
 
-        # First crop the top pixel using a different approach
-        # Use +0+1 to start at y-coordinate 1 (skipping the first pixel row)
-        convert "$full_path" -crop +0+1 +repage "$cropped_file"
-        if [ $? -ne 0 ]; then
-            echo "Error: 'convert' failed during cropping." >&2
-            mockup_success=false
-        fi
-
         # Create a mockup version with rounded corners, shadow, and transparency
         if [ "$mockup_success" = true ]; then
-            convert "$cropped_file" \
+            convert "$full_path" \
                 \( +clone -alpha extract -draw 'fill black polygon 0,0 0,20 20,0 fill white circle 20,20 20,0' \
                 \( +clone -flip \) -compose Multiply -composite \
                 \( +clone -flop \) -compose Multiply -composite \
@@ -87,7 +80,7 @@ if [ -f "$full_path" ]; then
         # Check if mockup processing was successful before moving/copying
         if [ "$mockup_success" = true ] && [ -f "$mockup_file" ]; then
             # Remove temporary files
-            rm "$temp_file" "$cropped_file"
+            rm "$temp_file"
 
             # Replace original screenshot with mockup version
             mv "$mockup_file" "$full_path"
@@ -101,7 +94,7 @@ if [ -f "$full_path" ]; then
         else
             echo "Warning: Mockup processing failed for $full_path. Keeping original." >&2
             # Clean up potentially created temp files if they exist
-            rm -f "$temp_file" "$cropped_file" "$mockup_file" # Also remove potentially incomplete mockup file
+            rm -f "$temp_file" "$mockup_file" # Also remove potentially incomplete mockup file
             # Copy the original screenshot to clipboard as fallback
             if [ "$mockup_mode" = "mockup" ]; then # Only copy original if mockup was intended but failed
                 if command -v wl-copy >/dev/null 2>&1; then

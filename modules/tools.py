@@ -58,6 +58,20 @@ class Toolbox(Box):
         self.btn_ssfull.connect("button-press-event", self.on_ssfull_click)
         self.btn_ssfull.connect("key-press-event", self.on_ssfull_key)
 
+        self.btn_sswindow = Button(  # New window screenshot button
+            name="toolbox-button",
+            child=Label(name="button-label", markup=icons.sswindow),
+            on_clicked=self.sswindow,
+            h_expand=False,
+            v_expand=False,
+            h_align="center",
+            v_align="center",
+        )
+        # Enable keyboard focus and connect events for window screenshot
+        self.btn_sswindow.set_can_focus(True)
+        self.btn_sswindow.connect("button-press-event", self.on_sswindow_click)
+        self.btn_sswindow.connect("key-press-event", self.on_sswindow_key)
+
         self.btn_screenrecord = Button(
             name="toolbox-button",
             child=Label(name="button-label", markup=icons.screenrecord),
@@ -149,6 +163,7 @@ class Toolbox(Box):
 
         self.buttons = [
             self.btn_ssregion,
+            self.btn_sswindow,
             self.btn_ssfull,
             self.btn_screenshots_folder,
             Box(name="tool-sep", h_expand=False, v_expand=False, h_align="center", v_align="center"),
@@ -177,8 +192,11 @@ class Toolbox(Box):
         self.notch.close_notch()
 
     # Action methods
-    def ssfull(self, *args):
-        exec_shell_command_async(f"bash {SCREENSHOT_SCRIPT} p")
+    def ssfull(self, *args, mockup=False): # Added mockup argument
+        cmd = f"bash {SCREENSHOT_SCRIPT} p"
+        if mockup:
+            cmd += " mockup"
+        exec_shell_command_async(cmd)
         self.close_menu()
 
     def on_ssfull_click(self, button, event):
@@ -186,8 +204,7 @@ class Toolbox(Box):
             if event.button == 1:  # Left click
                 self.ssfull()
             elif event.button == 3:  # Right click
-                exec_shell_command_async(f"bash {SCREENSHOT_SCRIPT} p mockup")
-                self.close_menu()
+                self.ssfull(mockup=True) # Call ssfull with mockup=True
             return True
         return False
 
@@ -195,8 +212,7 @@ class Toolbox(Box):
         if event.keyval in {Gdk.KEY_Return, Gdk.KEY_KP_Enter}:
             modifiers = event.get_state()
             if modifiers & Gdk.ModifierType.SHIFT_MASK:
-                exec_shell_command_async(f"bash {SCREENSHOT_SCRIPT} p mockup")
-                self.close_menu()
+                self.ssfull(mockup=True) # Call ssfull with mockup=True
             else:
                 self.ssfull()
             return True
@@ -224,6 +240,31 @@ class Toolbox(Box):
                 self.close_menu()
             else:
                 self.ssregion()
+            return True
+        return False
+
+    def sswindow(self, *args):
+        exec_shell_command_async(f"bash {SCREENSHOT_SCRIPT} w")
+        self.close_menu()
+
+    def on_sswindow_click(self, button, event):
+        if event.type == Gdk.EventType.BUTTON_PRESS:
+            if event.button == 1:  # Left click
+                self.sswindow()
+            elif event.button == 3:  # Right click
+                exec_shell_command_async(f"bash {SCREENSHOT_SCRIPT} w mockup")
+                self.close_menu()
+            return True
+        return False
+
+    def on_sswindow_key(self, widget, event):
+        if event.keyval in {Gdk.KEY_Return, Gdk.KEY_KP_Enter}:
+            modifiers = event.get_state()
+            if modifiers & Gdk.ModifierType.SHIFT_MASK:
+                exec_shell_command_async(f"bash {SCREENSHOT_SCRIPT} w mockup")
+                self.close_menu()
+            else:
+                self.sswindow()
             return True
         return False
 
@@ -286,10 +327,6 @@ class Toolbox(Box):
             return False
         GLib.idle_add(lambda: threading.Thread(target=check).start())
         return True
-
-    def ssregion(self, *args):
-        exec_shell_command_async(f"bash {SCREENSHOT_SCRIPT} sf")
-        self.close_menu()
 
     def colorpicker(self, button, event):
         if event.type == Gdk.EventType.BUTTON_PRESS:
