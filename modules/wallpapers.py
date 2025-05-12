@@ -95,7 +95,7 @@ class WallpaperSelector(Box):
         self.scheme_dropdown.set_tooltip_text("Select color scheme")
         for key, display_name in self.schemes.items():
             self.scheme_dropdown.append(key, display_name)
-        self.scheme_dropdown.set_active_id("scheme-monochrome")
+        self.scheme_dropdown.set_active_id("scheme-tonal-spot")
         self.scheme_dropdown.connect("changed", self.on_scheme_changed)
 
         # Create a switcher to enable/disable Matugen (enabled by default)
@@ -193,10 +193,12 @@ class WallpaperSelector(Box):
         model = iconview.get_model()
         file_name = model[path][1]
         full_path = os.path.join(data.WALLPAPERS_DIR, file_name)
+        print(full_path)
         selected_scheme = self.scheme_dropdown.get_active_id()
-        current_wall = os.path.expanduser(f"~/.current.wall")
-        if os.path.isfile(current_wall):
-            os.remove(current_wall)
+        current_wall = os.path.expanduser("~/.current.wall")
+        print(full_path, current_wall)
+        if not os.path.exists(current_wall) or os.path.isfile(current_wall):
+            exec_shell_command_async(f'rm {current_wall}')
         os.symlink(full_path, current_wall)
         if self.matugen_switcher.get_active():
             # Matugen is enabled: run the normal command.
