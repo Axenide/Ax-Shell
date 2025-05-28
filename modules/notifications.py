@@ -1198,7 +1198,7 @@ class NotificationPopup(Window):
         y_pos = data.NOTIF_POS.lower()
         x_pos = "right"
 
-        if data.BAR_POSITION in ["Top", "Bottom"] and data.PANEL_POSITION == "End" and data.NOTIF_POS == data.BAR_POSITION:
+        if data.BAR_POSITION in ["Top", "Bottom"] and data.PANEL_POSITION == "End" or x_pos == data.BAR_POSITION.lower():
             x_pos = "left"
 
         super().__init__(
