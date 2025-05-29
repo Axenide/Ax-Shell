@@ -9,15 +9,28 @@ from gi.repository import Gdk, GLib, Gtk
 
 import config.data as data
 
-gi.require_version('Gtk', '3.0')
+gi.require_version("Gtk", "3.0")
 import modules.icons as icons
 from services.network import NetworkClient
 
 
 def add_hover_cursor(widget):
     widget.add_events(Gdk.EventMask.ENTER_NOTIFY_MASK | Gdk.EventMask.LEAVE_NOTIFY_MASK)
-    widget.connect("enter-notify-event", lambda w, e: w.get_window().set_cursor(Gdk.Cursor.new_from_name(w.get_display(), "pointer")) if w.get_window() else None)
-    widget.connect("leave-notify-event", lambda w, e: w.get_window().set_cursor(None) if w.get_window() else None)
+    widget.connect(
+        "enter-notify-event",
+        lambda w, e: (
+            w.get_window().set_cursor(
+                Gdk.Cursor.new_from_name(w.get_display(), "pointer")
+            )
+            if w.get_window()
+            else None
+        ),
+    )
+    widget.connect(
+        "leave-notify-event",
+        lambda w, e: w.get_window().set_cursor(None) if w.get_window() else None,
+    )
+
 
 class NetworkButton(Box):
     def __init__(self, **kwargs):
@@ -53,14 +66,17 @@ class NetworkButton(Box):
             h_align="start",
             v_align="center",
             spacing=10,
-
             children=[self.network_icon, self.network_text],
         )
         self.network_status_button = Button(
             name="network-status-button",
             h_expand=True,
             child=self.network_status_box,
-            on_clicked=lambda *_: self.network_client.wifi_device.toggle_wifi() if self.network_client.wifi_device else None,
+            on_clicked=lambda *_: (
+                self.network_client.wifi_device.toggle_wifi()
+                if self.network_client.wifi_device
+                else None
+            ),
         )
         add_hover_cursor(self.network_status_button)
 
@@ -86,11 +102,17 @@ class NetworkButton(Box):
             children=[self.network_status_button, self.network_menu_button],
         )
 
-        self.widgets_list_internal = [self, self.network_icon, self.network_label,
-                       self.network_ssid, self.network_status_button,
-                       self.network_menu_button, self.network_menu_label]
+        self.widgets_list_internal = [
+            self,
+            self.network_icon,
+            self.network_label,
+            self.network_ssid,
+            self.network_status_button,
+            self.network_menu_button,
+            self.network_menu_label,
+        ]
 
-        self.network_client.connect('device-ready', self._on_wifi_ready)
+        self.network_client.connect("device-ready", self._on_wifi_ready)
 
         GLib.idle_add(self._initial_update)
 
@@ -100,13 +122,22 @@ class NetworkButton(Box):
 
     def _on_wifi_ready(self, *args):
         if self.network_client.wifi_device:
-            self.network_client.wifi_device.connect('notify::enabled', self.update_state)
-            self.network_client.wifi_device.connect('notify::ssid', self.update_state)
+            self.network_client.wifi_device.connect(
+                "notify::enabled", self.update_state
+            )
+            self.network_client.wifi_device.connect("notify::ssid", self.update_state)
             self.update_state()
 
     def _animate_searching(self):
         """Animate wifi icon when searching for networks"""
-        wifi_icons = [icons.wifi_0, icons.wifi_1, icons.wifi_2, icons.wifi_3, icons.wifi_2, icons.wifi_1]
+        wifi_icons = [
+            icons.wifi_0,
+            icons.wifi_1,
+            icons.wifi_2,
+            icons.wifi_3,
+            icons.wifi_2,
+            icons.wifi_1,
+        ]
 
         wifi = self.network_client.wifi_device
         if not self.network_icon or not wifi or not wifi.enabled:
@@ -185,7 +216,11 @@ class NetworkButton(Box):
             if not wifi:
                 self._stop_animation()
                 self.network_icon.set_markup(icons.wifi_off)
-            elif wifi.state == "activated" and wifi.ssid != "Disconnected" and wifi.strength > 0:
+            elif (
+                wifi.state == "activated"
+                and wifi.ssid != "Disconnected"
+                and wifi.strength > 0
+            ):
                 self._stop_animation()
                 strength = wifi.strength
                 if strength < 25:
@@ -198,6 +233,7 @@ class NetworkButton(Box):
                     self.network_icon.set_markup(icons.wifi_3)
             else:
                 self._start_animation()
+
 
 class BluetoothButton(Box):
     def __init__(self, **kwargs):
@@ -220,13 +256,17 @@ class BluetoothButton(Box):
             label="Bluetooth",
             justification="left",
         )
-        self.bluetooth_label_box = Box(children=[self.bluetooth_label, Box(h_expand=True)])
+        self.bluetooth_label_box = Box(
+            children=[self.bluetooth_label, Box(h_expand=True)]
+        )
         self.bluetooth_status_text = Label(
             name="bluetooth-status",
             label="Disabled",
             justification="left",
         )
-        self.bluetooth_status_box = Box(children=[self.bluetooth_status_text, Box(h_expand=True)])
+        self.bluetooth_status_box = Box(
+            children=[self.bluetooth_status_text, Box(h_expand=True)]
+        )
         self.bluetooth_text = Box(
             orientation="v",
             h_align="start",
@@ -260,6 +300,7 @@ class BluetoothButton(Box):
         self.add(self.bluetooth_status_button)
         self.add(self.bluetooth_menu_button)
 
+
 class NightModeButton(Button):
     def __init__(self):
         self.night_mode_icon = Label(
@@ -271,13 +312,17 @@ class NightModeButton(Button):
             label="Night Mode",
             justification="left",
         )
-        self.night_mode_label_box = Box(children=[self.night_mode_label, Box(h_expand=True)])
+        self.night_mode_label_box = Box(
+            children=[self.night_mode_label, Box(h_expand=True)]
+        )
         self.night_mode_status = Label(
             name="night-mode-status",
             label="Enabled",
             justification="left",
         )
-        self.night_mode_status_box = Box(children=[self.night_mode_status, Box(h_expand=True)])
+        self.night_mode_status_box = Box(
+            children=[self.night_mode_status, Box(h_expand=True)]
+        )
         self.night_mode_text = Box(
             name="night-mode-text",
             orientation="v",
@@ -300,7 +345,12 @@ class NightModeButton(Button):
         )
         add_hover_cursor(self)
 
-        self.widgets = [self, self.night_mode_label, self.night_mode_status, self.night_mode_icon]
+        self.widgets = [
+            self,
+            self.night_mode_label,
+            self.night_mode_status,
+            self.night_mode_icon,
+        ]
         self.check_hyprsunset()
 
     def toggle_hyprsunset(self, *args):
@@ -335,6 +385,7 @@ class NightModeButton(Button):
             for widget in self.widgets:
                 widget.add_style_class("disabled")
 
+
 class CaffeineButton(Button):
     def __init__(self):
         self.caffeine_icon = Label(
@@ -346,13 +397,17 @@ class CaffeineButton(Button):
             label="Caffeine",
             justification="left",
         )
-        self.caffeine_label_box = Box(children=[self.caffeine_label, Box(h_expand=True)])
+        self.caffeine_label_box = Box(
+            children=[self.caffeine_label, Box(h_expand=True)]
+        )
         self.caffeine_status = Label(
             name="caffeine-status",
-            label="Enabled",
+            label="Disabled",
             justification="left",
         )
-        self.caffeine_status_box = Box(children=[self.caffeine_status, Box(h_expand=True)])
+        self.caffeine_status_box = Box(
+            children=[self.caffeine_status, Box(h_expand=True)]
+        )
         self.caffeine_text = Box(
             name="caffeine-text",
             orientation="v",
@@ -374,7 +429,12 @@ class CaffeineButton(Button):
         )
         add_hover_cursor(self)
 
-        self.widgets = [self, self.caffeine_label, self.caffeine_status, self.caffeine_icon]
+        self.widgets = [
+            self,
+            self.caffeine_label,
+            self.caffeine_status,
+            self.caffeine_icon,
+        ]
         self.check_wlinhibit()
 
     def toggle_wlinhibit(self, *args):
@@ -383,28 +443,32 @@ class CaffeineButton(Button):
           - If running, kill it and mark as 'Disabled' (add 'disabled' class).
           - If not running, start it and mark as 'Enabled' (remove 'disabled' class).
         """
-        try:
-            subprocess.check_output(["pgrep", "wlinhibit"])
-            exec_shell_command_async("pkill wlinhibit")
+        if self.caffeine_status.get_label() == "Enabled":
             self.caffeine_status.set_label("Disabled")
-            for i in self.widgets:
-                i.add_style_class("disabled")
-        except subprocess.CalledProcessError:
-            exec_shell_command_async("wlinhibit")
+            exec_shell_command_async(
+                "pkill -f ~/.config/Ax-Shell/scr`ipts/wayland-idle-inhibitor.py"
+            )
+            for widget in self.widgets:
+                self.add_style_class("disabled")
+        else:
             self.caffeine_status.set_label("Enabled")
-            for i in self.widgets:
-                i.remove_style_class("disabled")
+            exec_shell_command_async(
+                "bash -c pidof wayland-idle-inhibitor.py || ~/.config/Ax-Shell/scripts/wayland-idle-inhibitor.py"
+            )
+            for widget in self.widgets:
+                widget.remove_style_class("disabled")
 
     def check_wlinhibit(self, *args):
-        try:
-            subprocess.check_output(["pgrep", "wlinhibit"])
+        if self.caffeine_status.get_label() == "Enabled":
             self.caffeine_status.set_label("Enabled")
             for i in self.widgets:
                 i.remove_style_class("disabled")
-        except subprocess.CalledProcessError:
+            return
+        else:
             self.caffeine_status.set_label("Disabled")
             for i in self.widgets:
                 i.add_style_class("disabled")
+
 
 class Buttons(Gtk.Grid):
     def __init__(self, **kwargs):
@@ -422,7 +486,10 @@ class Buttons(Gtk.Grid):
         self.night_mode_button = NightModeButton()
         self.caffeine_button = CaffeineButton()
 
-        if data.PANEL_THEME == "Panel" and (data.BAR_POSITION in ["Left", "Right"] or data.PANEL_POSITION in ["Start", "End"]):
+        if data.PANEL_THEME == "Panel" and (
+            data.BAR_POSITION in ["Left", "Right"]
+            or data.PANEL_POSITION in ["Start", "End"]
+        ):
 
             self.attach(self.network_button, 0, 0, 1, 1)
             self.attach(self.bluetooth_button, 1, 0, 1, 1)
