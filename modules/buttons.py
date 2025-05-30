@@ -443,14 +443,7 @@ class CaffeineButton(Button):
           - If running, kill it and mark as 'Disabled' (add 'disabled' class).
           - If not running, start it and mark as 'Enabled' (remove 'disabled' class).
         """
-<<<<<<< HEAD
         if self.caffeine_status.get_label() == "Enabled":
-=======
-
-        try:
-            subprocess.check_output(["pgrep", "wlinhibit"])
-            exec_shell_command_async("pkill wlinhibit")
->>>>>>> 35c7fcf (feat: Random wallpaper shortcut)
             self.caffeine_status.set_label("Disabled")
             exec_shell_command_async(
                 "pkill -f ~/.config/Ax-Shell/scr`ipts/wayland-idle-inhibitor.py"
