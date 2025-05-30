@@ -8,7 +8,6 @@ span: str = f"<span font-family='{font_family}' font-weight='{font_weight}'>"
 apps: str = "&#xf1fd;"
 dashboard: str = "&#xea87;"
 chat: str = "&#xf59f;"
-wallpapers: str = "&#xeb01;"
 windows: str = "&#xefe6;"
 
 # Bar
@@ -20,6 +19,7 @@ media: str = "&#xf00d;"
 toolbox: str = "&#xebca;"
 ssfull: str = "&#xec3c;"
 ssregion: str = "&#xf201;"
+sswindow: str = "&#xeaea;"
 screenshots: str = "&#xeb0a;"
 screenrecord: str = "&#xed22;"
 recordings: str = "&#xeafa;"
@@ -34,7 +34,7 @@ disk: str = "&#xea88;"
 battery: str = "&#xea38;"
 memory: str = "&#xfa97;"
 cpu: str = "&#xef8e;"
-
+gpu: str = "&#xf233;"
 
 # AIchat
 reload: str = "&#xf3ae;"
@@ -120,6 +120,10 @@ vol_high: str = "&#xeb51;"
 mic: str = "&#xeaf0;"
 mic_mute: str = "&#xed16;"
 
+speaker: str = "&#x10045;"
+headphones: str = "&#xfa3c;"
+mic_filled: str = "&#xfe0f;"
+
 # Overview
 circle_plus: str = "&#xea69;"
 
@@ -150,6 +154,15 @@ brightness_low: str = "&#xeb7d;"
 brightness_medium: str = "&#xeb7e;"
 brightness_high: str = "&#xeb30;"
 
+brightness: str = "&#xee1a;"
+
+# Dashboard
+widgets: str = "&#xf02c;"
+pins: str = "&#xec9c;"
+kanban: str = "&#xec3f;"
+wallpapers: str = "&#xeb61;"
+sparkles: str = "&#xf6d7;"
+
 # Misc
 dot: str = "&#xf698;"
 palette: str = "&#xeb01;"
@@ -161,6 +174,15 @@ keyboard: str = "&#xebd6;"
 terminal: str = "&#xebef;"
 timer_off: str = "&#xf146;"
 timer_on: str = "&#xf756;"
+spy: str = "&#xf227;"
+
+# Dice
+dice_1: str = "&#xf08b;"
+dice_2: str = "&#xf08c;"
+dice_3: str = "&#xf08d;"
+dice_4: str = "&#xf08e;"
+dice_5: str = "&#xf08f;"
+dice_6: str = "&#xf090;"
 
 exceptions: list[str] = ['font_family', 'font_weight', 'span']
 

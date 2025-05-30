@@ -1,15 +1,23 @@
-from fabric.widgets.box import Box
-from fabric.widgets.label import Label
-from fabric.widgets.button import Button
-from fabric.widgets.entry import Entry
-from fabric.widgets.stack import Stack
-from fabric.utils import remove_handler
-from fabric.utils.helpers import get_relative_path
-from gi.repository import Gdk
-import modules.icons as icons
 import os
 import subprocess
+
 import ijson
+from fabric.utils import remove_handler
+from fabric.utils.helpers import get_relative_path
+from fabric.widgets.box import Box
+from fabric.widgets.button import Button
+from fabric.widgets.entry import Entry
+from fabric.widgets.label import Label
+from fabric.widgets.stack import Stack
+from gi.repository import Gdk
+
+import config.data as data
+import modules.icons as icons
+
+vertical_mode = data.PANEL_THEME == "Panel" and (data.BAR_POSITION in ["Left", "Right"] or data.PANEL_POSITION in ["Start", "End"])
+
+emoji_rows = 3 if not vertical_mode else 9
+emoji_columns = 9 if not vertical_mode else 5
 
 class EmojiPicker(Box):
     def __init__(self, **kwargs):
@@ -22,7 +30,7 @@ class EmojiPicker(Box):
 
         self.notch = kwargs["notch"]
         self.selected_index = -1
-        self.emojis_per_page = 9 * 3
+        self.emojis_per_page = emoji_columns * emoji_rows
         self.current_page_index = 0
         self.filtered_emojis = []
         self.total_pages = 0
@@ -133,7 +141,7 @@ class EmojiPicker(Box):
 
         row_box = None
         for i, (emoji_char, emoji_info) in enumerate(page_emojis):
-            if i % 9 == 0:
+            if i % emoji_columns == 0:
                 row_box = Box(name="emoji-row-box", orientation="h", spacing=2)
                 grid_box.add(row_box)
             if row_box is not None:
@@ -234,8 +242,8 @@ class EmojiPicker(Box):
         if total_items_current_page == 0:
             return
 
-        rows = 3
-        columns = 9
+        rows = emoji_rows
+        columns = emoji_columns
 
         if self.selected_index == -1:
             if keyval in (Gdk.KEY_Down, Gdk.KEY_Right):

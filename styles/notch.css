@@ -1,112 +1,35 @@
 #notch-box {
-  margin: 0 60px 10px 60px;
-}
-
-#notch-box.hidden {
-  opacity: 0;
+  margin: 0 20px 10px 20px;
 }
 
 #notch-wrap {
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-#notch-wrap.occluded {
-  margin-top: -38px;
-}
-
-#notch-wrap.occluded #notch-box {
-  opacity: 0;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-#notch-box.hideshow {
-  opacity: 1;
-  margin-top: 40px;
+  transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 #notch-content {
   background-color: var(--shadow);
-  min-height: 40px;
-  min-width: 256px;
   border-radius: 0 0 20px 20px;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
-#notch-content.launcher,
-#notch-content.tmux,
-#notch-content.cliphist {
-  padding: 16px;
-  min-height: 220px;
-  min-width: 480px;
+#notch-content.open {
+  border-radius: 0 0 36px 36px;
+  padding: 2px;
+}
+
+#notch-content.open.invert {
+  padding: 2px;
+  padding-top: 0px;
   border-radius: 0 0 36px 36px;
 }
 
-#notch-content.dashboard {
-  padding: 16px;
-  min-height: 450px;
-  min-width: 1070px;
-  border-radius: 0 0 36px 36px;
-}
-
-#notch-content.overview {
-  padding: 16px;
-  @apply overview_width();
-  @apply overview_height();
-  border-radius: 0 0 36px 36px;
-}
-
-#notch-content.tools {
-  min-height: 84px;
-  min-width: 632px;
-  /* Changed to include pomodoro btn */
-  border-radius: 0 0 36px 36px;
-}
-
-#notch-content.emoji {
-  padding: 16px;
-  min-height: 238px;
-  min-width: 574px;
-  border-radius: 0 0 36px 36px;
-}
-
-#notch-content.power {
-  min-height: 84px;
-  min-width: 308px;
-  border-radius: 0 0 36px 36px;
-}
-
-#app-launcher,
-#dashboard,
-#notification,
-#overview,
-#emoji,
-#power-menu,
-#toolbox,
-#tmux-manager,
-#clip-history {
-  opacity: 1;
-  margin: -800px;
-  transition: all 0.25s cubic-bezier(0.5, 0.25, 0, 1);
-}
-
-#app-launcher.open,
-#dashboard.open,
-#notification.open,
-#overview.open,
-#emoji.open,
-#power-menu.open,
-#toolbox.open,
-#bluetooth.open,
-#tmux-manager.open,
-#clip-history.open {
-  opacity: 1;
-  margin: 0px;
+#notch-content.invert {
+  background-color: var(--surface);
+  border-radius: 0 0 12px 12px;
 }
 
 #notch-compact {
   font-weight: bold;
-  transition: all 0.5s cubic-bezier(0.5, 0.25, 0, 1.25);
-  padding: 10px;
 }
 
 #notch-corner-left {
@@ -154,6 +77,44 @@
   margin: 10px;
 }
 
-#vert-comp {
-  min-width: 40px;
+#app-launcher,
+#power-menu,
+#toolbox,
+#dashboard,
+#tmux-manager,
+#clip-history,
+#overview,
+#emoji {
+  background-color: var(--shadow);
+  padding: 14px;
+  border-radius: 0 0 34px 34px;
+  transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1);
+}
+
+#notch-content.panel #app-launcher,
+#notch-content.panel #power-menu,
+#notch-content.panel #toolbox,
+#notch-content.panel #dashboard,
+#notch-content.panel #tmux-manager,
+#notch-content.panel #clip-history,
+#notch-content.panel #overview,
+#notch-content.panel #emoji {
+  border-radius: 34px;
+}
+
+#notch-content.panel {
+  border-radius: 36px;
+}
+
+#notch-box.panel {
+  margin: 6px;
+  padding: 2px;
+  background-color: var(--surface);
+  border-radius: 36px;
+}
+
+#notch-content.open.panel {
+  background-color: var(--shadow);
+  padding: 0px;
+  border-radius: 36px;
 }

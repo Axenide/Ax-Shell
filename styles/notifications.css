@@ -41,17 +41,15 @@
 #notification-stack-box {
   border-radius: 32px;
   padding: 16px;
+  border: 2px solid var(--surface);
   background-color: var(--shadow);
   margin: 8px;
+  margin-bottom: 4px;
   min-width: 330px;
 }
 
-#boxed-notification-revealer {
-  margin-top: -14px;
-}
-
 #notification-navigation {
-  padding: 4px;
+  padding: 16px;
 }
 
 #notif-close-button {
@@ -82,6 +80,7 @@
   padding: 8px;
   border-radius: 16px;
   background: var(--shadow);
+  border: 2px solid var(--surface);
   margin-top: -12px;
 }
 

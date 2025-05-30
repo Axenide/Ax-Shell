@@ -36,9 +36,9 @@
 }
 
 #emoji #emoji-slot-button {
-  border-radius: 16px;
+  border-radius: 40px;
   padding: 16px;
-  transition: padding 0.1s ease;
+  transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 @keyframes loadEmojiSlot {
@@ -54,24 +54,8 @@
 #emoji #emoji-slot-button:focus,
 #emoji #emoji-slot-button:selected,
 #emoji #emoji-slot-button.selected {
+  border-radius: 16px;
   background-color: var(--surface-bright);
-  text-shadow: 0 0 4px var(--shadow);
-  animation: highlightEmojiSlot 0.25s cubic-bezier(0, 0, 0.5, 1);
-}
-
-@keyframes highlightEmojiSlot {
-  0% {
-    padding: 16px;
-    text-shadow: 0 4px 4px var(--shadow);
-  }
-  50% {
-    padding: 8px 16px 24px 16px;
-    text-shadow: 0 12px 4px var(--shadow);
-  }
-  100% {
-    padding: 16px;
-    text-shadow: 0 4px 4px var(--shadow);
-  }
 }
 
 #emoji #emoji-slot-button:active {

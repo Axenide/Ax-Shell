@@ -1,18 +1,17 @@
+import configparser
+import ctypes
 import os
+import re
+import signal
 import struct
 import subprocess
-import re
-import ctypes
-import signal
-
-from gi.repository import GLib, Gtk, Gdk
-from loguru import logger
 from math import pi
 
-from fabric.widgets.overlay import Overlay
 from fabric.utils.helpers import get_relative_path
+from fabric.widgets.overlay import Overlay
+from gi.repository import Gdk, GLib, Gtk
+from loguru import logger
 
-import configparser
 
 def get_bars(file_path):
     config = configparser.ConfigParser()

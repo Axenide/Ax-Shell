@@ -1,13 +1,11 @@
-#buttons-grid {
-  min-height: 52px;
-}
-
 /* === Botones Base === */
 #network-button,
 #bluetooth-button,
 #night-mode-button,
 #caffeine-button {
-  border-radius: 20px;
+  min-height: 52px;
+  border-radius: 16px;
+  transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 /* Tamaños y estilos específicos */
@@ -26,6 +24,7 @@
 #night-mode-button.disabled,
 #caffeine-button.disabled {
   background-color: var(--surface);
+  border-radius: 26px;
 }
 
 /* Botones internos (status y menú) */
@@ -35,6 +34,7 @@
 #bluetooth-menu-button {
   background-color: var(--primary);
   padding: 0 8px;
+  transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 #network-menu-button,
@@ -54,17 +54,24 @@
   background-color: var(--foreground);
 }
 
+#network-menu-button:active,
+#bluetooth-menu-button:active {
+  border-radius: 0 26px 26px 0;
+}
+
 /* Estados Disabled */
 #network-status-button.disabled,
 #network-menu-button.disabled,
 #bluetooth-status-button.disabled,
 #bluetooth-menu-button.disabled {
   background-color: var(--surface);
+  border-radius: 26px 0 0 26px;
 }
 
 #network-menu-button.disabled,
 #bluetooth-menu-button.disabled {
   border-left: 1px solid var(--surface-bright);
+  border-radius: 0 26px 26px 0;
 }
 
 #network-status-button.disabled:hover,
@@ -79,12 +86,12 @@
 /* Bordes diferenciados para botones compuestos */
 #network-status-button,
 #bluetooth-status-button {
-  border-radius: 20px 0 0 20px;
+  border-radius: 16px 0 0 16px;
 }
 
 #network-menu-button,
 #bluetooth-menu-button {
-  border-radius: 0 20px 20px 0;
+  border-radius: 0 16px 16px 0;
 }
 
 /* === Estilos de Iconos === */
@@ -123,7 +130,7 @@
   color: var(--shadow);
   font-size: 14px;
   font-weight: bold;
-  margin-bottom: -4px;
+  /* margin-bottom: -4px; */
 }
 
 #network-label.disabled,

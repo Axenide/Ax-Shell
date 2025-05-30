@@ -1,31 +1,117 @@
-@import url("./styles/colors.css");
-@import url("./styles/shadows.css");
+@import url("./styles/applets.css");
 @import url("./styles/bar.css");
-@import url("./styles/notch.css");
-@import url("./styles/dock.css");
-@import url("./styles/workspaces.css");
-@import url("./styles/dashboard.css");
 @import url("./styles/buttons.css");
-@import url("./styles/pins.css");
-@import url("./styles/kanban.css");
 @import url("./styles/calendar.css");
+@import url("./styles/colors.css");
 @import url("./styles/controls.css");
-@import url("./styles/launcher.css");
-@import url("./styles/notifications.css");
-@import url("./styles/wallpapers.css");
-@import url("./styles/overview.css");
+@import url("./styles/dashboard.css");
+@import url("./styles/dock.css");
 @import url("./styles/emoji.css");
-@import url("./styles/player.css");
-@import url("./styles/bluetooth.css");
-@import url("./styles/power.css");
-@import url("./styles/metrics.css");
-@import url("./styles/tools.css");
 @import url("./styles/extras.css");
+@import url("./styles/kanban.css");
+@import url("./styles/launcher.css");
+@import url("./styles/metrics.css");
+@import url("./styles/notch.css");
+@import url("./styles/notifications.css");
+@import url("./styles/overview.css");
+@import url("./styles/pins.css");
+@import url("./styles/player.css");
+@import url("./styles/power.css");
+@import url("./styles/shadows.css");
+@import url("./styles/tools.css");
+@import url("./styles/wallpapers.css");
+@import url("./styles/workspaces.css");
 
 * {
   all: unset;
   color: var(--foreground);
-  font-size: 11pt;
-  font-family: "Zed Sans";
+  font-size: unset;
+  font-family: unset;
   border-radius: 16px;
+}
+
+#applet-stack,
+#calendar,
+#header,
+#player,
+#metrics,
+#pin-cell-box,
+#kanban-header {
+  background-color: alpha(black, 0.5);
+}
+
+#update-window {
+  background: linear-gradient(
+    135deg,
+    var(--primary) 0%,
+    var(--primary) 1%,
+    var(--shadow) 1%,
+    var(--shadow) 2%,
+    var(--outline) 2%,
+    var(--outline) 3%,
+    var(--shadow) 3%,
+    var(--shadow) 4%,
+    var(--surface-bright) 4%,
+    var(--surface-bright) 5%,
+    var(--shadow) 5%,
+    var(--shadow) 6%,
+    var(--surface) 6%,
+    var(--surface) 7%,
+    var(--shadow) 7%,
+    var(--shadow) 8%,
+    var(--shadow) 93%,
+    var(--surface) 93%,
+    var(--surface) 94%,
+    var(--shadow) 94%,
+    var(--shadow) 95%,
+    var(--surface-bright) 95%,
+    var(--surface-bright) 96%,
+    var(--shadow) 96%,
+    var(--shadow) 97%,
+    var(--outline) 97%,
+    var(--outline) 98%,
+    var(--shadow) 98%,
+    var(--shadow) 99%,
+    var(--primary) 99%,
+    var(--primary) 100%
+  );
+  border-radius: 0;
+}
+
+#update-button {
+  background-color: var(--primary);
+  border-radius: 16px;
+  padding: 8px 16px;
+  font-weight: bold;
+  transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+#update-button:hover {
+  background-color: var(--foreground);
+  border-radius: 8px;
+}
+
+#update-button:active {
+  background-color: var(--primary);
+}
+
+#update-button label {
+  color: var(--shadow);
+}
+
+#later-button {
+  background-color: var(--surface-bright);
+  border-radius: 16px;
+  padding: 8px 16px;
+  font-weight: bold;
+  transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+#later-button:hover {
+  background-color: var(--outline);
+  border-radius: 8px;
+}
+
+#later-button:active {
+  background-color: var(--surface-bright);
 }

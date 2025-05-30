@@ -4,18 +4,18 @@
 }
 
 #pin-cell-box {
-  background-color: var(--shadow);
+  /* background-color: var(--shadow); */
   border-radius: 16px;
   padding: 16px;
   border: 4px solid var(--surface);
-  min-height: 160px;
+  /* min-height: 160px; */
 }
 
 #pin-file,
 #pin-url {
   font-weight: bold;
-  margin-top: -16px;
-  margin-bottom: 16px;
+  /* margin-top: -16px; */
+  /* margin-bottom: 16px; */
 }
 
 #pin-add:hover {
@@ -28,5 +28,4 @@
 
 #pin-url-icon {
   color: var(--primary);
-  font-size: 80px;
 }

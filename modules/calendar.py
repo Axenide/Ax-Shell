@@ -1,27 +1,39 @@
 import calendar
+import subprocess
 from datetime import datetime, timedelta
+
 import gi
-import modules.icons as icons
-from fabric.widgets.label import Label
 from fabric.widgets.centerbox import CenterBox
+from fabric.widgets.label import Label
+
+import modules.icons as icons
 
 gi.require_version("Gtk", "3.0")
-from gi.repository import Gtk, GLib
+from gi.repository import GLib, Gtk
+
 
 class Calendar(Gtk.Box):
     def __init__(self):
         super().__init__(orientation=Gtk.Orientation.VERTICAL, spacing=8, name="calendar")
 
+        try:
+            origin_date = datetime.fromisoformat(subprocess.check_output(["locale", "week-1stday"]).decode("utf-8")[:-1])
+            date = origin_date + timedelta(days=int(subprocess.check_output(["locale", "first_weekday"])) - 1)
+            self.first_weekday = date.weekday()
+        except Exception as e:
+            print(f"Error getting locale first weekday: {e}")
+            self.first_weekday = 0
+
+        self.set_halign(Gtk.Align.CENTER)
+        self.set_hexpand(False)
+
         self.current_year = datetime.now().year
         self.current_month = datetime.now().month
         self.current_day = datetime.now().day
-        # Store previous month/year to determine transition direction.
         self.previous_key = (self.current_year, self.current_month)
 
-        # Cache threshold in number of months away from the current view.
-        self.cache_threshold = 1  # Allow current month +/- 1 month
+        self.cache_threshold = 1
 
-        # Dictionary to store built views for each month.
         self.month_views = {}
 
         self.prev_month_button = Gtk.Button(
@@ -51,18 +63,17 @@ class Calendar(Gtk.Box):
         self.weekday_row = Gtk.Box(spacing=4, name="weekday-row")
         self.pack_start(self.weekday_row, False, False, 0)
 
-        # Create a stack to hold month days views.
         self.stack = Gtk.Stack(name="calendar-stack")
         self.stack.set_transition_duration(250)
         self.pack_start(self.stack, True, True, 0)
 
         self.update_header()
         self.update_calendar()
-        self.schedule_midnight_update()  # Schedule the initial midnight update
+        self.schedule_midnight_update()
 
     def schedule_midnight_update(self):
         now = datetime.now()
-        # Calculate next midnight
+
         midnight = now.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
         delta = midnight - now
         seconds_until = delta.total_seconds()
@@ -74,22 +85,21 @@ class Calendar(Gtk.Box):
         self.current_month = now.month
         self.current_day = now.day
 
-        # If the displayed month view is already cached, remove it so that it can be recreated with updated day highlighting.
         key = (self.current_year, self.current_month)
         if key in self.month_views:
             widget = self.month_views.pop(key)
             self.stack.remove(widget)
 
         self.update_calendar()
-        self.schedule_midnight_update()  # Reschedule for the next midnight
-        return False  # Ensure the timeout doesn't repeat
+        self.schedule_midnight_update()
+        return False
 
     def update_header(self):
-        # Update header month label and weekday row.
+
         self.month_label.set_text(
             datetime(self.current_year, self.current_month, 1).strftime("%B %Y").capitalize()
         )
-        # Clear existing children from weekday_row.
+
         for child in self.weekday_row.get_children():
             self.weekday_row.remove(child)
         days = self.get_weekday_initials()
@@ -100,15 +110,14 @@ class Calendar(Gtk.Box):
 
     def update_calendar(self):
         new_key = (self.current_year, self.current_month)
-        # Set the transition type based on whether we're moving to a later or earlier month.
+
         if new_key > self.previous_key:
             self.stack.set_transition_type(Gtk.StackTransitionType.SLIDE_LEFT)
         elif new_key < self.previous_key:
             self.stack.set_transition_type(Gtk.StackTransitionType.SLIDE_RIGHT)
-        # Update previous key for next comparison.
+
         self.previous_key = new_key
 
-        # Create the month view if it doesn't exist.
         if new_key not in self.month_views:
             month_view = self.create_month_view(self.current_year, self.current_month)
             self.month_views[new_key] = month_view
@@ -117,16 +126,15 @@ class Calendar(Gtk.Box):
                 f"{self.current_year}_{self.current_month}",
                 f"{self.current_year}_{self.current_month}"
             )
-        # Switch the visible child in the stack.
+
         self.stack.set_visible_child_name(f"{self.current_year}_{self.current_month}")
         self.update_header()
         self.stack.show_all()
 
-        # Purge any cached month views that are too far away.
         self.prune_cache()
 
     def prune_cache(self):
-        # Compute a numerical value for a (year, month) key.
+
         def month_index(key):
             year, month = key
             return year * 12 + (month - 1)
@@ -142,9 +150,9 @@ class Calendar(Gtk.Box):
 
     def create_month_view(self, year, month):
         grid = Gtk.Grid(column_homogeneous=True, row_homogeneous=False, name="calendar-grid")
-        cal = calendar.Calendar(firstweekday=0)
+        cal = calendar.Calendar(firstweekday=self.first_weekday)
         month_days = cal.monthdayscalendar(year, month)
-        # Ensure 6 rows for consistency.
+
         while len(month_days) < 6:
             month_days.append([0] * 7)
 
@@ -159,7 +167,7 @@ class Calendar(Gtk.Box):
                     label = Label(name="day-empty", markup=icons.dot)
                 else:
                     label = Gtk.Label(label=str(day), name="day-label")
-                    # Highlight today's date if it matches the current day.
+
                     if (
                         day == self.current_day
                         and month == datetime.now().month
@@ -167,7 +175,6 @@ class Calendar(Gtk.Box):
                     ):
                         label.get_style_context().add_class("current-day")
 
-                # Center the label in the middle_box.
                 middle_box.pack_start(Gtk.Box(hexpand=True, vexpand=True), True, True, 0)
                 middle_box.pack_start(label, False, False, 0)
                 middle_box.pack_start(Gtk.Box(hexpand=True, vexpand=True), True, True, 0)
@@ -181,8 +188,7 @@ class Calendar(Gtk.Box):
         return grid
 
     def get_weekday_initials(self):
-        # Returns localized weekday initials.
-        return [datetime(2025, 1, i + 6).strftime("%a")[:1] for i in range(7)]
+        return [datetime(2024, 1, i + 1 + self.first_weekday).strftime("%a")[:1] for i in range(7)]
 
     def on_prev_month_clicked(self, widget):
         if self.current_month == 1:

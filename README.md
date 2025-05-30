@@ -73,16 +73,19 @@ curl -fsSL https://raw.githubusercontent.com/Axenide/Ax-Shell/main/install.sh | 
     - `hypridle`
     - `hyprlock`
     - `hyprpicker`
+    - `hyprshot`
     - `hyprsunset`
     - `imagemagick`
     - `libnotify`
     - `noto-fonts-emoji`
+    - `nvtop`
     - `playerctl`
     - `swappy`
     - `swww`
     - `tesseract`
     - `tmux`
     - `uwsm`
+    - `webp-pixbuf-loader`
     - `wl-clipboard`
     - `wlinhibit`
     - Python dependencies:
