@@ -1,26 +1,20 @@
-from os import truncate
-
 from fabric.hyprland.widgets import ActiveWindow
 from fabric.utils.helpers import FormattedString, get_desktop_applications
 from fabric.widgets.box import Box
 from fabric.widgets.centerbox import CenterBox
 from fabric.widgets.image import Image
 from fabric.widgets.label import Label
-from fabric.widgets.overlay import Overlay
 from fabric.widgets.revealer import Revealer
 from fabric.widgets.stack import Stack
 from fabric.widgets.wayland import WaylandWindow as Window
 from gi.repository import Gdk, GLib, Gtk, Pango
 
 import config.data as data
-from modules.bluetooth import BluetoothConnections
 from modules.cliphist import ClipHistory
 from modules.corners import MyCorner
 from modules.dashboard import Dashboard
 from modules.emoji import EmojiPicker
 from modules.launcher import AppLauncher
-from modules.network import NetworkConnections
-from modules.notifications import NotificationContainer
 from modules.overview import Overview
 from modules.player import PlayerSmall
 from modules.power import PowerMenu
