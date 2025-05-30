@@ -437,13 +437,20 @@ class CaffeineButton(Button):
         ]
         self.check_wlinhibit()
 
-    def toggle_wlinhibit(self, *args):
+    def toggle_wlinhibit(self, *args, external=False):
         """
         Toggle the 'wlinhibit' process:
           - If running, kill it and mark as 'Disabled' (add 'disabled' class).
           - If not running, start it and mark as 'Enabled' (remove 'disabled' class).
         """
+<<<<<<< HEAD
         if self.caffeine_status.get_label() == "Enabled":
+=======
+
+        try:
+            subprocess.check_output(["pgrep", "wlinhibit"])
+            exec_shell_command_async("pkill wlinhibit")
+>>>>>>> 35c7fcf (feat: Random wallpaper shortcut)
             self.caffeine_status.set_label("Disabled")
             exec_shell_command_async(
                 "pkill -f ~/.config/Ax-Shell/scr`ipts/wayland-idle-inhibitor.py"
@@ -457,6 +464,11 @@ class CaffeineButton(Button):
             )
             for widget in self.widgets:
                 widget.remove_style_class("disabled")
+
+        if external:
+            # Different if enabled or disabled
+            message = "Disabled 💤" if self.caffeine_status.get_label() == "Disabled" else "Enabled ☀️"
+            exec_shell_command_async(f"notify-send '☕ Caffeine' '{message}' -a '{data.APP_NAME_CAP}' -e")
 
     def check_wlinhibit(self, *args):
         if self.caffeine_status.get_label() == "Enabled":
