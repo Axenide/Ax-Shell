@@ -113,7 +113,7 @@ fi
 if [ ! -d "$HOME/.fonts/tabler-icons" ]; then
     echo "Copying local fonts to $HOME/.fonts/tabler-icons..."
     mkdir -p "$HOME/.fonts/tabler-icons"
-    cp -r "$INSTALL_DIR/assets/fonts/"* "$HOME/.fonts/tabler-icons"
+    cp -r "$INSTALL_DIR/assets/fonts/"* "$HOME/.fonts"
 else
     echo "Local fonts are already installed. Skipping copy."
 fi
