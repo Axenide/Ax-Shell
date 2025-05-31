@@ -93,7 +93,7 @@ class EmojiPicker(Box):
             return {}
 
         with open(emoji_file_path, 'r') as f:
-            for emoji_char, emoji_info in json.kvitems(f, ''):
+            for emoji_char, emoji_info in ijson.kvitems(f, ''):
                 emoji_data[emoji_char] = emoji_info
         return emoji_data
 

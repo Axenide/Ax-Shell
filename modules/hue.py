@@ -37,10 +37,9 @@ class Light(Box):
         self.light_menu_button = self.buttons.light_menu_button
         self.light_menu_label = self.buttons.light_menu_label
 
-        self.hue = Hue('192.168.0.230', 'OAVsJnfaX476yAFsBt7ES3voatlCWPay43b3arxK')  # create Hue instance, ip address, key
+        self.hue = Hue('192.168.10.71', 'OAVsJnfaX476yAFsBt7ES3voatlCWPay43b3arxK')  # create Hue instance, ip address, key
 
         self.bulb = self.hue.lights[0]
-        self.status_light()
 
         self.color_wheel = ColorWheel(self.hue, self.wheel_width, self.wheel_height)
 
@@ -52,6 +51,8 @@ class Light(Box):
             markup=icons.bulb
         )
         self.brightness.max_value = 100.0
+        
+        self.status_light()
 
         if self.bulb.on:
             self.brightness.value = self.bulb.brightness
@@ -110,12 +111,12 @@ class Light(Box):
     def status_light(self):
         if self.bulb.on:
             self.light_status_text.set_label("on")
-            for i in [self.light_status_button, self.light_status_text, self.light_icon, self.light_label, self.light_menu_button, self.light_menu_label]:
+            for i in [self.light_status_button, self.light_status_text, self.light_icon, self.light_label, self.light_menu_button, self.light_menu_label, self.brightness]:
                 i.remove_style_class("disabled")
             self.light_icon.set_markup(icons.bulb)
         else:
             self.light_status_text.set_label("off")
-            for i in [self.light_status_button, self.light_status_text, self.light_icon, self.light_label, self.light_menu_button, self.light_menu_label]:
+            for i in [self.light_status_button, self.light_status_text, self.light_icon, self.light_label, self.light_menu_button, self.light_menu_label, self.brightness]:
                 i.add_style_class("disabled")
             self.light_icon.set_markup(icons.bulb_off)
 
@@ -134,7 +135,7 @@ class ColorWheel(Gtk.DrawingArea):
         super().__init__()
         self.wheel_width = width
         self.wheel_height = height
-        self.set_size_request(self.wheel_width, self.wheel_height)
+        self.set_size_request(self.wheel_width+50, self.wheel_height)
         self.connect("draw", self.on_draw)
         self.add_events(Gdk.EventMask.BUTTON_PRESS_MASK | Gdk.EventMask.BUTTON_MOTION_MASK | Gdk.EventMask.BUTTON_RELEASE_MASK)
         self.connect("button-press-event", self.on_click)

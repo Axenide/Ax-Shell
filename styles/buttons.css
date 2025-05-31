@@ -83,13 +83,15 @@
 #bluetooth-status-button:hover,
 #bluetooth-menu-button:hover,
 #bluetooth-button:hover,
-#night-mode-button:hover,
+#light-status-button:hover,
+#light-menu-button:hover,
 #caffeine-button:hover {
   background-color: var(--foreground);
 }
 
 #network-menu-button:active,
-#bluetooth-menu-button:active {
+#bluetooth-menu-button:active,
+#light-menu-button:active {
   border-radius: 0 26px 26px 0;
 }
 
@@ -97,13 +99,16 @@
 #network-status-button.disabled,
 #network-menu-button.disabled,
 #bluetooth-status-button.disabled,
-#bluetooth-menu-button.disabled {
+#bluetooth-menu-button.disabled,
+#light-status-button.disabled,
+#light-menu-button.disabled {
   background-color: var(--surface);
   border-radius: 26px 0 0 26px;
 }
 
 #network-menu-button.disabled,
-#bluetooth-menu-button.disabled {
+#bluetooth-menu-button.disabled,
+#light-menu-button.disabled {
   border-left: 1px solid var(--surface-bright);
   border-radius: 0 26px 26px 0;
 }
@@ -111,7 +116,9 @@
 #network-status-button.disabled:hover,
 #network-menu-button.disabled:hover,
 #bluetooth-status-button.disabled:hover,
-#bluetooth-menu-button.disabled:hover {
+#bluetooth-menu-button.disabled:hover,
+#light-status-button.disabled:hover,
+#light-menu-button.disabled:hover {
     background-color: var(--surface-bright);
 }
 

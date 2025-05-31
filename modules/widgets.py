@@ -9,11 +9,9 @@ import config.data as data
 from modules.bluetooth import BluetoothConnections
 from modules.buttons import Buttons
 from modules.calendar import Calendar
-from modules.player import Player
-from modules.bluetooth import BluetoothConnections
-from modules.metrics import Metrics
 from modules.controls import ControlSliders
 from modules.metrics import Metrics
+from modules.hue import Light
 from modules.network import NetworkConnections
 from modules.notifications import NotificationHistory
 from modules.player import Player
@@ -67,7 +65,15 @@ class Widgets(Box):
 
         self.metrics = Metrics()
 
-        self.notification_history = self.notch.notification_history
+        self.cgm = Box(
+            name="cgm",
+            h_expand=True,
+            v_expand=True,
+        )
+
+        self.notification_history = NotificationHistory()
+
+        self.network_connections = NetworkConnections(widgets=self)
 
         self.applet_stack = Stack(
             h_expand=True,
@@ -98,7 +104,7 @@ class Widgets(Box):
                 v_expand=True,
                 spacing=8,
                 children=[
-                    self.cgm,
+                    self.calendar,
 
                     self.applet_stack_box,
                 ]
@@ -158,3 +164,6 @@ class Widgets(Box):
 
     def show_network_applet(self):
         self.notch.open_notch("network_applet")
+    
+    def show_light(self):
+        self.applet_stack.set_visible_child(self.light)

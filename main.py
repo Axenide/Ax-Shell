@@ -38,9 +38,9 @@ if __name__ == "__main__":
     from config.data import load_config
     config = load_config()
 
-    GLib.idle_add(run_updater)
+    #GLib.idle_add(run_updater)
     # Every hour
-    GLib.timeout_add(3600000, run_updater)
+    #GLib.timeout_add(3600000, run_updater)
     
     corners = Corners()
     bar = Bar()

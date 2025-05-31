@@ -21,6 +21,7 @@
 @import url("./styles/tools.css");
 @import url("./styles/wallpapers.css");
 @import url("./styles/workspaces.css");
+@import url("./styles/hue.css");
 
 * {
   all: unset;
