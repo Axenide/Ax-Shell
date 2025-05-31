@@ -1,11 +1,13 @@
+from fabric.bluetooth import BluetoothClient, BluetoothDevice
 from fabric.widgets.box import Box
-from fabric.widgets.label import Label
-from fabric.widgets.image import Image
 from fabric.widgets.button import Button
 from fabric.widgets.centerbox import CenterBox
+from fabric.widgets.image import Image
+from fabric.widgets.label import Label
 from fabric.widgets.scrolledwindow import ScrolledWindow
-from fabric.bluetooth import BluetoothClient, BluetoothDevice
+
 import modules.icons as icons
+
 
 class BluetoothDeviceSlot(CenterBox):
     def __init__(self, device: BluetoothDevice, **kwargs):
@@ -21,21 +23,24 @@ class BluetoothDeviceSlot(CenterBox):
             name="bluetooth-connect",
             label="Connect",
             on_clicked=lambda *_: self.device.set_connecting(not self.device.connected),
+            style_classes=["connected"] if self.device.connected else None,
         )
 
         self.start_children = [
             Box(
                 spacing=8,
+                h_expand=True,
+                h_align="fill",
                 children=[
-                    Image(icon_name=device.icon_name + "-symbolic", size=32),
-                    Label(label=device.name),
+                    Image(icon_name=device.icon_name + "-symbolic", size=16),
+                    Label(label=device.name, h_expand=True, h_align="start", ellipsization="end"),
                     self.connection_label,
                 ],
             )
         ]
         self.end_children = self.connect_button
 
-        self.device.emit("changed")  # to update display status
+        self.device.emit("changed")
 
     def on_changed(self, *_):
         self.connection_label.set_markup(
@@ -43,12 +48,16 @@ class BluetoothDeviceSlot(CenterBox):
         )
         if self.device.connecting:
             self.connect_button.set_label(
-                "Connecting..." if not self.device.connecting else "Disconnecting..."
+                "Connecting..." if not self.device.connecting else "..."
             )
         else:
             self.connect_button.set_label(
                 "Connect" if not self.device.connected else "Disconnect"
             )
+        if self.device.connected:
+            self.connect_button.add_style_class("connected")
+        else:
+            self.connect_button.remove_style_class("connected")
         return
 
 class BluetoothConnections(Box):
@@ -93,8 +102,6 @@ class BluetoothConnections(Box):
         self.paired_box = Box(spacing=2, orientation="vertical")
         self.available_box = Box(spacing=2, orientation="vertical")
 
-        # Create a single content container with the required structure:
-        # [Paired label] [Paired devices list] [Available label] [Available devices list]
         content_box = Box(spacing=4, orientation="vertical")
         content_box.add(self.paired_box)
         content_box.add(Label(name="bluetooth-section", label="Available"))
@@ -111,11 +118,12 @@ class BluetoothConnections(Box):
                 name="bluetooth-devices",
                 min_content_size=(-1, -1),
                 child=content_box,
-                v_expand=True
+                v_expand=True,
+                propagate_width=False,
+                propagate_height=False,
             ),
         ]
 
-        # Trigger initial notifications to update status without delay.
         self.client.notify("scanning")
         self.client.notify("enabled")
 

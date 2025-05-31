@@ -1,7 +1,11 @@
 #button-bar,
-#workspaces,
-#workspaces-num,
+#bar-inner.dense,
+#bar-inner.edge,
+#bar-inner.edge.vertical,
+#bar-inner.edgecenter.vertical,
+#workspaces-container,
 #notch-content,
+#notch-box.panel,
 #date-time,
 #systray,
 #battery,
@@ -12,7 +16,11 @@
 #weather,
 #language,
 #dock {
-  box-shadow: 0 0 4px alpha(black, 0.5);
+  box-shadow: 0 0 3px alpha(black, 0.99);
+}
+
+#notch-content.panel {
+  box-shadow: 0 0 3px alpha(black, 0);
 }
 
 #bar-revealer {

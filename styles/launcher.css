@@ -18,10 +18,12 @@
 #close-button,
 #clear-button,
 #config-button,
-#new-session-button {
+#new-session-button,
+#random-wall-button {
   background-color: var(--surface);
-  border-radius: 16px;
+  border-radius: 40px;
   padding: 8px;
+  transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 #close-button:hover,
@@ -31,13 +33,16 @@
 #config-button:hover,
 #config-button:focus,
 #new-session-button:hover,
-#new-session-button:focus {
+#new-session-button:focus,
+#random-wall-button:hover {
   background-color: var(--surface-bright);
+  border-radius: 16px;
 }
 
 #close-button:active,
 #clear-button:active {
   background-color: var(--red-dim);
+  border-radius: 40px;
 }
 
 #close-label,
@@ -52,18 +57,22 @@
 }
 
 #config-button:active,
-#new-session-button:active {
+#new-session-button:active,
+#random-wall-button:active {
   background-color: var(--primary);
+  border-radius: 40px;
 }
 
 #config-label,
-#new-session-label {
+#new-session-label,
+#random-wall-label {
   color: var(--primary);
   font-size: 24px;
 }
 
 #config-button:active #config-label,
-#new-session-button:active #new-session-label {
+#new-session-button:active #new-session-label,
+#random-wall-button:active #random-wall-label {
   color: var(--shadow);
 }
 
@@ -71,14 +80,18 @@
   border-radius: 16px;
 }
 
-#scrolled-window scrollbar {
+#scrolled-window scrollbar,
+#bluetooth-devices scrollbar,
+#network-ap-scrolled-window scrollbar {
   border-radius: 10px;
   background-color: var(--surface);
   padding: 4px;
   margin-left: 6px;
 }
 
-#scrolled-window slider {
+#scrolled-window slider,
+#bluetooth-devices slider,
+#network-ap-scrolled-window slider {
   border-radius: 8px;
   min-width: 16px;
   min-height: 48px;
@@ -86,10 +99,11 @@
 }
 
 #slot-button {
-  border-radius: 16px;
-  padding: 16px;
-  transition: padding 0.1s ease;
+  border-radius: 40px;
+  padding: 0 16px;
   animation: loadSlot 0.5s ease;
+  min-height: 52px;
+  transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 @keyframes loadSlot {
@@ -106,7 +120,8 @@
 #slot-button:focus,
 #slot-button:selected,
 #slot-button.selected {
-  background-color: var(--surface-bright);
+  border-radius: 16px;
+  background-color: var(--surface);
   padding-left: 20px;
 }
 

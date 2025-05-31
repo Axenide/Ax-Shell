@@ -3,19 +3,20 @@ import json
 
 import cairo
 import gi
-from loguru import logger
 from fabric.hyprland.service import Hyprland
+from fabric.utils.helpers import get_desktop_applications
 from fabric.widgets.box import Box
 from fabric.widgets.button import Button
 from fabric.widgets.eventbox import EventBox
 from fabric.widgets.image import Image
 from fabric.widgets.label import Label
 from fabric.widgets.overlay import Overlay
-import modules.icons as icons
+from loguru import logger
 
+import config.data as data
+import modules.icons as icons
 # WIP icon resolver (app_id to guessing the icon name)
 from utils.icon_resolver import IconResolver
-from fabric.utils.helpers import get_desktop_applications
 
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gdk, Gtk
@@ -318,35 +319,31 @@ class Overview(Box):
         return None
 
     def update(self, signal_update=False):
-        # Refresh app registry when updating to ensure latest data
         self._all_apps = get_desktop_applications()
         self.app_identifiers = self._build_app_identifiers_map()
-        
-        # Remove old clients and workspaces.
         for client in self.clients.values():
             client.destroy()
         self.clients.clear()
-
         for workspace in self.workspace_boxes.values():
             workspace.destroy()
         self.workspace_boxes.clear()
 
-        # Create two rows in this Box.
-        self.children = [Box(spacing=8), Box(spacing=8)]
+        if data.PANEL_THEME == "Panel" and data.BAR_POSITION in ["Left", "Right"]:
+            rows = 5
+            cols = 2
+        else:
+            rows = 2
+            cols = 5
+
+        self.children = [Box(spacing=8) for _ in range(rows)]
 
         monitors = {
             monitor["id"]: (monitor["x"], monitor["y"], monitor["transform"])
-            for monitor in json.loads(
-                connection.send_command("j/monitors").reply.decode()
-            )
+            for monitor in json.loads(connection.send_command("j/monitors").reply.decode())
         }
-
-        for client in json.loads(
-            str(connection.send_command("j/clients").reply.decode())
-        ):
-            # Exclude special workspaces.
+        for client in json.loads(connection.send_command("j/clients").reply.decode()):
             if client["workspace"]["id"] > 0:
-                self.clients[client["address"]] = HyprlandWindowButton(
+                btn = HyprlandWindowButton(
                     window=self,
                     title=client["title"],
                     address=client["address"],
@@ -354,20 +351,23 @@ class Overview(Box):
                     size=(client["size"][0] * SCALE, client["size"][1] * SCALE),
                     transform=monitors[client["monitor"]][2],
                 )
-                if client["workspace"]["id"] not in self.workspace_boxes:
-                    self.workspace_boxes[client["workspace"]["id"]] = Gtk.Fixed.new()
-                self.workspace_boxes[client["workspace"]["id"]].put(
-                    self.clients[client["address"]],
+                self.clients[client["address"]] = btn
+                w_id = client["workspace"]["id"]
+                if w_id not in self.workspace_boxes:
+                    self.workspace_boxes[w_id] = Gtk.Fixed.new()
+                self.workspace_boxes[w_id].put(
+                    btn,
                     abs(client["at"][0] - monitors[client["monitor"]][0]) * SCALE,
                     abs(client["at"][1] - monitors[client["monitor"]][1]) * SCALE,
                 )
 
-        # Lay out workspaces into two rows.
         for w_id in range(1, 11):
-            if w_id <= 5:
-                overview_row = self.children[0]
+            idx = w_id - 1
+            if rows == 2:
+                row = 0 if w_id <= cols else 1
             else:
-                overview_row = self.children[1]
+                row = idx // cols
+            overview_row = self.children[row]
             overview_row.add(
                 Box(
                     name="overview-workspace-box",
@@ -376,9 +376,7 @@ class Overview(Box):
                         Label(name="overview-workspace-label", label=f"Workspace {w_id}"),
                         WorkspaceEventBox(
                             w_id,
-                            self.workspace_boxes[w_id]
-                            if w_id in self.workspace_boxes
-                            else None,
+                            self.workspace_boxes.get(w_id)
                         ),
                     ],
                 )

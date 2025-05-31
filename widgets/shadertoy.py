@@ -4,7 +4,7 @@ from typing import Literal, cast, overload
 
 import gi
 import OpenGL.GL as GL
-from fabric import Property, Signal
+from fabric import Application, Property, Signal
 from fabric.widgets.widget import Widget
 from OpenGL.GL.shaders import compileProgram, compileShader
 
@@ -13,15 +13,18 @@ from gi.repository import Gdk, GdkPixbuf, GLib, Gtk
 
 
 class ShadertoyUniformType(Enum):
+    # TODO: add more types
     FLOAT = 1
     INTEGER = 2
     VECTOR = 3
     TEXTURE = 4
 
+
 class ShadertoyCompileError(Exception): ...
 
+
 class Shadertoy(Gtk.GLArea, Widget):
-    @Signal
+    @Signal  # pygobject signal
     def ready(self) -> None: ...
 
     @Property(str, "read-write")
@@ -38,7 +41,9 @@ class Shadertoy(Gtk.GLArea, Widget):
         self.queue_draw()
         return
 
+    # signatures for building a replica of shadertoy
     DEFAULT_VERTEX_SHADER = """
+    #version 330
 
     in vec2 position;
 
@@ -48,6 +53,7 @@ class Shadertoy(Gtk.GLArea, Widget):
     """
 
     DEFAULT_FRAGMENT_UNIFORMS = """
+    #version 330
 
     uniform vec3 iResolution;           // viewport resolution (in pixels)
     uniform float iTime;                 // shader playback time (in seconds)
@@ -102,7 +108,7 @@ class Shadertoy(Gtk.GLArea, Widget):
         **kwargs,
     ):
         Gtk.GLArea.__init__(
-            self
+            self  # type: ignore
         )
         Widget.__init__(
             self,
@@ -123,6 +129,7 @@ class Shadertoy(Gtk.GLArea, Widget):
         self._shader_buffer = shader_buffer
         self._shader_uniforms = shader_uniforms or []
 
+        # widget settings
         self.set_required_version(3, 3)
         self.set_has_depth_buffer(False)
         self.set_has_stencil_buffer(False)
@@ -133,10 +140,13 @@ class Shadertoy(Gtk.GLArea, Widget):
         self._quad_vbo = None
         self._texture_units = {}
 
+        # timer
         self._start_time = GLib.get_monotonic_time() / 1e6
         self._frame_time = self._start_time
         self._frame_count = 0
 
+        # to avoid a constant framerate we tell
+        # gtk to render a frame whenever possible
         self._tick_id = self.add_tick_callback(lambda *_: (self.queue_draw(), True)[1])
 
     def do_bake_program(self):
@@ -173,12 +183,19 @@ class Shadertoy(Gtk.GLArea, Widget):
             self._program = None
         self._program = self.do_bake_program()
 
+        # NOTE: for this to work (alpha pixels) `self.set_has_alpha(True)` must be done
+        # this breaks some fragment shaders, for some reason, so i'm leaving it for anyone willing to use
         GL.glEnable(GL.GL_BLEND)
         GL.glBlendFunc(GL.GL_SRC_ALPHA, GL.GL_ONE_MINUS_SRC_ALPHA)
 
         self._quad_vbo = GL.glGenBuffers(1)
         GL.glBindBuffer(GL.GL_ARRAY_BUFFER, self._quad_vbo)
 
+        # this is not so good, unless the introduction of numpy, we must do
+        # a hack to generate an array GL would accept, i've tried using
+        # the "array" python library but it doesn't seem to be working
+
+        # cast python type into GL type (list[float] -> arraybuf[GLfloat])
         quad_verts = (-1.0, -1.0, 1.0, -1.0, -1.0, 1.0, 1.0, 1.0)
         array_type = GL.GLfloat * len(quad_verts)
 
@@ -197,7 +214,7 @@ class Shadertoy(Gtk.GLArea, Widget):
         GL.glVertexAttribPointer(position, 2, GL.GL_FLOAT, GL.GL_FALSE, 0, None)
 
         for uname, utype, uvalue in self._shader_uniforms:
-            self.set_uniform(uname, utype, uvalue)
+            self.set_uniform(uname, utype, uvalue)  # type: ignore
 
         self._ready = True
         self.ready()
@@ -222,11 +239,12 @@ class Shadertoy(Gtk.GLArea, Widget):
 
         GL.glUseProgram(self._program)
 
+        # clear up for next frame
         GL.glClear(GL.GL_COLOR_BUFFER_BIT)
 
         alloc = self.get_allocation()
-        width: int = alloc.width
-        height: int = alloc.height
+        width: int = alloc.width  # type: ignore
+        height: int = alloc.height  # type: ignore
         mouse_pos = cast(tuple[int, int], self.get_pointer())
 
         current_time, delta_time, frame_rate = self.do_get_timing()
@@ -246,6 +264,7 @@ class Shadertoy(Gtk.GLArea, Widget):
             (mouse_pos[0], height - mouse_pos[1], 0, 0),
         )
 
+        # paint the quad
         GL.glBindVertexArray(self._vao)
         GL.glDrawArrays(GL.GL_TRIANGLE_STRIP, 0, 4)
         self.do_post_render(current_time)
@@ -307,7 +326,7 @@ class Shadertoy(Gtk.GLArea, Widget):
             case ShadertoyUniformType.INTEGER:
                 GL.glUniform1i(location, value)
             case ShadertoyUniformType.TEXTURE:
-
+                # who dislikes boilerplate?
                 value = cast(GdkPixbuf.Pixbuf, value).flip(False)
                 format = GL.GL_RGBA if value.get_has_alpha() else GL.GL_RGB
 
@@ -330,17 +349,19 @@ class Shadertoy(Gtk.GLArea, Widget):
                     GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MAG_FILTER, GL.GL_LINEAR
                 )
 
+                # "upload" the texture
                 GL.glTexImage2D(
                     GL.GL_TEXTURE_2D,
-                    0,
-                    format,
+                    0,  # detail level (woah?)
+                    format,  # result format
                     value.get_width(),
                     value.get_height(),
-                    0,
-                    format,
+                    0,  # "border"
+                    format,  # input format
                     GL.GL_UNSIGNED_BYTE,
                     value.get_pixels(),
                 )
                 GL.glGenerateMipmap(GL.GL_TEXTURE_2D)
 
+                # all aboard...
                 GL.glUniform1i(location, texture_unit)

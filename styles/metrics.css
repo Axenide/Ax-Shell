@@ -3,6 +3,11 @@
   padding: 4px;
 }
 
+#metrics-small.invert {
+  background-color: var(--surface);
+  border-radius: 12px;
+}
+
 #metrics-circle {
   color: var(--surface-bright);
   border: 3px solid var(--primary);

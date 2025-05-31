@@ -1,19 +1,23 @@
 import gi
+
 gi.require_version('Gtk', '3.0')
 from fabric.widgets.box import Box
+from fabric.widgets.label import Label
 from fabric.widgets.stack import Stack
+
+import config.data as data
+from modules.bluetooth import BluetoothConnections
 from modules.buttons import Buttons
 from modules.calendar import Calendar
-
-#from modules.media import Media
-from modules.cgmsugar import MyCgm
-from modules.kanban import Kanban
-
 from modules.player import Player
 from modules.bluetooth import BluetoothConnections
-from modules.hue import Light
 from modules.metrics import Metrics
 from modules.controls import ControlSliders
+from modules.metrics import Metrics
+from modules.network import NetworkConnections
+from modules.notifications import NotificationHistory
+from modules.player import Player
+
 
 class Widgets(Box):
     def __init__(self, **kwargs):
@@ -26,6 +30,11 @@ class Widgets(Box):
             visible=True,
             all_visible=True,
         )
+
+        vertical_layout = False
+
+        if data.PANEL_THEME == "Panel" and (data.BAR_POSITION in ["Left", "Right"] or data.PANEL_POSITION in ["Start", "End"]):
+            vertical_layout = True
 
         self.notch = kwargs["notch"]
 
@@ -52,15 +61,11 @@ class Widgets(Box):
 
         self.controls = ControlSliders()
 
+        self.calendar = Calendar()
+
         self.player = Player()
 
         self.metrics = Metrics()
-
-        self.cgm = Box(
-            name="cgm",
-            h_expand=True,
-            v_expand=True,
-        )
 
         self.notification_history = self.notch.notification_history
 
@@ -70,6 +75,7 @@ class Widgets(Box):
             transition_type="slide-left-right",
             children=[
                 self.notification_history,
+                self.network_connections,
                 self.bluetooth,
                 self.light,
             ]
@@ -85,26 +91,32 @@ class Widgets(Box):
             ]
         )
 
+        self.children_1 = [
+            Box(
+                name="container-sub-1",
+                h_expand=True,
+                v_expand=True,
+                spacing=8,
+                children=[
+                    self.cgm,
+
+                    self.applet_stack_box,
+                ]
+            ),
+            self.metrics,
+        ] if not vertical_layout else [
+            self.applet_stack_box,
+            self.player,
+
+        ]
+
         self.container_1 = Box(
             name="container-1",
             h_expand=True,
             v_expand=True,
-            orientation="h",
+            orientation="h" if not vertical_layout else "v",
             spacing=8,
-            children=[
-                self.box_2,
-                Box(
-                    name="container-sub-1",
-                    h_expand=True,
-                    v_expand=True,
-                    spacing=8,
-                    children=[
-                        self.cgm,
-                        self.applet_stack_box,
-                    ]
-                ),
-                self.metrics,
-            ]
+            children=self.children_1,
         )
 
         self.container_2 = Box(
@@ -120,16 +132,20 @@ class Widgets(Box):
             ]
         )
 
+        self.children_3 = [
+            self.player,
+            self.container_2,
+        ] if not vertical_layout else [
+            self.container_2,
+        ]
+
         self.container_3 = Box(
             name="container-3",
             h_expand=True,
             v_expand=True,
             orientation="h",
             spacing=8,
-            children=[
-                self.player,
-                self.container_2,
-            ]
+            children=self.children_3,
         )
 
         self.add(self.container_3)
@@ -140,5 +156,5 @@ class Widgets(Box):
     def show_notif(self):
         self.applet_stack.set_visible_child(self.notification_history)
 
-    def show_light(self):
-        self.applet_stack.set_visible_child(self.light)
+    def show_network_applet(self):
+        self.notch.open_notch("network_applet")

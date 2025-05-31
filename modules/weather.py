@@ -9,8 +9,9 @@ from fabric.widgets.label import Label
 from fabric.widgets.box import Box
 
 gi.require_version("Gtk", "3.0")
-import modules.icons as icons
 import config.data as data
+import modules.icons as icons
+
 
 class Weather(Box):
     def __init__(self, **kwargs) -> None:
@@ -19,16 +20,15 @@ class Weather(Box):
         self.cords = PrivateData()
         self.add(self.label)
         self.show_all()
-        self.enabled = True  # Add a flag to track if the component should be shown
-        self.session = requests.Session()  # Reuse HTTP connection
-        # Update every 10 minutes
+        self.enabled = True
+        self.session = requests.Session()
         GLib.timeout_add_seconds(600, self.fetch_weather)
         self.fetch_weather()
 
     def set_visible(self, visible):
         """Override to track external visibility setting"""
         self.enabled = visible
-        # Only update actual visibility if weather data is available
+
         if visible and hasattr(self, 'has_weather_data') and self.has_weather_data:
             super().set_visible(True)
         else:

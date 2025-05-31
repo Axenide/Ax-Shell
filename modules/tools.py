@@ -1,14 +1,16 @@
-from fabric.widgets.box import Box
-from fabric.widgets.label import Label
-from fabric.widgets.button import Button
-from fabric.utils.helpers import exec_shell_command_async, get_relative_path
-import modules.icons as icons
-from gi.repository import Gdk, GLib
 import os
-import config.data as data
 import subprocess
-from loguru import logger
 import threading
+
+from fabric.utils.helpers import exec_shell_command_async, get_relative_path
+from fabric.widgets.box import Box
+from fabric.widgets.button import Button
+from fabric.widgets.label import Label
+from gi.repository import Gdk, GLib
+from loguru import logger
+
+import config.data as data
+import modules.icons as icons
 
 SCREENSHOT_SCRIPT = get_relative_path("../scripts/screenshot.sh")
 POMODORO_SCRIPT = get_relative_path("../scripts/pomodoro.sh")
@@ -18,9 +20,13 @@ SCREENRECORD_SCRIPT = get_relative_path("../scripts/screenrecord.sh")
 
 class Toolbox(Box):
     def __init__(self, **kwargs):
+        orientation = "h"
+        if data.PANEL_THEME == "Panel" and (data.BAR_POSITION in ["Left", "Right"] or data.PANEL_POSITION in ["Start", "End"]):
+            orientation = "v"
+
         super().__init__(
             name="toolbox",
-            orientation="h",
+            orientation=orientation,
             spacing=4,
             v_align="center",
             h_align="center",
@@ -39,7 +45,6 @@ class Toolbox(Box):
             h_align="center",
             v_align="center",
         )
-        # Enable keyboard focus and connect events
         self.btn_ssregion.set_can_focus(True)
         self.btn_ssregion.connect("button-press-event", self.on_ssregion_click)
         self.btn_ssregion.connect("key-press-event", self.on_ssregion_key)
@@ -53,12 +58,12 @@ class Toolbox(Box):
             h_align="center",
             v_align="center",
         )
-        # Enable keyboard focus and connect events
+
         self.btn_ssfull.set_can_focus(True) 
         self.btn_ssfull.connect("button-press-event", self.on_ssfull_click)
         self.btn_ssfull.connect("key-press-event", self.on_ssfull_key)
 
-        self.btn_sswindow = Button(  # New window screenshot button
+        self.btn_sswindow = Button(
             name="toolbox-button",
             child=Label(name="button-label", markup=icons.sswindow),
             on_clicked=self.sswindow,
@@ -67,7 +72,7 @@ class Toolbox(Box):
             h_align="center",
             v_align="center",
         )
-        # Enable keyboard focus and connect events for window screenshot
+
         self.btn_sswindow.set_can_focus(True)
         self.btn_sswindow.connect("button-press-event", self.on_sswindow_click)
         self.btn_sswindow.connect("key-press-event", self.on_sswindow_key)
@@ -125,9 +130,8 @@ class Toolbox(Box):
             v_align="center",
         )
 
-        # Enable keyboard focus for the colorpicker button.
         self.btn_color.set_can_focus(True)
-        # Connect both mouse and keyboard events.
+
         self.btn_color.connect("button-press-event", self.colorpicker)
         self.btn_color.connect("key_press_event", self.colorpicker_key)
 
@@ -183,7 +187,6 @@ class Toolbox(Box):
 
         self.show_all()
 
-        # Start polling for process state every second.
         self.recorder_timer_id = GLib.timeout_add_seconds(1, self.update_screenrecord_state)
         self.gamemode_updater = GLib.timeout_add_seconds(1, self.gamemode_check)
         self.pomodoro_updater = GLib.timeout_add_seconds(1, self.pomodoro_check)
@@ -191,8 +194,7 @@ class Toolbox(Box):
     def close_menu(self):
         self.notch.close_notch()
 
-    # Action methods
-    def ssfull(self, *args, mockup=False): # Added mockup argument
+    def ssfull(self, *args, mockup=False):
         cmd = f"bash {SCREENSHOT_SCRIPT} p"
         if mockup:
             cmd += " mockup"
@@ -201,10 +203,10 @@ class Toolbox(Box):
 
     def on_ssfull_click(self, button, event):
         if event.type == Gdk.EventType.BUTTON_PRESS:
-            if event.button == 1:  # Left click
+            if event.button == 1:
                 self.ssfull()
-            elif event.button == 3:  # Right click
-                self.ssfull(mockup=True) # Call ssfull with mockup=True
+            elif event.button == 3:
+                self.ssfull(mockup=True)
             return True
         return False
 
@@ -212,22 +214,22 @@ class Toolbox(Box):
         if event.keyval in {Gdk.KEY_Return, Gdk.KEY_KP_Enter}:
             modifiers = event.get_state()
             if modifiers & Gdk.ModifierType.SHIFT_MASK:
-                self.ssfull(mockup=True) # Call ssfull with mockup=True
+                self.ssfull(mockup=True)
             else:
                 self.ssfull()
             return True
         return False
 
     def ssregion(self, *args):
-        exec_shell_command_async(f"bash {SCREENSHOT_SCRIPT} sf")
+        exec_shell_command_async(f"bash {SCREENSHOT_SCRIPT} s")
         self.close_menu()
 
     def on_ssregion_click(self, button, event):
         if event.type == Gdk.EventType.BUTTON_PRESS:
-            if event.button == 1:  # Left click
+            if event.button == 1:
                 self.ssregion()
-            elif event.button == 3:  # Right click
-                exec_shell_command_async(f"bash {SCREENSHOT_SCRIPT} sf mockup")
+            elif event.button == 3:
+                exec_shell_command_async(f"bash {SCREENSHOT_SCRIPT} s mockup")
                 self.close_menu()
             return True
         return False
@@ -236,7 +238,7 @@ class Toolbox(Box):
         if event.keyval in {Gdk.KEY_Return, Gdk.KEY_KP_Enter}:
             modifiers = event.get_state()
             if modifiers & Gdk.ModifierType.SHIFT_MASK:
-                exec_shell_command_async(f"bash {SCREENSHOT_SCRIPT} sf mockup")
+                exec_shell_command_async(f"bash {SCREENSHOT_SCRIPT} s mockup")
                 self.close_menu()
             else:
                 self.ssregion()
@@ -249,9 +251,9 @@ class Toolbox(Box):
 
     def on_sswindow_click(self, button, event):
         if event.type == Gdk.EventType.BUTTON_PRESS:
-            if event.button == 1:  # Left click
+            if event.button == 1:
                 self.sswindow()
-            elif event.button == 3:  # Right click
+            elif event.button == 3:
                 exec_shell_command_async(f"bash {SCREENSHOT_SCRIPT} w mockup")
                 self.close_menu()
             return True
@@ -269,16 +271,14 @@ class Toolbox(Box):
         return False
 
     def screenrecord(self, *args):
-        # Launch screenrecord script in detached mode so that it remains running independently of this program.
+
         exec_shell_command_async(f"bash -c 'nohup bash {SCREENRECORD_SCRIPT} > /dev/null 2>&1 & disown'")
         self.close_menu()
 
-    # Function to run the pomodoro script
     def pomodoro(self, *args):
         exec_shell_command_async(f"bash -c 'nohup bash {POMODORO_SCRIPT} > /dev/null 2>&1 & disown'")
         self.close_menu()
 
-    # Function to check if the pomodoro script is running
     def pomodoro_check(self):
         def check():
             try:
@@ -301,7 +301,7 @@ class Toolbox(Box):
         return True
 
     def ocr(self, *args):
-        exec_shell_command_async(f"bash {OCR_SCRIPT} sf")
+        exec_shell_command_async(f"bash {OCR_SCRIPT} s")
         self.close_menu()
 
     def gamemode(self, *args):
@@ -331,9 +331,9 @@ class Toolbox(Box):
     def colorpicker(self, button, event):
         if event.type == Gdk.EventType.BUTTON_PRESS:
             cmd = {
-                1: "-hex",   # Left click
-                2: "-hsv",   # Middle click
-                3: "-rgb"    # Right click
+                1: "-hex",
+                2: "-hsv",
+                3: "-rgb"
             }.get(event.button)
             
             if cmd:
@@ -343,7 +343,7 @@ class Toolbox(Box):
     def colorpicker_key(self, widget, event):
         if event.keyval in {Gdk.KEY_Return, Gdk.KEY_KP_Enter}:
             modifiers = event.get_state()
-            cmd = "-hex"  # Default
+            cmd = "-hex"
             
             match modifiers & (Gdk.ModifierType.SHIFT_MASK | Gdk.ModifierType.CONTROL_MASK):
                 case Gdk.ModifierType.SHIFT_MASK:
@@ -381,7 +381,7 @@ class Toolbox(Box):
         screenshots_dir = os.path.join(os.environ.get('XDG_PICTURES_DIR', 
                                                     os.path.expanduser('~/Pictures')), 
                                      'Screenshots')
-        # Create directory if it doesn't exist
+
         os.makedirs(screenshots_dir, exist_ok=True)
         exec_shell_command_async(f"xdg-open {screenshots_dir}")
         self.close_menu()
@@ -390,7 +390,7 @@ class Toolbox(Box):
         recordings_dir = os.path.join(os.environ.get('XDG_VIDEOS_DIR', 
                                                    os.path.expanduser('~/Videos')), 
                                     'Recordings')
-        # Create directory if it doesn't exist
+
         os.makedirs(recordings_dir, exist_ok=True)
         exec_shell_command_async(f"xdg-open {recordings_dir}")
         self.close_menu()

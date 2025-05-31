@@ -1,7 +1,8 @@
 #toolbox-button {
-  border-radius: 20px;
+  border-radius: 40px;
   min-width: 52px;
   min-height: 52px;
+  transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 #toolbox-button label {
@@ -19,6 +20,7 @@
 
 #toolbox-button:hover,
 #toolbox-button:focus {
+  border-radius: 20px;
   background-color: var(--surface-bright);
 }
 
@@ -38,6 +40,7 @@
 }
 
 #toolbox-button:active {
+  border-radius: 40px;
   background-color: var(--primary);
 }
 

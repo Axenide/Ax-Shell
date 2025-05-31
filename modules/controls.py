@@ -1,18 +1,17 @@
-from gi.repository import GLib, Gdk
-
+from fabric.audio.service import Audio
 from fabric.widgets.box import Box
 from fabric.widgets.button import Button
 from fabric.widgets.circularprogressbar import CircularProgressBar
 from fabric.widgets.eventbox import EventBox
 from fabric.widgets.label import Label
 from fabric.widgets.overlay import Overlay
-
-import modules.icons as icons
-import config.data as data
-
-from fabric.audio.service import Audio
 from fabric.widgets.scale import Scale
+from gi.repository import Gdk, GLib
+
+import config.data as data
+import modules.icons as icons
 from services.brightness import Brightness
+
 
 class VolumeSlider(Scale):
     def __init__(self, **kwargs):
@@ -47,7 +46,6 @@ class VolumeSlider(Scale):
             return
         self.value = self.audio.speaker.volume / 100
         
-        # Apply muted class when speaker is muted
         if self.audio.speaker.muted:
             self.add_style_class("muted")
         else:
@@ -85,7 +83,7 @@ class MicSlider(Scale):
             return
         self.value = self.audio.microphone.volume / 100
         
-        # Apply muted class when microphone is muted
+
         if self.audio.microphone.muted:
             self.add_style_class("muted")
         else:
@@ -168,7 +166,6 @@ class BrightnessSlider(Scale):
         if self._update_source_id is not None:
             GLib.source_remove(self._update_source_id)
         super().destroy()
-
 
 class BrightnessSmall(Box):
     def __init__(self, **kwargs):
@@ -406,7 +403,7 @@ class BrightnessIcon(Box):
         self.brightness_label = Label(name="brightness-label-dash", markup=icons.brightness_high, h_align="center", v_align="center", h_expand=True, v_expand=True)
         self.brightness_button = Button(child=self.brightness_label, h_align="center", v_align="center", h_expand=True, v_expand=True)
         
-        # Wrap the button in an EventBox for scroll events - add alignment properties here
+
         self.event_box = EventBox(
             events=["scroll", "smooth-scroll"],
             child=self.brightness_button,
@@ -470,11 +467,11 @@ class BrightnessIcon(Box):
         brightness_percentage = int(normalized * 100)
         
         if brightness_percentage >= 75:
-            self.brightness_label.set_markup(icons.brightness_high)
+            self.brightness_label.set_markup("󰃠")
         elif brightness_percentage >= 24:
-            self.brightness_label.set_markup(icons.brightness_medium)
+            self.brightness_label.set_markup("󰃠")
         else:
-            self.brightness_label.set_markup(icons.brightness_low)
+            self.brightness_label.set_markup("󰃠")
         self.set_tooltip_text(f"{brightness_percentage}%")
         self._updating_from_brightness = False
         
@@ -487,31 +484,32 @@ class VolumeIcon(Box):
     def __init__(self, **kwargs):
         super().__init__(name="vol-icon", **kwargs)
         self.audio = Audio()
-        
-        self.vol_label = Label(name="vol-label-dash", markup=icons.vol_high, h_align="center", v_align="center", h_expand=True, v_expand=True)
+
+        self.vol_label = Label(name="vol-label-dash", markup="", h_align="center", v_align="center", h_expand=True, v_expand=True)
         self.vol_button = Button(on_clicked=self.toggle_mute, child=self.vol_label, h_align="center", v_align="center", h_expand=True, v_expand=True)
-        
-        # Wrap the button in an EventBox for scroll events - add alignment properties here
+
         self.event_box = EventBox(
             events=["scroll", "smooth-scroll"],
             child=self.vol_button,
-            h_align="center", 
-            v_align="center", 
-            h_expand=True, 
+            h_align="center",
+            v_align="center",
+            h_expand=True,
             v_expand=True
         )
         self.event_box.connect("scroll-event", self.on_scroll)
         self.add(self.event_box)
-        
+
         self._pending_value = None
         self._update_source_id = None
-        
+        self._periodic_update_source_id = None
+
         self.audio.connect("notify::speaker", self.on_new_speaker)
         if self.audio.speaker:
             self.audio.speaker.connect("changed", self.on_speaker_changed)
-        self.on_speaker_changed()
+
+        self._periodic_update_source_id = GLib.timeout_add_seconds(1, self.update_device_icon)
         self.add_events(Gdk.EventMask.SCROLL_MASK | Gdk.EventMask.SMOOTH_SCROLL_MASK)
-        
+
     def on_scroll(self, _, event):
         if not self.audio.speaker:
             return
@@ -556,39 +554,67 @@ class VolumeIcon(Box):
         current_stream = self.audio.speaker
         if current_stream:
             current_stream.muted = not current_stream.muted
-            if current_stream.muted:
-                self.vol_button.get_child().set_markup(icons.vol_off)
-                self.vol_label.add_style_class("muted")
-                self.vol_button.add_style_class("muted")
-            else:
-                self.on_speaker_changed()
-                self.vol_label.remove_style_class("muted")
-                self.vol_button.remove_style_class("muted")
-                
+
+            self.on_speaker_changed()
+
     def on_speaker_changed(self, *_):
         if not self.audio.speaker:
+
+            self.vol_label.set_markup("")
+            self.remove_style_class("muted")
+            self.vol_label.remove_style_class("muted")
+            self.vol_button.remove_style_class("muted")
+            self.set_tooltip_text("No audio device")
             return
+
         if self.audio.speaker.muted:
-            self.vol_button.get_child().set_markup(icons.vol_off)
+            self.vol_label.set_markup(icons.headphones)
             self.add_style_class("muted")
             self.vol_label.add_style_class("muted")
+            self.vol_button.add_style_class("muted")
             self.set_tooltip_text("Muted")
-            return
         else:
             self.remove_style_class("muted")
             self.vol_label.remove_style_class("muted")
-            
-        self.set_tooltip_text(f"{round(self.audio.speaker.volume)}%")
-        if self.audio.speaker.volume > 74:
-            self.vol_button.get_child().set_markup(icons.vol_high)
-        elif self.audio.speaker.volume > 0:
-            self.vol_button.get_child().set_markup(icons.vol_medium)
-        else:
-            self.vol_button.get_child().set_markup(icons.vol_mute)
-            
+            self.vol_button.remove_style_class("muted")
+
+            self.update_device_icon()
+            self.set_tooltip_text(f"{round(self.audio.speaker.volume)}%")
+
+    def update_device_icon(self):
+
+        if not self.audio.speaker:
+
+            self.vol_label.set_markup("")
+
+            return True
+
+        if self.audio.speaker.muted:
+             return True
+
+        try:
+
+            device_type = self.audio.speaker.port.type
+            if device_type == 'headphones':
+                self.vol_label.set_markup(icons.headphones)
+            elif device_type == 'speaker':
+                self.vol_label.set_markup(icons.headphones)
+            else:
+
+                 self.vol_label.set_markup(icons.headphones)
+
+        except AttributeError:
+
+            self.vol_label.set_markup(icons.headphones)
+
+        return True
+
     def destroy(self):
         if self._update_source_id is not None:
             GLib.source_remove(self._update_source_id)
+
+        if hasattr(self, '_periodic_update_source_id') and self._periodic_update_source_id is not None:
+            GLib.source_remove(self._periodic_update_source_id)
         super().destroy()
 
 class MicIcon(Box):
@@ -599,7 +625,7 @@ class MicIcon(Box):
         self.mic_label = Label(name="mic-label-dash", markup=icons.mic, h_align="center", v_align="center", h_expand=True, v_expand=True)
         self.mic_button = Button(on_clicked=self.toggle_mute, child=self.mic_label, h_align="center", v_align="center", h_expand=True, v_expand=True)
         
-        # Wrap the button in an EventBox for scroll events - add alignment properties here
+
         self.event_box = EventBox(
             events=["scroll", "smooth-scroll"],
             child=self.mic_button,
@@ -665,7 +691,7 @@ class MicIcon(Box):
         if current_stream:
             current_stream.muted = not current_stream.muted
             if current_stream.muted:
-                self.mic_button.get_child().set_markup(icons.mic_mute)
+                self.mic_button.get_child().set_markup("")
                 self.mic_label.add_style_class("muted")
                 self.mic_button.add_style_class("muted")
             else:
@@ -677,7 +703,7 @@ class MicIcon(Box):
         if not self.audio.microphone:
             return
         if self.audio.microphone.muted:
-            self.mic_button.get_child().set_markup(icons.mic_mute)
+            self.mic_button.get_child().set_markup("")
             self.add_style_class("muted")
             self.mic_label.add_style_class("muted")
             self.set_tooltip_text("Muted")
@@ -688,9 +714,9 @@ class MicIcon(Box):
             
         self.set_tooltip_text(f"{round(self.audio.microphone.volume)}%")
         if self.audio.microphone.volume >= 1:
-            self.mic_button.get_child().set_markup(icons.mic)
+            self.mic_button.get_child().set_markup("")
         else:
-            self.mic_button.get_child().set_markup(icons.mic_mute)
+            self.mic_button.get_child().set_markup("")
             
     def destroy(self):
         if self._update_source_id is not None:
@@ -708,21 +734,21 @@ class ControlSliders(Box):
         
         brightness = Brightness.get_initial()
         
-        # Create all slider containers with icons
+
         if (brightness.screen_brightness != -1):
-            brightness_row = Box(orientation="h", spacing=4, h_expand=True, h_align="fill")
+            brightness_row = Box(orientation="h", spacing=0, h_expand=True, h_align="fill")
             brightness_row.add(BrightnessIcon())
-            brightness_row.add(BrightnessSlider())  # Removed h_expand=True
+            brightness_row.add(BrightnessSlider())
             self.add(brightness_row)
             
-        volume_row = Box(orientation="h", spacing=4, h_expand=True, h_align="fill")
+        volume_row = Box(orientation="h", spacing=0, h_expand=True, h_align="fill")
         volume_row.add(VolumeIcon())
-        volume_row.add(VolumeSlider())  # Removed h_expand=True
+        volume_row.add(VolumeSlider())
         self.add(volume_row)
         
-        mic_row = Box(orientation="h", spacing=4, h_expand=True, h_align="fill")
+        mic_row = Box(orientation="h", spacing=0, h_expand=True, h_align="fill")
         mic_row.add(MicIcon())
-        mic_row.add(MicSlider())  # Removed h_expand=True
+        mic_row.add(MicSlider())
         self.add(mic_row)
         
         self.show_all()

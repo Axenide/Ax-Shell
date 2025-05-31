@@ -28,6 +28,7 @@
 #day-empty {
   min-width: 32px;
   min-height: 32px;
+  font-size: 9pt;
 }
 
 #day-empty {
@@ -36,6 +37,7 @@
 
 #weekday-label {
   color: var(--primary);
+  font-size: 9pt;
 }
 
 #calendar-grid {
@@ -44,7 +46,7 @@
 }
 
 #day-label.current-day {
-  background-color: var(--primary);
+  background-color: var(--foreground);
   color: var(--shadow);
   border-radius: 20px;
 }

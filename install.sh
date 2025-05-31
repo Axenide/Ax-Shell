@@ -30,6 +30,7 @@ PACKAGES=(
   python-numpy
   python-pillow
   python-psutil
+  python-pywayland
   python-requests
   python-setproctitle
   python-toml
@@ -38,11 +39,12 @@ PACKAGES=(
   swww
   tesseract
   tmux
+  ttf-nerd-fonts-symbols-mono
   unzip
   uwsm
+  vte3
   webp-pixbuf-loader
   wl-clipboard
-  wlinhibit
 )
 
 # Prevent running as root

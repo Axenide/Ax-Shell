@@ -1,21 +1,24 @@
-import os
-import hashlib
-import shutil
 import colorsys
-from gi.repository import GdkPixbuf, Gtk, GLib, Gio, Gdk, Pango
+import concurrent.futures
+import hashlib
+import os
+import random  # <--- AÑADIDO
+import shutil
+from concurrent.futures import ThreadPoolExecutor
+
+from fabric.utils.helpers import exec_shell_command_async
 from fabric.widgets.box import Box
 from fabric.widgets.button import Button
-from fabric.widgets.centerbox import CenterBox
 from fabric.widgets.entry import Entry
-from fabric.widgets.scrolledwindow import ScrolledWindow
 from fabric.widgets.label import Label
-from fabric.utils.helpers import exec_shell_command_async
-import modules.icons as icons
-import config.data as data
-import config.config
+from fabric.widgets.scrolledwindow import ScrolledWindow
+from gi.repository import Gdk, GdkPixbuf, Gio, GLib, Gtk, Pango
 from PIL import Image
-import concurrent.futures
-from concurrent.futures import ThreadPoolExecutor
+
+import config.config
+import config.data as data
+import modules.icons as icons
+
 
 class WallpaperSelector(Box):
     CACHE_DIR = f"{data.CACHE_DIR}/thumbs"  # Changed from wallpapers to thumbs
@@ -70,13 +73,18 @@ class WallpaperSelector(Box):
             spacing=10,
             h_expand=True,
             v_expand=True,
+            h_align="fill",
+            v_align="fill",
             child=self.viewport,
+            propagate_width=False,
+            propagate_height=False,
         )
 
         self.search_entry = Entry(
             name="search-entry-walls",
             placeholder="Search Wallpapers...",
             h_expand=True,
+            h_align="fill",
             notify_text=lambda entry, *_: self.arrange_viewport(entry.get_text()),
             on_key_press_event=self.on_search_entry_key_press,
         )
@@ -121,6 +129,7 @@ class WallpaperSelector(Box):
 
         # Create a switcher to enable/disable Matugen (enabled by default)
         self.matugen_switcher = Gtk.Switch(name="matugen-switcher")
+        self.matugen_switcher.set_tooltip_text("Toggle dynamic colors")
         self.matugen_switcher.set_vexpand(False)
         self.matugen_switcher.set_hexpand(False)
         self.matugen_switcher.set_valign(Gtk.Align.CENTER)
@@ -130,15 +139,19 @@ class WallpaperSelector(Box):
 
         self.mat_icon = Label(name="mat-label", markup=icons.palette)
 
+        self.random_wall = Button(
+            name="random-wall-button",
+            child=Label(name="random-wall-label", markup=icons.dice_1),
+            tooltip_text="Random Wallpaper",
+        )
+        self.random_wall.connect("clicked", self.set_random_wallpaper) # <--- AÑADIDO
+
         # Add the switcher to the header_box's start_children
-        self.header_box = CenterBox(
+        self.header_box = Box(
             name="header-box",
             spacing=8,
             orientation="h",
-            # Removed color button and label from here
-            start_children=[self.matugen_switcher, self.mat_icon],
-            center_children=[self.search_entry],
-            end_children=[self.scheme_dropdown],
+            children=[self.random_wall, self.search_entry, self.scheme_dropdown, self.matugen_switcher],
         )
 
         self.add(self.header_box)
@@ -180,13 +193,54 @@ class WallpaperSelector(Box):
         # Removed the old main_content_box and its add
 
         self._start_thumbnail_thread()
-        self.connect("map", self.on_map) # Connect the map signal
-        # Set initial sensitivity based on loaded state
-        # self.scheme_dropdown.set_sensitive(self.matugen_enabled) # Ensure sensitivity is set correctly on load
-        self.setup_file_monitor()  # Initialize file monitoring
+        self.connect("map", self.on_map)
+        self.setup_file_monitor()
         self.show_all()
+        self.randomize_dice_icon()
         # Ensure the search entry gets focus when starting
         self.search_entry.grab_focus()
+
+    def randomize_dice_icon(self):
+        dice_icons = [
+            icons.dice_1,
+            icons.dice_2,
+            icons.dice_3,
+            icons.dice_4,
+            icons.dice_5,
+            icons.dice_6,
+        ]
+        chosen_icon = random.choice(dice_icons)
+        label = self.random_wall.get_child()
+        if isinstance(label, Label):
+            label.set_markup(chosen_icon)
+
+    def set_random_wallpaper(self, widget, external=False):
+        if not self.files:
+            print("No wallpapers available to set a random one.")
+            return
+
+        file_name = random.choice(self.files)
+        full_path = os.path.join(data.WALLPAPERS_DIR, file_name)
+        selected_scheme = self.scheme_dropdown.get_active_id()
+        current_wall = os.path.expanduser(f"~/.current.wall")
+
+        if os.path.isfile(current_wall) or os.path.islink(current_wall): # Check for link too
+            os.remove(current_wall)
+        os.symlink(full_path, current_wall)
+
+        if self.matugen_switcher.get_active():
+            exec_shell_command_async(f'matugen image "{full_path}" -t {selected_scheme}')
+        else:
+            exec_shell_command_async(
+                f'swww img "{full_path}" -t outer --transition-duration 1.5 --transition-step 255 --transition-fps 60 -f Nearest'
+            )
+        
+        print(f"Set random wallpaper: {file_name}")
+
+        if external:
+            exec_shell_command_async(f"notify-send '🎲 Wallpaper' 'Setting a random wallpaper 🎨' -a '{data.APP_NAME_CAP}' -i '{full_path}' -e")
+
+        self.randomize_dice_icon()
 
     def setup_file_monitor(self):
         gfile = Gio.File.new_for_path(data.WALLPAPERS_DIR)
@@ -257,18 +311,17 @@ class WallpaperSelector(Box):
         full_path = os.path.join(data.WALLPAPERS_DIR, file_name)
         print(full_path)
         selected_scheme = self.scheme_dropdown.get_active_id()
-        current_wall = os.path.expanduser("~/.current.wall")
-        print(full_path, current_wall)
-        if not os.path.exists(current_wall) or os.path.isfile(current_wall):
-            exec_shell_command_async(f'rm {current_wall}')
+        current_wall = os.path.expanduser(f"~/.current.wall")
+        if os.path.isfile(current_wall) or os.path.islink(current_wall):
+            os.remove(current_wall)
         os.symlink(full_path, current_wall)
         if self.matugen_switcher.get_active():
             # Matugen is enabled: run the normal command.
-            exec_shell_command_async(f'matugen image {full_path} -t {selected_scheme}')
+            exec_shell_command_async(f'matugen image "{full_path}" -t {selected_scheme}')
         else:
             # Matugen is disabled: run the alternative swww command.
             exec_shell_command_async(
-                f'swww img {full_path} -t outer --transition-duration 1.5 --transition-step 255 --transition-fps 60 -f Nearest'
+                f'swww img "{full_path}" -t outer --transition-duration 1.5 --transition-step 255 --transition-fps 60 -f Nearest'
             )
 
     def on_scheme_changed(self, combo):

@@ -163,8 +163,11 @@ class MprisPlayer(Service):
         return self._player.get_album()  # type: ignore
 
     @Property(str, "readable")
-    def title(self):
-        return self._player.get_title()
+    def title(self) -> str:
+        if self._player is None:
+            return ""
+        title_data = self._player.get_title()
+        return title_data if isinstance(title_data, str) else ""
 
     @Property(bool, "read-write", default_value=False)
     def shuffle(self) -> bool:

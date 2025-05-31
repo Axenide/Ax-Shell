@@ -1,6 +1,11 @@
+#wallpaper-icons {
+  border-radius: 20px;
+  transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
 #wallpaper-icons:selected {
   background-color: var(--outline);
-  border-radius: 0px;
+  border-radius: 8px;
 }
 
 #scheme-dropdown {
@@ -22,7 +27,7 @@
 }
 
 #search-entry-walls {
-  min-width: 512px;
+  /* min-width: 512px; */
 }
 
 /* Customize the overall switch appearance */
@@ -41,8 +46,8 @@
 #dnd-switch slider {
   background-color: var(--primary);
   border-radius: 16px;
-  min-width: 20px;
-  min-height: 20px;
+  min-width: 16px;
+  min-height: 8px;
   transition:
     background-color 0.1s cubic-bezier(0.5, 0.25, 0, 1.25),
     transform 0.25s cubic-bezier(0.5, 0.25, 0, 1.25);
@@ -101,6 +106,17 @@
   margin: -10px 0;
   background-color: var(--primary);
   box-shadow: 0 0 4px alpha(var(--shadow), 0.5);
+  transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+#hue-slider slider:hover,
+#hue-slider slider:active {
+  background-color: var(--foreground);
+}
+
+#hue-slider slider:active {
+  min-height: 24px;
+  min-width: 8px;
 }
 
 #apply-color-button {

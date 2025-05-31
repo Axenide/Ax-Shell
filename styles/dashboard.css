@@ -65,108 +65,72 @@
     padding: 8px;
 }
 
-#gpu-usage {
+/* Common trough style */
+#gpu-usage trough,
+#cpu-usage trough,
+#ram-usage trough,
+#disk-usage trough {
   background-color: var(--surface);
+  border-radius: 4px;
 }
 
-#gpu-usage trough {
-  min-height: 16px;
+/* Common highlight style */
+#gpu-usage trough highlight,
+#cpu-usage trough highlight,
+#ram-usage trough highlight,
+#disk-usage trough highlight {
+  border-radius: 2px 2px;
+  margin-top: 4px;
 }
 
-#gpu-usage trough highlight {
-  border-radius: 20px;
-  min-height: 16px;
+/* Highlight colors por recurso */
+#gpu-usage trough highlight,
+#gpu-usage slider,
+#cpu-usage trough highlight,
+#cpu-usage slider {
   background-color: var(--primary);
 }
-
-#gpu-usage slider {
-  border-radius: 100%;
-  min-width: 16px;
-  min-height: 16px;
-  background-color: transparent;
-}
-
-#gpu-label {
-  color: var(--primary);
-  font-size: 20px;
-}
-
-#cpu-usage {
-    background-color: var(--surface);
-}
-
-#cpu-usage trough {
-    min-height: 16px;
-}
-
-#cpu-usage trough highlight {
-    border-radius: 20px;
-    min-height: 16px;
-    background-color: var(--primary);
-}
-
-#cpu-usage slider {
-    border-radius: 100%;
-    min-width: 16px;
-    min-height: 16px;
-    background-color: transparent;
-}
-
-#cpu-label {
-    color: var(--primary);
-    font-size: 20px;
-}
-
-#ram-usage {
-    background-color: var(--surface);
-}
-
-#ram-usage trough {
-    min-height: 16px;
-}
-
-#ram-usage trough highlight {
-    border-radius: 20px;
-    min-height: 16px;
-    background-color: var(--secondary);
-}
-
+#ram-usage trough highlight,
 #ram-usage slider {
-    border-radius: 100%;
-    min-width: 16px;
-    min-height: 16px;
-    background-color: transparent;
+  background-color: var(--secondary);
 }
-
-#ram-label {
-    color: var(--secondary);
-    font-size: 20px;
-}
-
-#disk-usage {
-    background-color: var(--surface);
-}
-
-#disk-usage trough {
-    min-height: 16px;
-}
-
-#disk-usage trough highlight {
-    border-radius: 20px;
-    min-height: 16px;
-    background-color: var(--tertiary);
-}
-
+#disk-usage trough highlight,
 #disk-usage slider {
-    border-radius: 100%;
-    min-width: 16px;
-    min-height: 16px;
-    background-color: transparent;
+  background-color: var(--tertiary);
 }
 
+/* Common slider style */
+#gpu-usage slider,
+#cpu-usage slider,
+#ram-usage slider,
+#disk-usage slider {
+  border-radius: 4px;
+  min-width: 16px;
+  min-height: 2px;
+  margin: 0 -4px;
+  box-shadow:
+    0 0 0px 2px var(--shadow),
+    0 0 0px 2px var(--shadow);
+}
+
+/* Common label style */
+#gpu-label,
+#cpu-label,
+#ram-label,
 #disk-label {
-    color: var(--tertiary);
-    font-size: 20px;
+  font-size: 16px;
+}
+
+/* Label colors por recurso */
+#gpu-label,
+#cpu-label {
+  color: var(--primary);
+}
+#ram-label {
+  color: var(--secondary);
+}
+#disk-label {
+  color: var(--tertiary);
 }
 
 #applet-stack {

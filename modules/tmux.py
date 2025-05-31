@@ -1,14 +1,17 @@
-import subprocess
 import os
+import subprocess
+
+from fabric.utils import exec_shell_command_async, idle_add, remove_handler
 from fabric.widgets.box import Box
-from fabric.widgets.label import Label
 from fabric.widgets.button import Button
 from fabric.widgets.entry import Entry
+from fabric.widgets.label import Label
 from fabric.widgets.scrolledwindow import ScrolledWindow
-from fabric.utils import idle_add, remove_handler, exec_shell_command_async
-from gi.repository import GLib, Gdk, Gtk
-import modules.icons as icons
+from gi.repository import Gdk, GLib, Gtk
+
 import config.data as data
+import modules.icons as icons
+
 
 class TmuxManager(Box):
     def __init__(self, **kwargs):
@@ -29,6 +32,7 @@ class TmuxManager(Box):
             name="session-name-entry",
             placeholder="Create Tmux Session...",
             h_expand=True,
+            h_align="fill",
             on_activate=lambda entry, *_: self.create_session(entry.get_text()),
             on_key_press_event=self.on_entry_key_press,
         )
@@ -36,9 +40,13 @@ class TmuxManager(Box):
         self.scrolled_window = ScrolledWindow(
             name="scrolled-window",
             spacing=10,
-            min_content_size=(450, 105),
-            max_content_size=(450, 105),
+            h_expand=True,
+            v_expand=True,
+            h_align="fill",
+            v_align="fill",
             child=self.viewport,
+            propagate_width=False,
+            propagate_height=False,
         )
 
         self.header_box = Box(

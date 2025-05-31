@@ -1,14 +1,21 @@
-from fabric.widgets.box import Box
-from fabric.widgets.label import Label
-from fabric.widgets.button import Button
 from fabric.utils.helpers import exec_shell_command_async
+from fabric.widgets.box import Box
+from fabric.widgets.button import Button
+from fabric.widgets.label import Label
+
+import config.data as data
 import modules.icons as icons
+
 
 class PowerMenu(Box):
     def __init__(self, **kwargs):
+        orientation = "h"
+        if data.PANEL_THEME == "Panel" and (data.BAR_POSITION in ["Left", "Right"] or data.PANEL_POSITION in ["Start", "End"]):
+            orientation = "v"
+
         super().__init__(
             name="power-menu",
-            orientation="h",
+            orientation=orientation,
             spacing=4,
             v_align="center",
             h_align="center",
@@ -84,7 +91,6 @@ class PowerMenu(Box):
     def close_menu(self):
         self.notch.close_notch()
 
-    # Métodos de acción
     def lock(self, *args):
         print("Locking screen...")
         exec_shell_command_async("loginctl lock-session")
