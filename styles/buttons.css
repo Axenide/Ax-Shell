@@ -26,7 +26,10 @@
     background-color: var(--foreground);
 }
 
-#night-mode-button.disabled,
+#caffeine-button {
+  background-color: var(--primary);
+  padding: 0 10px;
+}
 #caffeine-button.disabled {
   background-color: var(--surface);
   border-radius: 26px;
@@ -72,7 +75,8 @@
 }
 
 #network-menu-button,
-#bluetooth-menu-button {
+#bluetooth-menu-button,
+#light-menu-button {
   border-left: 1px solid var(--outline);
   min-width: 24px;
 }
@@ -118,8 +122,9 @@
 #bluetooth-status-button.disabled:hover,
 #bluetooth-menu-button.disabled:hover,
 #light-status-button.disabled:hover,
-#light-menu-button.disabled:hover {
-    background-color: var(--surface-bright);
+#light-menu-button.disabled:hover,
+#caffeine-button.disabled:hover {
+  background-color: var(--surface-bright);
 }
 
 #light-status-button,
@@ -136,8 +141,7 @@
 
 #network-status-button:hover,
 #bluetooth-button:hover,
-#light-button:hover,
-#caffeine-button:hover {
+#light-button:hover {
     background-color: var(--foreground);
 }
 

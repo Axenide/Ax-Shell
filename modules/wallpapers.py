@@ -309,7 +309,6 @@ class WallpaperSelector(Box):
         model = iconview.get_model()
         file_name = model[path][1]
         full_path = os.path.join(data.WALLPAPERS_DIR, file_name)
-        print(full_path)
         selected_scheme = self.scheme_dropdown.get_active_id()
         current_wall = os.path.expanduser(f"~/.current.wall")
         if os.path.isfile(current_wall) or os.path.islink(current_wall):

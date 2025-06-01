@@ -740,7 +740,7 @@ class HyprConfGUI(Window):
             print(f"{time.time():.4f}: Initiating Ax-Shell restart using Popen...")
             main_py = os.path.expanduser(f"~/.config/{APP_NAME_CAP}/main.py")
             kill_cmd = f"killall {APP_NAME}"
-            start_cmd = ["uwsm", "app", "--", "/home/mathias/.config/Ax-Shell/.venv/bin/python", main_py]
+            start_cmd = ["uwsm", "app", "--", "python", main_py]
             try:
                 kill_proc = subprocess.Popen(kill_cmd, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
                 kill_proc.wait(timeout=2)
