@@ -144,7 +144,7 @@ class Dock(Window):
         self._prevent_occlusion = False
 
         self.view = Box(name="viewport", spacing=4)
-        self.wrapper = Box(name="dock", children=[self.view])
+        self.wrapper = Box(name="dock", children=[self.view], style_classes=["left"] if data.BAR_POSITION == "Right" else [])
 
         self.wrapper.set_orientation(dock_wrapper_orientation_val)
         self.view.set_orientation(dock_wrapper_orientation_val)
@@ -201,6 +201,30 @@ class Dock(Window):
                     self.corner_top = Box(
                         name="dock-corner-top", orientation=Gtk.Orientation.HORIZONTAL, v_align="start",
                         children=[Box(h_expand=True, h_align="fill"), MyCorner("top-left")]
+<<<<<<< HEAD
+                        name="dock-corner-top", orientation=Gtk.Orientation.HORIZONTAL, v_align="start",
+                        children=[Box(h_expand=True, h_align="fill"), MyCorner("bottom-right")]
+                    )
+                    self.corner_bottom = Box(
+                        name="dock-corner-bottom", orientation=Gtk.Orientation.HORIZONTAL, v_align="end",
+                        children=[Box(h_expand=True, h_align="fill"), MyCorner("top-right")]
+                    )
+                else:
+                    self.corner_top = Box(
+                        name="dock-corner-top", orientation=Gtk.Orientation.HORIZONTAL, v_align="start",
+                        children=[MyCorner("bottom-left"), Box(h_expand=True, h_align="fill")]
+                    )
+                    self.corner_bottom = Box(
+                        name="dock-corner-bottom", orientation=Gtk.Orientation.HORIZONTAL, v_align="end",
+                        children=[MyCorner("top-left"), Box(h_expand=True, h_align="fill")]
+=======
+                        name="dock-corner-top",
+                        orientation=Gtk.Orientation.HORIZONTAL,
+                        v_align="start",
+                        children=[
+                            Box(h_expand=True, h_align="fill"),
+                            MyCorner("top-left"),
+                        ],
                     )
                     self.corner_bottom = Box(
                         name="dock-corner-bottom", orientation=Gtk.Orientation.HORIZONTAL, v_align="end",
@@ -214,6 +238,14 @@ class Dock(Window):
                     self.corner_bottom = Box(
                         name="dock-corner-bottom", orientation=Gtk.Orientation.HORIZONTAL, v_align="end",
                         children=[Box(h_expand=True, h_align="fill"), MyCorner("bottom-right")]
+                        name="dock-corner-bottom",
+                        orientation=Gtk.Orientation.HORIZONTAL,
+                        v_align="end",
+                        children=[
+                            Box(h_expand=True, h_align="fill"),
+                            MyCorner("bottom-right"),
+                        ],
+>>>>>>> 3055c26 (Just for workable cofe)
                     )
 
                 self.dock_full = Box(
@@ -237,7 +269,7 @@ class Dock(Window):
 
             self.main_box = Box(
                 orientation=main_box_orientation_val,
-                children=[self.hover_activator, self.dock_revealer],
+                children=[self.hover_activator, self.dock_revealer] if data.BAR_POSITION != "Right" else [self.dock_revealer, self.hover_activator],
                 h_align=main_box_h_align_val,
             )
             self.add(self.main_box) 
