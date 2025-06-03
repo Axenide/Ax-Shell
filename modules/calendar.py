@@ -14,17 +14,11 @@ from gi.repository import GLib, Gtk
 
 class Calendar(Gtk.Box):
     def __init__(self):
-        super().__init__(
-            orientation=Gtk.Orientation.VERTICAL, spacing=8, name="calendar"
-        )
+        super().__init__(orientation=Gtk.Orientation.VERTICAL, spacing=8, name="calendar")
 
         try:
-            origin_date = datetime.fromisoformat(
-                subprocess.check_output(["locale", "week-1stday"]).decode("utf-8")[:-1]
-            )
-            date = origin_date + timedelta(
-                days=int(subprocess.check_output(["locale", "first_weekday"])) - 1
-            )
+            origin_date = datetime.fromisoformat(subprocess.check_output(["locale", "week-1stday"]).decode("utf-8")[:-1])
+            date = origin_date + timedelta(days=int(subprocess.check_output(["locale", "first_weekday"])) - 1)
             self.first_weekday = date.weekday()
         except Exception as e:
             print(f"Error getting locale first weekday: {e}")
@@ -44,7 +38,7 @@ class Calendar(Gtk.Box):
 
         self.prev_month_button = Gtk.Button(
             name="prev-month-button",
-            child=Label(name="month-button-label", markup=icons.chevron_left),
+            child=Label(name="month-button-label", markup=icons.chevron_left)
         )
         self.prev_month_button.connect("clicked", self.on_prev_month_clicked)
 
@@ -52,7 +46,7 @@ class Calendar(Gtk.Box):
 
         self.next_month_button = Gtk.Button(
             name="next-month-button",
-            child=Label(name="month-button-label", markup=icons.chevron_right),
+            child=Label(name="month-button-label", markup=icons.chevron_right)
         )
         self.next_month_button.connect("clicked", self.on_next_month_clicked)
 
@@ -80,9 +74,7 @@ class Calendar(Gtk.Box):
     def schedule_midnight_update(self):
         now = datetime.now()
 
-        midnight = now.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(
-            days=1
-        )
+        midnight = now.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
         delta = midnight - now
         seconds_until = delta.total_seconds()
         GLib.timeout_add_seconds(int(seconds_until), self.on_midnight)
@@ -105,9 +97,7 @@ class Calendar(Gtk.Box):
     def update_header(self):
 
         self.month_label.set_text(
-            datetime(self.current_year, self.current_month, 1)
-            .strftime("%B %Y")
-            .capitalize()
+            datetime(self.current_year, self.current_month, 1).strftime("%B %Y").capitalize()
         )
 
         for child in self.weekday_row.get_children():
@@ -134,7 +124,7 @@ class Calendar(Gtk.Box):
             self.stack.add_titled(
                 month_view,
                 f"{self.current_year}_{self.current_month}",
-                f"{self.current_year}_{self.current_month}",
+                f"{self.current_year}_{self.current_month}"
             )
 
         self.stack.set_visible_child_name(f"{self.current_year}_{self.current_month}")
@@ -159,9 +149,7 @@ class Calendar(Gtk.Box):
             self.stack.remove(widget)
 
     def create_month_view(self, year, month):
-        grid = Gtk.Grid(
-            column_homogeneous=True, row_homogeneous=False, name="calendar-grid"
-        )
+        grid = Gtk.Grid(column_homogeneous=True, row_homogeneous=False, name="calendar-grid")
         cal = calendar.Calendar(firstweekday=self.first_weekday)
         month_days = cal.monthdayscalendar(year, month)
 
@@ -187,13 +175,9 @@ class Calendar(Gtk.Box):
                     ):
                         label.get_style_context().add_class("current-day")
 
-                middle_box.pack_start(
-                    Gtk.Box(hexpand=True, vexpand=True), True, True, 0
-                )
+                middle_box.pack_start(Gtk.Box(hexpand=True, vexpand=True), True, True, 0)
                 middle_box.pack_start(label, False, False, 0)
-                middle_box.pack_start(
-                    Gtk.Box(hexpand=True, vexpand=True), True, True, 0
-                )
+                middle_box.pack_start(Gtk.Box(hexpand=True, vexpand=True), True, True, 0)
 
                 day_box.pack_start(top_spacer, True, True, 0)
                 day_box.pack_start(middle_box, True, True, 0)
@@ -205,10 +189,7 @@ class Calendar(Gtk.Box):
 
     def get_weekday_initials(self):
 
-        return [
-            datetime(2024, 1, i + 1 + self.first_weekday).strftime("%a")[:1]
-            for i in range(7)
-        ]
+        return [datetime(2024, 1, i + 1 + self.first_weekday).strftime("%a")[:1] for i in range(7)]
 
     def on_prev_month_clicked(self, widget):
         if self.current_month == 1:
