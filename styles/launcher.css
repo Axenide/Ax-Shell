@@ -18,7 +18,8 @@
 #close-button,
 #clear-button,
 #config-button,
-#new-session-button {
+#new-session-button,
+#random-wall-button {
   background-color: var(--surface);
   border-radius: 40px;
   padding: 8px;
@@ -32,7 +33,8 @@
 #config-button:hover,
 #config-button:focus,
 #new-session-button:hover,
-#new-session-button:focus {
+#new-session-button:focus,
+#random-wall-button:hover {
   background-color: var(--surface-bright);
   border-radius: 16px;
 }
@@ -55,19 +57,22 @@
 }
 
 #config-button:active,
-#new-session-button:active {
+#new-session-button:active,
+#random-wall-button:active {
   background-color: var(--primary);
   border-radius: 40px;
 }
 
 #config-label,
-#new-session-label {
+#new-session-label,
+#random-wall-label {
   color: var(--primary);
   font-size: 24px;
 }
 
 #config-button:active #config-label,
-#new-session-button:active #new-session-label {
+#new-session-button:active #new-session-label,
+#random-wall-button:active #random-wall-label {
   color: var(--shadow);
 }
 

@@ -1,0 +1,7 @@
+{
+	"version": "0.0.3",
+	"changelog": [
+		"fix: Caffeine toggle keybind was still using wlinhibit",
+    "Herobrine removed."
+	]
+}

@@ -425,32 +425,28 @@ class CaffeineButton(Button):
             name="caffeine-button",
             h_expand=True,
             child=self.caffeine_box,
-            on_clicked=self.toggle_wlinhibit,
+            on_clicked=self.toggle_inhibit,
         )
         add_hover_cursor(self)
 
-        self.widgets = [
-            self,
-            self.caffeine_label,
-            self.caffeine_status,
-            self.caffeine_icon,
-        ]
-        self.check_wlinhibit()
+        self.widgets = [self, self.caffeine_label, self.caffeine_status, self.caffeine_icon]
+        self.check_inhibit()
 
-    def toggle_wlinhibit(self, *args, external=False):
+    def toggle_inhibit(self, *args, external=False):
         """
-        Toggle the 'wlinhibit' process:
+        Toggle the 'ax-inhibit' process:
           - If running, kill it and mark as 'Disabled' (add 'disabled' class).
           - If not running, start it and mark as 'Enabled' (remove 'disabled' class).
         """
-        if self.caffeine_status.get_label() == "Enabled":
+
+        try:
+            subprocess.check_output(["pgrep", "ax-inhibit"])
+            exec_shell_command_async("pkill ax-inhibit")
             self.caffeine_status.set_label("Disabled")
-            exec_shell_command_async(
-                "pkill -f ~/.config/Ax-Shell/scr`ipts/wayland-idle-inhibitor.py"
-            )
-            for widget in self.widgets:
-                self.add_style_class("disabled")
-        else:
+            for i in self.widgets:
+                i.add_style_class("disabled")
+        except subprocess.CalledProcessError:
+            exec_shell_command_async(f"python {data.HOME_DIR}/.config/{data.APP_NAME_CAP}/scripts/inhibit.py")
             self.caffeine_status.set_label("Enabled")
             exec_shell_command_async(
                 "bash -c pidof wayland-idle-inhibitor.py || ~/.config/Ax-Shell/scripts/wayland-idle-inhibitor.py"
@@ -463,8 +459,14 @@ class CaffeineButton(Button):
             message = "Disabled 💤" if self.caffeine_status.get_label() == "Disabled" else "Enabled ☀️"
             exec_shell_command_async(f"notify-send '☕ Caffeine' '{message}' -a '{data.APP_NAME_CAP}' -e")
 
-    def check_wlinhibit(self, *args):
-        if self.caffeine_status.get_label() == "Enabled":
+        if external:
+            # Different if enabled or disabled
+            message = "Disabled 💤" if self.caffeine_status.get_label() == "Disabled" else "Enabled ☀️"
+            exec_shell_command_async(f"notify-send '☕ Caffeine' '{message}' -a '{data.APP_NAME_CAP}' -e")
+
+    def check_inhibit(self, *args):
+        try:
+            subprocess.check_output(["pgrep", "ax-inhibit"])
             self.caffeine_status.set_label("Enabled")
             for i in self.widgets:
                 i.remove_style_class("disabled")

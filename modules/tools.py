@@ -221,7 +221,7 @@ class Toolbox(Box):
         return False
 
     def ssregion(self, *args):
-        exec_shell_command_async(f"bash {SCREENSHOT_SCRIPT} sf")
+        exec_shell_command_async(f"bash {SCREENSHOT_SCRIPT} s")
         self.close_menu()
 
     def on_ssregion_click(self, button, event):
@@ -229,7 +229,7 @@ class Toolbox(Box):
             if event.button == 1:
                 self.ssregion()
             elif event.button == 3:
-                exec_shell_command_async(f"bash {SCREENSHOT_SCRIPT} sf mockup")
+                exec_shell_command_async(f"bash {SCREENSHOT_SCRIPT} s mockup")
                 self.close_menu()
             return True
         return False
@@ -238,7 +238,7 @@ class Toolbox(Box):
         if event.keyval in {Gdk.KEY_Return, Gdk.KEY_KP_Enter}:
             modifiers = event.get_state()
             if modifiers & Gdk.ModifierType.SHIFT_MASK:
-                exec_shell_command_async(f"bash {SCREENSHOT_SCRIPT} sf mockup")
+                exec_shell_command_async(f"bash {SCREENSHOT_SCRIPT} s mockup")
                 self.close_menu()
             else:
                 self.ssregion()
@@ -301,7 +301,7 @@ class Toolbox(Box):
         return True
 
     def ocr(self, *args):
-        exec_shell_command_async(f"bash {OCR_SCRIPT} sf")
+        exec_shell_command_async(f"bash {OCR_SCRIPT} s")
         self.close_menu()
 
     def gamemode(self, *args):

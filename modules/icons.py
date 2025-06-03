@@ -176,6 +176,14 @@ timer_off: str = "&#xf146;"
 timer_on: str = "&#xf756;"
 spy: str = "&#xf227;"
 
+# Dice
+dice_1: str = "&#xf08b;"
+dice_2: str = "&#xf08c;"
+dice_3: str = "&#xf08d;"
+dice_4: str = "&#xf08e;"
+dice_5: str = "&#xf08f;"
+dice_6: str = "&#xf090;"
+
 exceptions: list[str] = ['font_family', 'font_weight', 'span']
 
 def apply_span() -> None:

@@ -46,8 +46,8 @@
 #dnd-switch slider {
   background-color: var(--primary);
   border-radius: 16px;
-  min-width: 20px;
-  min-height: 20px;
+  min-width: 16px;
+  min-height: 8px;
   transition:
     background-color 0.1s cubic-bezier(0.5, 0.25, 0, 1.25),
     transform 0.25s cubic-bezier(0.5, 0.25, 0, 1.25);

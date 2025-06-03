@@ -227,9 +227,10 @@ bind = {bind_vars.get('prefix_cliphist', 'SUPER')}, {bind_vars.get('suffix_cliph
 bind = {bind_vars.get('prefix_toolbox', 'SUPER')}, {bind_vars.get('suffix_toolbox', 'S')}, exec, $fabricSend 'notch.open_notch("tools")' # Toolbox
 bind = {bind_vars.get('prefix_overview', 'SUPER')}, {bind_vars.get('suffix_overview', 'TAB')}, exec, $fabricSend 'notch.open_notch("overview")' # Overview
 bind = {bind_vars.get('prefix_wallpapers', 'SUPER')}, {bind_vars.get('suffix_wallpapers', 'COMMA')}, exec, $fabricSend 'notch.open_notch("wallpapers")' # Wallpapers
+bind = {bind_vars.get('prefix_randwall', 'SUPER')}, {bind_vars.get('suffix_randwall', 'COMMA')}, exec, $fabricSend 'notch.dashboard.wallpapers.set_random_wallpaper(None, external=True)' # Random Wallpaper
 bind = {bind_vars.get('prefix_emoji', 'SUPER')}, {bind_vars.get('suffix_emoji', 'PERIOD')}, exec, $fabricSend 'notch.open_notch("emoji")' # Emoji Picker
 bind = {bind_vars.get('prefix_power', 'SUPER')}, {bind_vars.get('suffix_power', 'ESCAPE')}, exec, $fabricSend 'notch.open_notch("power")' # Power Menu
-bind = {bind_vars.get('prefix_caffeine', 'SUPER SHIFT')}, {bind_vars.get('suffix_caffeine', 'M')}, exec, $fabricSend 'notch.dashboard.widgets.buttons.caffeine_button.toggle_wlinhibit(external=True)' # Toggle Caffeine
+bind = {bind_vars.get('prefix_caffeine', 'SUPER SHIFT')}, {bind_vars.get('suffix_caffeine', 'M')}, exec, $fabricSend 'notch.dashboard.widgets.buttons.caffeine_button.toggle_inhibit(external=True)' # Toggle Caffeine
 bind = {bind_vars.get('prefix_css', 'SUPER SHIFT')}, {bind_vars.get('suffix_css', 'B')}, exec, $fabricSend 'app.set_css()' # Reload CSS
 bind = {bind_vars.get('prefix_restart_inspector', 'SUPER CTRL ALT')}, {bind_vars.get('suffix_restart_inspector', 'B')}, exec, killall {APP_NAME}; uwsm-app $(GTK_DEBUG=interactive python {home}/.config/{APP_NAME_CAP}/main.py) # Restart with inspector
 
