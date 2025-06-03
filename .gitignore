@@ -7,3 +7,5 @@ Ax-Shell.code-workspace
 .aider*
 config/dock.json
 config/dock.json.bak
+config/hypr/hypridle.conf
+config/hypr/hyprlock.conf

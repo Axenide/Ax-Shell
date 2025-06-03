@@ -23,6 +23,10 @@
   box-shadow: 0 0 3px alpha(black, 0);
 }
 
+#notch-content.panel {
+  box-shadow: 0 0 3px alpha(black, 0);
+}
+
 #bar-revealer {
   padding: 10px;
 }

@@ -1,444 +1,208 @@
+import calendar
 import subprocess
+from datetime import datetime, timedelta
 
 import gi
-from fabric.utils.helpers import exec_shell_command_async
-from fabric.widgets.box import Box
-from fabric.widgets.button import Button
+from fabric.widgets.centerbox import CenterBox
 from fabric.widgets.label import Label
-from gi.repository import Gdk, GLib, Gtk
 
-import config.data as data
-
-gi.require_version('Gtk', '3.0')
 import modules.icons as icons
-from services.network import NetworkClient
+
+gi.require_version("Gtk", "3.0")
+from gi.repository import GLib, Gtk
 
 
-def add_hover_cursor(widget):
-    widget.add_events(Gdk.EventMask.ENTER_NOTIFY_MASK | Gdk.EventMask.LEAVE_NOTIFY_MASK)
-    widget.connect("enter-notify-event", lambda w, e: w.get_window().set_cursor(Gdk.Cursor.new_from_name(w.get_display(), "pointer")) if w.get_window() else None)
-    widget.connect("leave-notify-event", lambda w, e: w.get_window().set_cursor(None) if w.get_window() else None)
+class Calendar(Gtk.Box):
+    def __init__(self):
+        super().__init__(orientation=Gtk.Orientation.VERTICAL, spacing=8, name="calendar")
 
-class NetworkButton(Box):
-    def __init__(self, **kwargs):
-        self.widgets_instance = kwargs.pop("widgets")
-        self.network_client = NetworkClient()
-        self._animation_timeout_id = None
-        self._animation_step = 0
-        self._animation_direction = 1
+        try:
+            origin_date = datetime.fromisoformat(subprocess.check_output(["locale", "week-1stday"]).decode("utf-8")[:-1])
+            date = origin_date + timedelta(days=int(subprocess.check_output(["locale", "first_weekday"])) - 1)
+            self.first_weekday = date.weekday()
+        except Exception as e:
+            print(f"Error getting locale first weekday: {e}")
+            self.first_weekday = 0
 
-        self.network_icon = Label(
-            name="network-icon",
-            markup=None,
-        )
-        self.network_label = Label(
-            name="network-label",
-            label="Wi-Fi",
-            justification="left",
-        )
-        self.network_label_box = Box(children=[self.network_label, Box(h_expand=True)])
-        self.network_ssid = Label(
-            name="network-ssid",
-            justification="left",
-        )
-        self.network_ssid_box = Box(children=[self.network_ssid, Box(h_expand=True)])
-        self.network_text = Box(
-            name="network-text",
-            orientation="v",
-            h_align="start",
-            v_align="center",
-            children=[self.network_label_box, self.network_ssid_box],
-        )
-        self.network_status_box = Box(
-            h_align="start",
-            v_align="center",
-            spacing=10,
+        self.set_halign(Gtk.Align.CENTER)
+        self.set_hexpand(False)
 
-            children=[self.network_icon, self.network_text],
-        )
-        self.network_status_button = Button(
-            name="network-status-button",
-            h_expand=True,
-            child=self.network_status_box,
-            on_clicked=lambda *_: self.network_client.wifi_device.toggle_wifi() if self.network_client.wifi_device else None,
-        )
-        add_hover_cursor(self.network_status_button)
+        self.current_year = datetime.now().year
+        self.current_month = datetime.now().month
+        self.current_day = datetime.now().day
+        self.previous_key = (self.current_year, self.current_month)
 
-        self.network_menu_label = Label(
-            name="network-menu-label",
-            markup=icons.chevron_right,
-        )
-        self.network_menu_button = Button(
-            name="network-menu-button",
-            child=self.network_menu_label,
-            on_clicked=lambda *_: self.widgets_instance.show_network_applet(),
-        )
-        add_hover_cursor(self.network_menu_button)
+        self.cache_threshold = 1
 
-        super().__init__(
-            name="network-button",
-            orientation="h",
-            h_align="fill",
-            v_align="fill",
-            h_expand=True,
-            v_expand=True,
-            spacing=0,
-            children=[self.network_status_button, self.network_menu_button],
+        self.month_views = {}
+
+        self.prev_month_button = Gtk.Button(
+            name="prev-month-button",
+            child=Label(name="month-button-label", markup=icons.chevron_left)
+        )
+        self.prev_month_button.connect("clicked", self.on_prev_month_clicked)
+
+        self.month_label = Gtk.Label(name="month-label")
+
+        self.next_month_button = Gtk.Button(
+            name="next-month-button",
+            child=Label(name="month-button-label", markup=icons.chevron_right)
+        )
+        self.next_month_button.connect("clicked", self.on_next_month_clicked)
+
+        self.header = CenterBox(
+            spacing=4,
+            name="header",
+            start_children=[self.prev_month_button],
+            center_children=[self.month_label],
+            end_children=[self.next_month_button],
         )
 
-        self.widgets_list_internal = [self, self.network_icon, self.network_label,
-                       self.network_ssid, self.network_status_button,
-                       self.network_menu_button, self.network_menu_label]
+        self.add(self.header)
 
-        self.network_client.connect('device-ready', self._on_wifi_ready)
+        self.weekday_row = Gtk.Box(spacing=4, name="weekday-row")
+        self.pack_start(self.weekday_row, False, False, 0)
 
-        GLib.idle_add(self._initial_update)
+        self.stack = Gtk.Stack(name="calendar-stack")
+        self.stack.set_transition_duration(250)
+        self.pack_start(self.stack, True, True, 0)
 
-    def _initial_update(self):
-        self.update_state()
+        self.update_header()
+        self.update_calendar()
+        self.schedule_midnight_update()
+
+    def schedule_midnight_update(self):
+        now = datetime.now()
+
+        midnight = now.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
+        delta = midnight - now
+        seconds_until = delta.total_seconds()
+        GLib.timeout_add_seconds(int(seconds_until), self.on_midnight)
+
+    def on_midnight(self):
+        now = datetime.now()
+        self.current_year = now.year
+        self.current_month = now.month
+        self.current_day = now.day
+
+        key = (self.current_year, self.current_month)
+        if key in self.month_views:
+            widget = self.month_views.pop(key)
+            self.stack.remove(widget)
+
+        self.update_calendar()
+        self.schedule_midnight_update()
         return False
 
-    def _on_wifi_ready(self, *args):
-        if self.network_client.wifi_device:
-            self.network_client.wifi_device.connect('notify::enabled', self.update_state)
-            self.network_client.wifi_device.connect('notify::ssid', self.update_state)
-            self.update_state()
+    def update_header(self):
 
-    def _animate_searching(self):
-        """Animate wifi icon when searching for networks"""
-        wifi_icons = [icons.wifi_0, icons.wifi_1, icons.wifi_2, icons.wifi_3, icons.wifi_2, icons.wifi_1]
+        self.month_label.set_text(
+            datetime(self.current_year, self.current_month, 1).strftime("%B %Y").capitalize()
+        )
 
-        wifi = self.network_client.wifi_device
-        if not self.network_icon or not wifi or not wifi.enabled:
-            self._stop_animation()
-            return False
+        for child in self.weekday_row.get_children():
+            self.weekday_row.remove(child)
+        days = self.get_weekday_initials()
+        for day in days:
+            label = Gtk.Label(label=day.upper(), name="weekday-label")
+            self.weekday_row.pack_start(label, True, True, 0)
+        self.weekday_row.show_all()
 
-        if wifi.state == "activated" and wifi.ssid != "Disconnected":
-            self._stop_animation()
-            return False
+    def update_calendar(self):
+        new_key = (self.current_year, self.current_month)
 
-        GLib.idle_add(self.network_icon.set_markup, wifi_icons[self._animation_step])
+        if new_key > self.previous_key:
+            self.stack.set_transition_type(Gtk.StackTransitionType.SLIDE_LEFT)
+        elif new_key < self.previous_key:
+            self.stack.set_transition_type(Gtk.StackTransitionType.SLIDE_RIGHT)
 
-        self._animation_step = (self._animation_step + 1) % len(wifi_icons)
+        self.previous_key = new_key
 
-        return True
+        if new_key not in self.month_views:
+            month_view = self.create_month_view(self.current_year, self.current_month)
+            self.month_views[new_key] = month_view
+            self.stack.add_titled(
+                month_view,
+                f"{self.current_year}_{self.current_month}",
+                f"{self.current_year}_{self.current_month}"
+            )
 
-    def _start_animation(self):
-        if self._animation_timeout_id is None:
-            self._animation_step = 0
-            self._animation_direction = 1
+        self.stack.set_visible_child_name(f"{self.current_year}_{self.current_month}")
+        self.update_header()
+        self.stack.show_all()
 
-            self._animation_timeout_id = GLib.timeout_add(500, self._animate_searching)
+        self.prune_cache()
 
-    def _stop_animation(self):
-        if self._animation_timeout_id is not None:
-            GLib.source_remove(self._animation_timeout_id)
-            self._animation_timeout_id = None
+    def prune_cache(self):
 
-    def update_state(self, *args):
-        """Update the button state based on network status"""
-        wifi = self.network_client.wifi_device
-        ethernet = self.network_client.ethernet_device
+        def month_index(key):
+            year, month = key
+            return year * 12 + (month - 1)
 
-        if wifi and not wifi.enabled:
-            self._stop_animation()
-            self.network_icon.set_markup(icons.wifi_off)
-            for widget in self.widgets_list_internal:
-                widget.add_style_class("disabled")
-            self.network_ssid.set_label("Disabled")
-            return
+        current_index = month_index((self.current_year, self.current_month))
+        keys_to_remove = []
+        for key in self.month_views:
+            if abs(month_index(key) - current_index) > self.cache_threshold:
+                keys_to_remove.append(key)
+        for key in keys_to_remove:
+            widget = self.month_views.pop(key)
+            self.stack.remove(widget)
 
-        for widget in self.widgets_list_internal:
-            widget.remove_style_class("disabled")
+    def create_month_view(self, year, month):
+        grid = Gtk.Grid(column_homogeneous=True, row_homogeneous=False, name="calendar-grid")
+        cal = calendar.Calendar(firstweekday=self.first_weekday)
+        month_days = cal.monthdayscalendar(year, month)
 
-        if wifi and wifi.enabled:
-            if wifi.state == "activated" and wifi.ssid != "Disconnected":
-                self._stop_animation()
-                self.network_ssid.set_label(wifi.ssid)
+        while len(month_days) < 6:
+            month_days.append([0] * 7)
 
-                if wifi.strength > 0:
-                    strength = wifi.strength
-                    if strength < 25:
-                        self.network_icon.set_markup(icons.wifi_0)
-                    elif strength < 50:
-                        self.network_icon.set_markup(icons.wifi_1)
-                    elif strength < 75:
-                        self.network_icon.set_markup(icons.wifi_2)
-                    else:
-                        self.network_icon.set_markup(icons.wifi_3)
-            else:
-                self.network_ssid.set_label("Enabled")
-                self._start_animation()
+        for row, week in enumerate(month_days):
+            for col, day in enumerate(week):
+                day_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, name="day-box")
+                top_spacer = Gtk.Box(hexpand=True, vexpand=True)
+                middle_box = Gtk.Box(hexpand=True, vexpand=True)
+                bottom_spacer = Gtk.Box(hexpand=True, vexpand=True)
 
-        try:
-            primary_device = self.network_client.primary_device
-        except AttributeError:
-            primary_device = "wireless"
-
-        if primary_device == "wired":
-            self._stop_animation()
-            if ethernet and ethernet.internet == "activated":
-                self.network_icon.set_markup(icons.world)
-            else:
-                self.network_icon.set_markup(icons.world_off)
-        else:
-            if not wifi:
-                self._stop_animation()
-                self.network_icon.set_markup(icons.wifi_off)
-            elif wifi.state == "activated" and wifi.ssid != "Disconnected" and wifi.strength > 0:
-                self._stop_animation()
-                strength = wifi.strength
-                if strength < 25:
-                    self.network_icon.set_markup(icons.wifi_0)
-                elif strength < 50:
-                    self.network_icon.set_markup(icons.wifi_1)
-                elif strength < 75:
-                    self.network_icon.set_markup(icons.wifi_2)
+                if day == 0:
+                    label = Label(name="day-empty", markup=icons.dot)
                 else:
-                    self.network_icon.set_markup(icons.wifi_3)
-            else:
-                self._start_animation()
+                    label = Gtk.Label(label=str(day), name="day-label")
 
-class BluetoothButton(Box):
-    def __init__(self, **kwargs):
-        super().__init__(
-            name="bluetooth-button",
-            orientation="h",
-            h_align="fill",
-            v_align="fill",
-            h_expand=True,
-            v_expand=True,
-        )
-        self.widgets = kwargs["widgets"]
+                    if (
+                        day == self.current_day
+                        and month == datetime.now().month
+                        and year == datetime.now().year
+                    ):
+                        label.get_style_context().add_class("current-day")
 
-        self.bluetooth_icon = Label(
-            name="bluetooth-icon",
-            markup=icons.bluetooth,
-        )
-        self.bluetooth_label = Label(
-            name="bluetooth-label",
-            label="Bluetooth",
-            justification="left",
-        )
-        self.bluetooth_label_box = Box(children=[self.bluetooth_label, Box(h_expand=True)])
-        self.bluetooth_status_text = Label(
-            name="bluetooth-status",
-            label="Disabled",
-            justification="left",
-        )
-        self.bluetooth_status_box = Box(children=[self.bluetooth_status_text, Box(h_expand=True)])
-        self.bluetooth_text = Box(
-            orientation="v",
-            h_align="start",
-            v_align="center",
-            children=[self.bluetooth_label_box, self.bluetooth_status_box],
-        )
-        self.bluetooth_status_container = Box(
-            h_align="start",
-            v_align="center",
-            spacing=10,
-            children=[self.bluetooth_icon, self.bluetooth_text],
-        )
-        self.bluetooth_status_button = Button(
-            name="bluetooth-status-button",
-            h_expand=True,
-            child=self.bluetooth_status_container,
-            on_clicked=lambda *_: self.widgets.bluetooth.client.toggle_power(),
-        )
-        add_hover_cursor(self.bluetooth_status_button)
-        self.bluetooth_menu_label = Label(
-            name="bluetooth-menu-label",
-            markup=icons.chevron_right,
-        )
-        self.bluetooth_menu_button = Button(
-            name="bluetooth-menu-button",
-            on_clicked=lambda *_: self.widgets.show_bt(),
-            child=self.bluetooth_menu_label,
-        )
-        add_hover_cursor(self.bluetooth_menu_button)
+                middle_box.pack_start(Gtk.Box(hexpand=True, vexpand=True), True, True, 0)
+                middle_box.pack_start(label, False, False, 0)
+                middle_box.pack_start(Gtk.Box(hexpand=True, vexpand=True), True, True, 0)
 
-        self.add(self.bluetooth_status_button)
-        self.add(self.bluetooth_menu_button)
+                day_box.pack_start(top_spacer, True, True, 0)
+                day_box.pack_start(middle_box, True, True, 0)
+                day_box.pack_start(bottom_spacer, True, True, 0)
 
-class NightModeButton(Button):
-    def __init__(self):
-        self.night_mode_icon = Label(
-            name="night-mode-icon",
-            markup=icons.night,
-        )
-        self.night_mode_label = Label(
-            name="night-mode-label",
-            label="Night Mode",
-            justification="left",
-        )
-        self.night_mode_label_box = Box(children=[self.night_mode_label, Box(h_expand=True)])
-        self.night_mode_status = Label(
-            name="night-mode-status",
-            label="Enabled",
-            justification="left",
-        )
-        self.night_mode_status_box = Box(children=[self.night_mode_status, Box(h_expand=True)])
-        self.night_mode_text = Box(
-            name="night-mode-text",
-            orientation="v",
-            h_align="start",
-            v_align="center",
-            children=[self.night_mode_label_box, self.night_mode_status_box],
-        )
-        self.night_mode_box = Box(
-            h_align="start",
-            v_align="center",
-            spacing=10,
-            children=[self.night_mode_icon, self.night_mode_text],
-        )
+                grid.attach(day_box, col, row, 1, 1)
+        grid.show_all()
+        return grid
 
-        super().__init__(
-            name="night-mode-button",
-            h_expand=True,
-            child=self.night_mode_box,
-            on_clicked=self.toggle_hyprsunset,
-        )
-        add_hover_cursor(self)
+    def get_weekday_initials(self):
 
-        self.widgets = [self, self.night_mode_label, self.night_mode_status, self.night_mode_icon]
-        self.check_hyprsunset()
+        return [datetime(2024, 1, i + 1 + self.first_weekday).strftime("%a")[:1] for i in range(7)]
 
-    def toggle_hyprsunset(self, *args):
-        """
-        Toggle the 'hyprsunset' process:
-          - If running, kill it and mark as 'Disabled'.
-          - If not running, start it and mark as 'Enabled'.
-        """
-        try:
-            subprocess.check_output(["pgrep", "hyprsunset"])
-            exec_shell_command_async("pkill hyprsunset")
-            self.night_mode_status.set_label("Disabled")
-            for widget in self.widgets:
-                widget.add_style_class("disabled")
-        except subprocess.CalledProcessError:
-            exec_shell_command_async("hyprsunset -t 3500")
-            self.night_mode_status.set_label("Enabled")
-            for widget in self.widgets:
-                widget.remove_style_class("disabled")
-
-    def check_hyprsunset(self, *args):
-        """
-        Update the button state based on whether hyprsunset is running.
-        """
-        try:
-            subprocess.check_output(["pgrep", "hyprsunset"])
-            self.night_mode_status.set_label("Enabled")
-            for widget in self.widgets:
-                widget.remove_style_class("disabled")
-        except subprocess.CalledProcessError:
-            self.night_mode_status.set_label("Disabled")
-            for widget in self.widgets:
-                widget.add_style_class("disabled")
-
-class CaffeineButton(Button):
-    def __init__(self):
-        self.caffeine_icon = Label(
-            name="caffeine-icon",
-            markup=icons.coffee,
-        )
-        self.caffeine_label = Label(
-            name="caffeine-label",
-            label="Caffeine",
-            justification="left",
-        )
-        self.caffeine_label_box = Box(children=[self.caffeine_label, Box(h_expand=True)])
-        self.caffeine_status = Label(
-            name="caffeine-status",
-            label="Enabled",
-            justification="left",
-        )
-        self.caffeine_status_box = Box(children=[self.caffeine_status, Box(h_expand=True)])
-        self.caffeine_text = Box(
-            name="caffeine-text",
-            orientation="v",
-            h_align="start",
-            v_align="center",
-            children=[self.caffeine_label_box, self.caffeine_status_box],
-        )
-        self.caffeine_box = Box(
-            h_align="start",
-            v_align="center",
-            spacing=10,
-            children=[self.caffeine_icon, self.caffeine_text],
-        )
-        super().__init__(
-            name="caffeine-button",
-            h_expand=True,
-            child=self.caffeine_box,
-            on_clicked=self.toggle_inhibit,
-        )
-        add_hover_cursor(self)
-
-        self.widgets = [self, self.caffeine_label, self.caffeine_status, self.caffeine_icon]
-        self.check_inhibit()
-
-    def toggle_inhibit(self, *args, external=False):
-        """
-        Toggle the 'ax-inhibit' process:
-          - If running, kill it and mark as 'Disabled' (add 'disabled' class).
-          - If not running, start it and mark as 'Enabled' (remove 'disabled' class).
-        """
-
-        try:
-            subprocess.check_output(["pgrep", "ax-inhibit"])
-            exec_shell_command_async("pkill ax-inhibit")
-            self.caffeine_status.set_label("Disabled")
-            for i in self.widgets:
-                i.add_style_class("disabled")
-        except subprocess.CalledProcessError:
-            exec_shell_command_async(f"python {data.HOME_DIR}/.config/{data.APP_NAME_CAP}/scripts/inhibit.py")
-            self.caffeine_status.set_label("Enabled")
-            for i in self.widgets:
-                i.remove_style_class("disabled")
-
-        if external:
-            # Different if enabled or disabled
-            message = "Disabled 💤" if self.caffeine_status.get_label() == "Disabled" else "Enabled ☀️"
-            exec_shell_command_async(f"notify-send '☕ Caffeine' '{message}' -a '{data.APP_NAME_CAP}' -e")
-
-    def check_inhibit(self, *args):
-        try:
-            subprocess.check_output(["pgrep", "ax-inhibit"])
-            self.caffeine_status.set_label("Enabled")
-            for i in self.widgets:
-                i.remove_style_class("disabled")
-        except subprocess.CalledProcessError:
-            self.caffeine_status.set_label("Disabled")
-            for i in self.widgets:
-                i.add_style_class("disabled")
-
-class Buttons(Gtk.Grid):
-    def __init__(self, **kwargs):
-        super().__init__(name="buttons-grid")
-        self.set_row_homogeneous(True)
-        self.set_column_homogeneous(True)
-        self.set_row_spacing(4)
-        self.set_column_spacing(4)
-        self.set_vexpand(False)
-
-        self.widgets = kwargs["widgets"]
-
-        self.network_button = NetworkButton(widgets=self.widgets)
-        self.bluetooth_button = BluetoothButton(widgets=self.widgets)
-        self.night_mode_button = NightModeButton()
-        self.caffeine_button = CaffeineButton()
-
-        if data.PANEL_THEME == "Panel" and (data.BAR_POSITION in ["Left", "Right"] or data.PANEL_POSITION in ["Start", "End"]):
-
-            self.attach(self.network_button, 0, 0, 1, 1)
-            self.attach(self.bluetooth_button, 1, 0, 1, 1)
-            self.attach(self.night_mode_button, 0, 1, 1, 1)
-            self.attach(self.caffeine_button, 1, 1, 1, 1)
+    def on_prev_month_clicked(self, widget):
+        if self.current_month == 1:
+            self.current_month = 12
+            self.current_year -= 1
         else:
+            self.current_month -= 1
+        self.update_calendar()
 
-            self.attach(self.network_button, 0, 0, 1, 1)
-            self.attach(self.bluetooth_button, 1, 0, 1, 1)
-            self.attach(self.night_mode_button, 2, 0, 1, 1)
-            self.attach(self.caffeine_button, 3, 0, 1, 1)
-
-        self.show_all()
+    def on_next_month_clicked(self, widget):
+        if self.current_month == 12:
+            self.current_month = 1
+            self.current_year += 1
+        else:
+            self.current_month += 1
+        self.update_calendar()
