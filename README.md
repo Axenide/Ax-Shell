@@ -94,7 +94,9 @@ curl -fsSL https://raw.githubusercontent.com/Axenide/Ax-Shell/main/install.sh | 
     - `vte3`
     - `webp-pixbuf-loader`
     - `wl-clipboard`
+    - `wlinhibit`
     - Python dependencies:
+        - PyGObject
         - ijson
         - numpy
         - pillow

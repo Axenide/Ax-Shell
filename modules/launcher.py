@@ -21,7 +21,11 @@ from gi.repository import Gdk, GLib
 import config.data as data
 import modules.icons as icons
 from modules.dock import Dock
+from modules.updater import run_updater
+from utils.conversion import Conversion
 
+tooltip_settings = f"<b>Open {data.APP_NAME_CAP} Settings</b>"
+tooltip_close = "<b>Close</b>"
 
 class AppLauncher(Box):
     def __init__(self, **kwargs):
@@ -38,12 +42,21 @@ class AppLauncher(Box):
         self._arranger_handler: int = 0
         self._all_apps = get_desktop_applications()
 
+
+        self.converter = Conversion()
         self.calc_history_path = f"{data.CACHE_DIR}/calc.json"
         if os.path.exists(self.calc_history_path):
             with open(self.calc_history_path, "r") as f:
                 self.calc_history = json.load(f)
         else:
             self.calc_history = []
+        
+        self.conversion_history_path = f"{data.CACHE_DIR}/conversion.json"
+        if os.path.exists(self.conversion_history_path):
+            with open(self.conversion_history_path, "r") as f:
+                self.conversion_history = json.load(f)
+        else:
+            self.conversion_history = []
 
         self.viewport = Box(name="viewport", spacing=4, orientation="v")
         self.search_entry = Entry(
@@ -75,12 +88,14 @@ class AppLauncher(Box):
             children=[
                 Button(
                     name="config-button",
+                    tooltip_markup=tooltip_settings,
                     child=Label(name="config-label", markup=icons.config),
                     on_clicked=lambda *_: (exec_shell_command_async(f"python {get_relative_path('../config/config.py')}"), self.close_launcher()),
                 ),
                 self.search_entry,
                 Button(
                     name="close-button",
+                    tooltip_markup=tooltip_close,
                     child=Label(name="close-label", markup=icons.cancel),
                     tooltip_text="Exit",
                     on_clicked=lambda *_: self.close_launcher()
@@ -139,6 +154,10 @@ class AppLauncher(Box):
         if query.startswith("="):
 
             self.update_calculator_viewport()
+            return
+        if query.startswith(";"):
+            # In conversion mode, update history view once (not per keystroke)
+            self.update_conversion_viewport()
             return
         remove_handler(self._arranger_handler) if self._arranger_handler else None
         self.viewport.children = []
@@ -265,6 +284,11 @@ class AppLauncher(Box):
             if self.selected_index == -1:
                 self.evaluate_calculator_expression(text)
             return
+        if text.startswith(";"):
+            # If in calculator mode and no history item is selected, evaluate new expression.
+            if self.selected_index == -1:
+                self.evaluate_calculator_expression(text)
+            return
         match text:
             case ":w":
                 self.notch.open_notch("wallpapers")
@@ -272,6 +296,8 @@ class AppLauncher(Box):
                 self.notch.open_notch("dashboard")
             case ":p":
                 self.notch.open_notch("power")
+            case ":update":
+                GLib.idle_add(lambda: run_updater(force=True))
             case _:
                 children = self.viewport.get_children()
                 if children:
@@ -315,6 +341,35 @@ class AppLauncher(Box):
                 self.close_launcher()
                 return True
             return False
+        if text.startswith(";"):
+            if event.keyval == Gdk.KEY_Down:
+                self.move_selection(1)
+                return True
+            elif event.keyval == Gdk.KEY_Up:
+                self.move_selection(-1)
+                return True
+            elif event.keyval in (Gdk.KEY_Return, Gdk.KEY_KP_Enter):
+                # In conversion mode, if a history item is highlighted:
+                if self.selected_index != -1 and self.selected_index < len(self.conversion_history):
+                    if event.state & Gdk.ModifierType.SHIFT_MASK:
+                        # Shift+Enter deletes the selected calculator history item
+                        self.delete_selected_conversion_history()
+                    else:
+                        # Normal Enter copies the result
+                        selected_text = self.conversion_history[self.selected_index]
+                        self.copy_text_to_clipboard(selected_text)
+                        # Clear selection so new expressions are evaluated on further Return presses
+                        self.selected_index = -1
+                else:
+                    # Force reset selection index
+                    self.selected_index = -1
+                    # No item selected, evaluate the expression
+                    self.evaluate_conversion_expression(text)
+                return True
+            elif event.keyval == Gdk.KEY_Escape:
+                self.close_launcher()
+                return True
+            return False
         else:
 
             if event.keyval == Gdk.KEY_Down:
@@ -338,6 +393,10 @@ class AppLauncher(Box):
         if text.startswith("="):
             self.update_calculator_viewport()
 
+            self.selected_index = -1
+        elif text.startswith(";"):
+            self.update_conversion_viewport()
+            # Always reset selection when typing a new expression
             self.selected_index = -1
         else:
             self.arrange_viewport(text)
@@ -409,6 +468,10 @@ class AppLauncher(Box):
     def save_calc_history(self):
         with open(self.calc_history_path, "w") as f:
             json.dump(self.calc_history, f)
+
+    def save_conversion_history(self):
+        with open(self.conversion_history_path, "w") as f:
+            json.dump(self.conversion_history, f)
 
     def evaluate_calculator_expression(self, text: str):
 
@@ -484,6 +547,27 @@ class AppLauncher(Box):
         self.save_calc_history()
         self.update_calculator_viewport()
 
+    def evaluate_conversion_expression(self, text: str):
+        print(f"Evaluating conversion expression: {text}")
+        expr = text.lstrip(";").strip()
+        if not expr:
+            return
+
+        try:
+            result_value, result_type = self.converter.parse_input_and_convert(expr)
+            if result_type is None:
+                result_str = f"{result_value:.2f}"
+            else:
+                result_str = f"{result_value:.2f} {result_type}"
+        except:
+            result_str = "Error: Invalid conversion expression"
+        
+        # Format the result based on its type
+        
+        self.conversion_history.insert(0, f"{text} => {result_str}")
+        self.save_conversion_history()
+        self.update_conversion_viewport()
+        
     def update_calculator_viewport(self):
         self.viewport.children = []
         for item in self.calc_history:
@@ -491,6 +575,16 @@ class AppLauncher(Box):
             self.viewport.add(btn)
 
         if self.selected_index >= len(self.calc_history):
+            self.selected_index = -1
+    
+    def update_conversion_viewport(self):
+        self.viewport.children = []
+        for item in self.conversion_history:
+            btn = self.create_conversion_history_button(item)
+            self.viewport.add(btn)
+        # Don't reset selection index here automatically
+        # Ensure selection state stays valid
+        if self.selected_index >= len(self.conversion_history):
             self.selected_index = -1
 
     def create_calc_history_button(self, text: str) -> Button:
@@ -547,6 +641,60 @@ class AppLauncher(Box):
             )
         return btn
 
+    def create_conversion_history_button(self, text: str) -> Button:
+        # Parse the result to create a more readable display
+        if "=>" in text:
+            parts = text.split("=>")
+            expression = parts[0].strip()
+            result = parts[1].strip()
+            
+            # For very long results, truncate for display but keep full in tooltip
+            display_text = text
+            if len(result) > 50:  # Truncate long results
+                display_text = f"{expression} => {result[:47]}..."
+                
+            btn = Button(
+                name="slot-button",  # reuse existing CSS styling
+                child=Box(
+                    name="calc-slot-box",
+                    orientation="h",
+                    spacing=10,
+                    children=[
+                        Label(
+                            name="calc-label",
+                            label=display_text,
+                            ellipsization="end",
+                            v_align="center",
+                            h_align="center",
+                        ),
+                    ],
+                ),
+                tooltip_text=text,
+                on_clicked=lambda *_: self.copy_text_to_clipboard(text),
+            )
+        else:
+            # Fallback for non-calculation entries
+            btn = Button(
+                name="slot-button",
+                child=Box(
+                    name="calc-slot-box",
+                    orientation="h",
+                    spacing=10,
+                    children=[
+                        Label(
+                            name="calc-label",
+                            label=text,
+                            ellipsization="end",
+                            v_align="center",
+                            h_align="center",
+                        ),
+                    ],
+                ),
+                tooltip_text=text,
+                on_clicked=lambda *_: self.copy_text_to_clipboard(text),
+            )
+        return btn
+    
     def copy_text_to_clipboard(self, text: str):
 
         parts = text.split("=>", 1)
@@ -577,3 +725,27 @@ class AppLauncher(Box):
 
             if len(self.calc_history) > 0:
                 self.update_selection(min(new_index, len(self.calc_history) - 1))
+
+    def delete_selected_conversion_history(self):
+        if self.selected_index != -1 and self.selected_index < len(self.conversion_history):
+            # Store the current index before deletion
+            current_index = self.selected_index
+            
+            # Delete the item
+            del self.conversion_history[current_index]
+            self.save_conversion_history()
+            
+            # Determine the new selection index
+            # If we deleted the first item, stay at index 0
+            # Otherwise, move to the previous item
+            new_index = 0 if current_index == 0 else current_index - 1
+            
+            # Reset selection before updating viewport
+            self.selected_index = -1
+            
+            # Update the viewport
+            self.update_conversion_viewport()
+            
+            # If we still have items, select the determined index
+            if len(self.conversion_history) > 0:
+                self.update_selection(min(new_index, len(self.conversion_history) - 1))

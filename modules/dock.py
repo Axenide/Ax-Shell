@@ -11,13 +11,13 @@ from fabric.widgets.button import Button
 from fabric.widgets.eventbox import EventBox
 from fabric.widgets.image import Image
 from fabric.widgets.revealer import Revealer
-from fabric.widgets.wayland import WaylandWindow as Window
 from gi.repository import Gdk, GLib, Gtk
 
 import config.data as data
 from modules.corners import MyCorner
 from utils.icon_resolver import IconResolver
 from utils.occlusion import check_occlusion
+from widgets.wayland import WaylandWindow as Window
 
 
 def read_config():

@@ -18,6 +18,42 @@ OCR_SCRIPT = get_relative_path("../scripts/ocr.sh")
 GAMEMODE_SCRIPT = get_relative_path("../scripts/gamemode.sh")
 SCREENRECORD_SCRIPT = get_relative_path("../scripts/screenrecord.sh")
 
+# Tooltips
+## Screenshot
+tooltip_ssregion = """<b><u>Region Screenshot</u></b>
+<b>Left Click:</b> Take a screenshot of a selected region.
+<b>Right Click:</b> Take a mockup screenshot of a selected region."""
+
+tooltip_ssfull = """<b><u>Screenshot</u></b>
+<b>Left Click:</b> Take a fullscreen screenshot.
+<b>Right Click:</b> Take a mockup fullscreen screenshot."""
+
+tooltip_sswindow = """<b><u>Window Screenshot</u></b>
+<b>Left Click:</b> Take a screenshot of the active window.
+<b>Right Click:</b> Take a mockup screenshot of the active window."""
+
+tooltip_screenshots = "<b>Screenshots Directory</b>"
+
+tooltip_screenrecord = "<b>Screen Recorder</b>"
+tooltip_recordings = "<b>Recordings Directory</b>"
+
+tooltip_ocr = "<b>OCR</b>"
+tooltip_colorpicker = """<b><u>Color Picker</u></b>
+<b>Mouse:</b>
+Left Click: HEX
+Middle Click: HSV
+Right Click: RGB
+
+<b>Keyboard:</b>
+Enter: HEX
+Shift+Enter: RGB
+Ctrl+Enter: HSV"""
+
+tooltip_gamemode = "<b>Game Mode</b>"
+tooltip_pomodoro = "<b>Pomodoro Timer</b>"
+tooltip_emoji = "<b>Emoji Picker</b>"
+
+
 class Toolbox(Box):
     def __init__(self, **kwargs):
         orientation = "h"
@@ -38,6 +74,7 @@ class Toolbox(Box):
 
         self.btn_ssregion = Button(
             name="toolbox-button",
+            tooltip_markup=tooltip_ssregion,
             child=Label(name="button-label", markup=icons.ssregion),
             on_clicked=self.ssregion,
             h_expand=False,
@@ -51,6 +88,7 @@ class Toolbox(Box):
 
         self.btn_ssfull = Button(
             name="toolbox-button",
+            tooltip_markup=tooltip_ssfull,
             child=Label(name="button-label", markup=icons.ssfull),
             on_clicked=self.ssfull,
             h_expand=False,
@@ -65,6 +103,7 @@ class Toolbox(Box):
 
         self.btn_sswindow = Button(
             name="toolbox-button",
+            tooltip_markup=tooltip_sswindow,
             child=Label(name="button-label", markup=icons.sswindow),
             on_clicked=self.sswindow,
             h_expand=False,
@@ -79,6 +118,7 @@ class Toolbox(Box):
 
         self.btn_screenrecord = Button(
             name="toolbox-button",
+            tooltip_markup=tooltip_screenrecord,
             child=Label(name="button-label", markup=icons.screenrecord),
             on_clicked=self.screenrecord,
             h_expand=False,
@@ -89,6 +129,7 @@ class Toolbox(Box):
 
         self.btn_ocr = Button(
             name="toolbox-button",
+            tooltip_markup=tooltip_ocr,
             child=Label(name="button-label", markup=icons.ocr),
             on_clicked=self.ocr,
             h_expand=False,
@@ -99,7 +140,7 @@ class Toolbox(Box):
 
         self.btn_color = Button(
             name="toolbox-button",
-            tooltip_text="Color Picker\nLeft Click: HEX\nMiddle Click: HSV\nRight Click: RGB\n\nKeyboard:\nEnter: HEX\nShift+Enter: RGB\nCtrl+Enter: HSV",
+            tooltip_markup=tooltip_colorpicker,
             child=Label(
                 name="button-bar-label",
                 markup=icons.colorpicker
@@ -112,6 +153,7 @@ class Toolbox(Box):
 
         self.btn_gamemode = Button(
             name="toolbox-button",
+            tooltip_markup=tooltip_gamemode,
             child=Label(name="button-label", markup=icons.gamemode),
             on_clicked=self.gamemode,
             h_expand=False,
@@ -122,6 +164,7 @@ class Toolbox(Box):
 
         self.btn_pomodoro = Button(
             name="toolbox-button",
+            tooltip_markup=tooltip_pomodoro,
             child=Label(name="button-label", markup=icons.timer_off),
             on_clicked=self.pomodoro,
             h_expand=False,
@@ -137,6 +180,7 @@ class Toolbox(Box):
 
         self.btn_emoji = Button(
             name="toolbox-button",
+            tooltip_markup=tooltip_emoji,
             child=Label(name="button-label", markup=icons.emoji),
             on_clicked=self.emoji,
             h_expand=False,
@@ -147,6 +191,7 @@ class Toolbox(Box):
         
         self.btn_screenshots_folder = Button(
             name="toolbox-button",
+            tooltip_markup=tooltip_screenshots,
             child=Label(name="button-label", markup=icons.screenshots),
             on_clicked=self.open_screenshots_folder,
             h_expand=False,
@@ -157,6 +202,7 @@ class Toolbox(Box):
         
         self.btn_recordings_folder = Button(
             name="toolbox-button",
+            tooltip_markup=tooltip_recordings,
             child=Label(name="button-label", markup=icons.recordings),
             on_clicked=self.open_recordings_folder,
             h_expand=False,

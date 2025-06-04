@@ -1,8 +1,9 @@
 {
-	"version": "0.0.2",
+	"version": "0.0.7",
 	"changelog": [
-		"Replaced wlinhibit with a custom implementation.",
-		"Questioned why I can't sleep. It's 5:30 AM.",
+    "<b>qol:</b> Tooltips everywhere.",
+    "<b>temp fix:</b> Notch/Panel closing when clicking outside disabled because of issues.",
+    "<b>dep:</b> Added python-gobject. (It was supposed to be installed as a dependency for Fabric, but it wasn't.)",
     "Herobrine removed."
 	]
 }

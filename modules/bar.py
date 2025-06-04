@@ -11,7 +11,6 @@ from fabric.widgets.centerbox import CenterBox
 from fabric.widgets.datetime import DateTime
 from fabric.widgets.label import Label
 from fabric.widgets.revealer import Revealer
-from fabric.widgets.wayland import WaylandWindow as Window
 from gi.repository import Gdk, Gtk
 
 import config.data as data
@@ -22,8 +21,29 @@ from modules.metrics import Battery, MetricsSmall, NetworkApplet
 from modules.systemtray import SystemTray
 from modules.weather import Weather
 from modules.cgmsugar import SmallCgm
+from widgets.wayland import WaylandWindow as Window
 
 CHINESE_NUMERALS = ["一", "二", "三", "四", "五", "六", "七", "八", "九", "〇"]
+
+# Tooltips
+tooltip_apps = f"""<b><u>Launcher</u></b>
+<b>• Apps:</b> Type to search.
+
+<b>• Calculator [Prefix "="]:</b> Solve a math expression.
+  e.g. "=2+2"
+
+<b>• Converter [Prefix ";"]:</b> Convert between units.
+  e.g. ";100 USD to EUR", ";10 km to miles"
+
+<b>• Special Commands [Prefix ":"]:</b>
+  :update - Open {data.APP_NAME_CAP}'s updater.
+  :d - Open Dashboard.
+  :w - Open Wallpapers."""
+
+tooltip_power = """<b>Power Menu</b>"""
+tooltip_tools = """<b>Toolbox</b>"""
+tooltip_overview = """<b>Overview</b>"""
+
 
 class Bar(Window):
     def __init__(self, **kwargs):
@@ -124,6 +144,7 @@ class Bar(Window):
 
         self.button_tools = Button(
             name="button-bar",
+            tooltip_markup=tooltip_tools,
             on_clicked=lambda *_: self.tools_menu(),
             child=Label(
                 name="button-bar-label",
@@ -149,6 +170,7 @@ class Bar(Window):
 
         self.button_apps = Button(
             name="button-bar",
+            tooltip_markup = tooltip_apps,
             on_clicked=lambda *_: self.search_apps(),
             child=Label(
                 name="button-bar-label",
@@ -160,6 +182,7 @@ class Bar(Window):
 
         self.button_power = Button(
             name="button-bar",
+            tooltip_markup=tooltip_power,
             on_clicked=lambda *_: self.power_menu(),
             child=Label(
                 name="button-bar-label",
@@ -171,6 +194,7 @@ class Bar(Window):
 
         self.button_overview = Button(
             name="button-bar",
+            tooltip_markup=tooltip_overview,
             on_clicked=lambda *_: self.overview(),
             child=Label(
                 name="button-bar-label",
