@@ -11,8 +11,7 @@ gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk, GLib
 import numpy as np
 import cairo
-import modules.icons as icons
-
+from modules.private_data import PrivateData
 
 class Light(Box):
     def __init__(self, **kwargs):
@@ -22,12 +21,15 @@ class Light(Box):
             orientation="h",
             **kwargs,
         )
+
         self.widgets = kwargs["widgets"]
 
         self.scale_height = 3.1 #310 pixels
 
         self.wheel_width = 300
         self.wheel_height = 300
+
+        self.private_config = PrivateData()
 
         self.buttons = self.widgets.buttons.light_button
         self.light_status_text = self.buttons.light_status_text
@@ -37,39 +39,8 @@ class Light(Box):
         self.light_menu_button = self.buttons.light_menu_button
         self.light_menu_label = self.buttons.light_menu_label
 
-        self.hue = Hue('192.168.10.71', 'OAVsJnfaX476yAFsBt7ES3voatlCWPay43b3arxK')  # create Hue instance, ip address, key
-
-        self.bulb = self.hue.lights[0]
-
-        self.color_wheel = ColorWheel(self.hue, self.wheel_width, self.wheel_height)
-
-        self.brightness = Scale(
-            name="brightness-bar",
-            min=0.0,
-            orientation='vertical',
-            inverted=True,
-            markup=icons.bulb
-        )
-        self.brightness.max_value = 100.0
-        
-        self.status_light()
-
-        if self.bulb.on:
-            self.brightness.value = self.bulb.brightness
-        else:
-            self.brightness.value = 0
-
-        self.last_update = [self.bulb.on, self.brightness.value]
-
-        GLib.timeout_add_seconds(5, self.fetch_status)
-
-        self.brightness.add_events(Gdk.EventMask.BUTTON_PRESS_MASK | Gdk.EventMask.BUTTON_MOTION_MASK| Gdk.EventMask.BUTTON_RELEASE_MASK)
-        self.brightness.connect("button-press-event", self.on_click)
-        self.brightness.connect("motion-notify-event", self.on_drag)
-        self.brightness.connect("button-release-event", self.on_release)
-
-        self.add(self.color_wheel)
-        self.add(self.brightness)
+        self.hue = Hue(self.private_config.hue_ip, self.private_config.hue_key)  # create Hue instance, ip address, key
+        self._add_light()
 
     def on_click(self, widget, event):
         if event.button == 1:
@@ -129,6 +100,39 @@ class Light(Box):
                     self.bulb.brightness = value
                 else:
                     self.bulb.on = False
+    
+    def _add_light(self):
+        self.bulb = self.hue.lights[0]
+
+        self.color_wheel = ColorWheel(self.hue, self.wheel_width, self.wheel_height)
+
+        self.brightness = Scale(
+            name="brightness-bar",
+            min=0.0,
+            orientation='vertical',
+            inverted=True,
+            markup=icons.bulb
+        )
+        self.brightness.max_value = 100.0
+        
+        self.status_light()
+
+        if self.bulb.on:
+            self.brightness.value = self.bulb.brightness
+        else:
+            self.brightness.value = 0
+
+        self.last_update = [self.bulb.on, self.brightness.value]
+
+        GLib.timeout_add_seconds(5, self.fetch_status)
+
+        self.brightness.add_events(Gdk.EventMask.BUTTON_PRESS_MASK | Gdk.EventMask.BUTTON_MOTION_MASK| Gdk.EventMask.BUTTON_RELEASE_MASK)
+        self.brightness.connect("button-press-event", self.on_click)
+        self.brightness.connect("motion-notify-event", self.on_drag)
+        self.brightness.connect("button-release-event", self.on_release)
+
+        self.add(self.color_wheel)
+        self.add(self.brightness)
 
 class ColorWheel(Gtk.DrawingArea):
     def __init__(self, hue, width, height):

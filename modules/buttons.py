@@ -307,6 +307,7 @@ class LightButton(Box):
             child=self.light_status_container,
             on_clicked=lambda *_: self.widgets.light.switch(),
         )
+        add_hover_cursor(self.light_status_button)
         self.light_menu_label = Label(
             name="light-menu-label",
             markup=icons.chevron_right,

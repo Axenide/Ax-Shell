@@ -14,25 +14,40 @@ class PrivateData:
                     _location = data.get("location", "")
                     _nightscout = data.get("nightscout", "")
                     _nightscout_api = data.get("nightscout_api", "")
+                    _hue_ip = data.get("hue_ip", "")
+                    _hue_key = data.get("hue_key", "")
             else:
                     print("File not found: personal_config.json")
         except (FileNotFoundError, json.JSONDecodeError):
             _location = "40.7128&lon=74.0060" #new york city
             _nightscout = "https://nightscout.com" #paste your nightscout website here
             _nightscout_api = "" #your nightscout api key
-        self._location = _location
-        self._nightscout = _nightscout
-        self._nightscout_api = _nightscout_api
+            _hue_ip = data.get("hue_ip", "192.0.0.1")
+            _hue_key = data.get("hue_key", "")
+        
+        self._location = str(_location)
+        self._nightscout = str(_nightscout)
+        self._nightscout_api = str(_nightscout_api)
+        self._hue_ip = str(_hue_ip)
+        self._hue_key = str(_hue_key)
 
     def get_location(self) -> str:
-        return str(self._location)
+        return f'{self._location}'
 
     def get_nightscout(self) -> str:
-        return str(self._nightscout)
+        return f'{self._nightscout}'
 
     def get_nightscout_api(self) -> str:
-        return str(self._nightscout_api)
+        return f'{self._nightscout_api}'
+    
+    def get_hue_ip(self) -> str:
+        return f'{self._hue_ip}'
+
+    def get_hue_key(self) -> str:
+        return f'{self._hue_key}'
 
     nightscout = property(get_nightscout)
     location = property(get_location)
     nightscout_api = property(get_nightscout_api)
+    hue_ip = property(get_hue_ip)
+    hue_key = property(get_hue_key)

@@ -929,7 +929,9 @@ class Notch(Window):
         if (self.stack.get_visible_child() == self.dashboard and 
             self.dashboard.stack.get_visible_child() == self.dashboard.widgets):
             
-
+            if (self.applet_stack.get_visible_child() == self.dashboard.widgets.bluetooth and
+            self.dashboard.widgets.bluetooth.editing):
+                return False
             if self.stack.get_visible_child() == self.launcher:
                 return False
                 
@@ -950,5 +952,5 @@ class Notch(Window):
 
                 self.open_launcher_with_text(keychar)
                 return True
-                
+                    
         return False

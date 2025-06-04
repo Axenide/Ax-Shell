@@ -8,3 +8,4 @@ personal_config.json
 .aider*
 config/dock.json
 config/dock.json.bak
+.venv

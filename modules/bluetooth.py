@@ -5,11 +5,23 @@ from fabric.widgets.centerbox import CenterBox
 from fabric.widgets.image import Image
 from fabric.widgets.label import Label
 from fabric.widgets.scrolledwindow import ScrolledWindow
+from fabric.widgets.eventbox import EventBox
+from fabric.widgets.entry import Entry
+from fabric.core.service import Signal
+from gi.repository import Gdk
 
 import modules.icons as icons
 
 
+def add_hover_cursor(widget):
+    widget.add_events(Gdk.EventMask.ENTER_NOTIFY_MASK | Gdk.EventMask.LEAVE_NOTIFY_MASK)
+    widget.connect("enter-notify-event", lambda w, e: w.get_window().set_cursor(Gdk.Cursor.new_from_name(w.get_display(), "pointer")) if w.get_window() else None)
+    widget.connect("leave-notify-event", lambda w, e: w.get_window().set_cursor(None) if w.get_window() else None)
+
 class BluetoothDeviceSlot(CenterBox):
+    @Signal
+    def editing(self, state: bool) -> None: ...
+
     def __init__(self, device: BluetoothDevice, **kwargs):
         super().__init__(name="bluetooth-device", **kwargs)
         self.device = device
@@ -25,6 +37,16 @@ class BluetoothDeviceSlot(CenterBox):
             on_clicked=lambda *_: self.device.set_connecting(not self.device.connected),
             style_classes=["connected"] if self.device.connected else None,
         )
+        # Cannot get ellipsized text on entry so I have label aswell
+        self.nickname_label = Label(label=device.alias, h_expand=True, h_align="start", ellipsization="end")
+        self.nickname_entry = Entry(name="search-entry-walls",text=device.alias, h_align="start", visible=False)
+
+        self.nickname_button = EventBox(events=["button-press-event"], child=Image(icon_name=device.icon_name + "-symbolic", size=16))
+        self.nickname_button.connect("button-press-event", self.nickname_edit)
+        add_hover_cursor(self.nickname_button)
+        
+        self.nickname_entry.connect("focus-out-event", self.exit_edit)
+        self.nickname_entry.connect("activate", self.exit_edit)
 
         self.start_children = [
             Box(
@@ -32,8 +54,9 @@ class BluetoothDeviceSlot(CenterBox):
                 h_expand=True,
                 h_align="fill",
                 children=[
-                    Image(icon_name=device.icon_name + "-symbolic", size=16),
-                    Label(label=device.name, h_expand=True, h_align="start", ellipsization="end"),
+                    self.nickname_button,
+                    self.nickname_label,
+                    self.nickname_entry,
                     self.connection_label,
                 ],
             )
@@ -59,6 +82,31 @@ class BluetoothDeviceSlot(CenterBox):
         else:
             self.connect_button.remove_style_class("connected")
         return
+    
+    def nickname_edit(self, widget, event):
+        if event.button == 1:
+            toggle = False if self.nickname_entry.is_visible() else True
+            self.editable(toggle)
+            self.emit('editing', toggle)
+    
+    def exit_edit(self, *args):
+        self.editable(False)
+        self.emit('editing', False)
+        if self.nickname_entry.get_text() == "":
+            self.nickname_entry.set_text(self.device.name)
+        self.device.alias = self.nickname_entry.get_text()
+        print(self.device.alias)
+        self.nickname_label.set_label(self.nickname_entry.get_text())
+
+    def editable(self, yes: bool):
+        if yes:
+            self.nickname_label.hide()
+            self.nickname_entry.show()
+            self.nickname_entry.grab_focus()
+            self.nickname_entry.set_position(-1)
+        else:
+            self.nickname_label.show()
+            self.nickname_entry.hide()
 
 class BluetoothConnections(Box):
     def __init__(self, **kwargs):
@@ -70,6 +118,8 @@ class BluetoothConnections(Box):
         )
 
         self.widgets = kwargs["widgets"]
+
+        self.editing = False
 
         self.buttons = self.widgets.buttons.bluetooth_button
         self.bt_status_text = self.buttons.bluetooth_status_text
@@ -144,6 +194,7 @@ class BluetoothConnections(Box):
         if not (device := client.get_device(address)):
             return
         slot = BluetoothDeviceSlot(device)
+        slot.connect('editing', self.on_editing)
 
         if device.paired:
             return self.paired_box.add(slot)
@@ -158,3 +209,6 @@ class BluetoothConnections(Box):
             self.scan_label.remove_style_class("scanning")
             self.scan_button.remove_style_class("scanning")
             self.scan_button.set_tooltip_text("Scan for Bluetooth devices")
+    
+    def on_editing(self, widget, state):
+        self.editing = state
