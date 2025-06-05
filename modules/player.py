@@ -487,7 +487,7 @@ class PlayerSmall(CenterBox):
     def __init__(self):
         super().__init__(name="player-small", orientation="h", h_align="fill", v_align="center")
         self._show_artist = False
-        self._display_options = ["cavalcade", "title", "artist"]
+        self._display_options = ["cavalcade", "title", "artist", "overlay"]
         self._display_index = 0
         self._current_display = "overlay"
 
