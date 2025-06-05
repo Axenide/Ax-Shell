@@ -63,7 +63,7 @@
 }
 
 #wifi-connect-button.connected {
-  background-color: var(--green);
+  background-color: var(--primary);
 }
 
 #wifi-connect-button.connected label {
@@ -71,7 +71,7 @@
 }
 
 #bluetooth-connect.connected {
-  background-color: var(--blue);
+  background-color: var(--primary);
 }
 
 #bluetooth-connect.connected label {
@@ -112,15 +112,15 @@
 
 @keyframes blink {
   0% {
-    background-color: var(--blue);
+    background-color: var(--secondary);
     color: var(--shadow);
   }
   50% {
     background-color: var(--shadow);
-    color: var(--blue);
+    color: var(--secondary);
   }
   100% {
-    background-color: var(--blue);
+    background-color: var(--secondary);
     color: var(--shadow);
   }
 }
