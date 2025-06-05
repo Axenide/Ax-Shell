@@ -489,7 +489,7 @@ class PlayerSmall(CenterBox):
         self._show_artist = False
         self._display_options = ["cavalcade", "title", "artist"]
         self._display_index = 0
-        self._current_display = "cavalcade"
+        self._current_display = "overlay"
 
         self.mpris_icon = Button(
             name="compact-mpris-icon",
@@ -528,18 +528,29 @@ class PlayerSmall(CenterBox):
         self.cavalcade = SpectrumRender()
         self.cavalcade_box = self.cavalcade.get_spectrum_box()
 
-        self.center_stack = Stack(
-            name="compact-mpris",
-            transition_type="crossfade",
-            transition_duration=100,
-            v_align="center",
-            v_expand=False,
-            children=[
-                self.cavalcade_box,
-                self.mpris_label,
-            ]
-        )
-        self.center_stack.set_visible_child(self.cavalcade_box)
+        if self._current_display != "overlay":
+            self.center_stack = Stack(
+                name="compact-mpris",
+                transition_type="crossfade",
+                transition_duration=100,
+                v_align="center",
+                v_expand=False,
+                children=[
+                    self.cavalcade_box,
+                    self.mpris_label,
+                ],
+            )
+            self.center_stack.set_visible_child(self.cavalcade_box)
+            self.center = self.center_stack
+        else:
+            self.center_overlay = Gtk.Overlay()
+            self.center_overlay.set_halign(Gtk.Align.CENTER)
+            self.center_overlay.set_valign(Gtk.Align.CENTER)
+
+            self.center_overlay.add(self.cavalcade_box)  # background
+            self.center_overlay.add_overlay(self.mpris_label)  # foreground
+            self.cavalcade_box.set_style("opacity: 0.6")  # change opacity of the box
+            self.center = self.center_overlay
 
         self.mpris_small = CenterBox(
             name="compact-mpris",
@@ -549,7 +560,7 @@ class PlayerSmall(CenterBox):
             v_align="center",
             v_expand=False,
             start_children=self.mpris_icon,
-            center_children=self.center_stack,
+            center_children=self.center,
             end_children=self.mpris_button,
         )
 
@@ -599,6 +610,9 @@ class PlayerSmall(CenterBox):
             text = (mp.artist if mp.artist else "Nothing Playing")
             self.mpris_label.set_text(text)
             self.center_stack.set_visible_child(self.mpris_label)
+        elif self._current_display == "overlay":
+            text = (mp.title if mp.title and mp.title.strip() else "Nothing Playing")
+            self.mpris_label.set_text(text)
         else:
             self.center_stack.set_visible_child(self.cavalcade_box)
 
