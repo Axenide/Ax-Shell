@@ -589,6 +589,8 @@ class PlayerSmall(CenterBox):
             self.mpris_label.set_text("Nothing Playing")
             self.mpris_button.get_child().set_markup(icons.stop)
             self.mpris_icon.get_child().set_markup(icons.disc)
+            if self._current_display == "overlay":
+                return
             if self._current_display != "cavalcade":
                 self.center_stack.set_visible_child(self.mpris_label)
             else:
