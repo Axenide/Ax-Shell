@@ -21,16 +21,6 @@ import config.data as data
 import modules.icons as icons
 
 
-def get_all_monitors():
-    """
-    Returns a list of connected monitor names using xrandr.
-    """
-    try:
-        output = subprocess.check_output(['xrandr', '--query']).decode()
-        return [line.split()[0] for line in output.splitlines() if " connected" in line]
-    except Exception as e:
-        print(f"Monitor detection failed: {e}")
-        return []
 
 def kill_swww_daemon():
     try:
