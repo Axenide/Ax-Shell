@@ -69,7 +69,12 @@
 
 #date-time {
   background-color: var(--shadow);
-  padding: 8px;
+  min-height: 36px;
+  padding: 0 8px;
+}
+
+#date-time.vertical {
+  padding: 8px 0;
 }
 
 #date-time.invert {
