@@ -1,0 +1,83 @@
+#emoji #search-entry {
+  font-weight: bold;
+  background-color: var(--surface);
+  color: var(--foreground);
+  border-radius: 16px;
+  padding: 10px;
+}
+
+#emoji #search-entry selection {
+  color: var(--background);
+  background-color: var(--primary);
+}
+
+#emoji #close-button {
+  background-color: var(--surface);
+  border-radius: 16px;
+  padding: 8px;
+}
+
+#emoji #close-button:hover,
+#emoji #close-button:focus {
+  background-color: var(--surface-bright);
+}
+
+#emoji #close-button:active {
+  background-color: var(--red-dim);
+}
+
+#emoji #close-label {
+  color: var(--red-dim);
+  font-size: 24px;
+}
+
+#emoji #close-button:active #close-label {
+  color: var(--shadow);
+}
+
+#emoji #emoji-slot-button {
+  border-radius: 40px;
+  padding: 16px;
+  transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes loadEmojiSlot {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+#emoji #emoji-slot-button:hover,
+#emoji #emoji-slot-button:focus,
+#emoji #emoji-slot-button:selected,
+#emoji #emoji-slot-button.selected {
+  border-radius: 16px;
+  background-color: var(--surface-bright);
+}
+
+#emoji #emoji-slot-button:active {
+  background-color: var(--primary);
+}
+
+#emoji #emoji-name-label {
+  color: var(--foreground);
+  font-weight: bold;
+}
+
+#emoji #emoji-slot-button:hover #emoji-name-label,
+#emoji #emoji-slot-button:focus #emoji-name-label,
+#emoji #emoji-slot-button:selected #emoji-name-label,
+#emoji #emoji-slot-button.selected #emoji-name-label {
+  color: var(--primary);
+}
+
+#emoji #emoji-slot-button:active #emoji-name-label {
+  color: var(--shadow);
+}
+
+#emoji #emoji-char-label {
+  font-size: 24px;
+}

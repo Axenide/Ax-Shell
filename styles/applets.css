@@ -1,0 +1,126 @@
+#bluetooth-header,
+#network-header {
+  border: 2px solid var(--surface);
+  padding: 4px;
+  border-radius: 12px;
+}
+
+#bluetooth-device,
+#wifi-ap-slot {
+  border: 2px solid var(--surface);
+  border-radius: 12px;
+  padding: 4px;
+}
+
+#bluetooth-scan,
+#bluetooth-back,
+#network-refresh,
+#network-back {
+  background-color: var(--surface);
+  border-radius: 8px;
+  padding: 4px;
+}
+
+#bluetooth-back-label,
+#network-back-label {
+  font-size: 20px;
+}
+
+#bluetooth-scan:hover,
+#bluetooth-back:hover,
+#network-refresh:hover,
+#network-back:hover {
+  background-color: var(--surface-bright);
+}
+
+#bluetooth-scan label,
+#bluetooth-toggle label,
+#wifi-connect-button label {
+  font-weight: bold;
+}
+
+#bluetooth-text,
+#bluetooth-section {
+  font-weight: bold;
+}
+
+#bluetooth-section {
+  background-color: var(--surface);
+  border-radius: 12px;
+  padding: 8px;
+}
+
+#bluetooth-connection {
+  font-size: 20px;
+}
+
+#bluetooth-connect,
+#wifi-connect-button {
+  font-weight: bold;
+  background-color: var(--surface);
+  border-radius: 8px;
+  padding: 8px;
+}
+
+#wifi-connect-button.connected {
+  background-color: var(--green);
+}
+
+#wifi-connect-button.connected label {
+  color: var(--shadow);
+}
+
+#bluetooth-connect.connected {
+  background-color: var(--blue);
+}
+
+#bluetooth-connect.connected label {
+  color: var(--shadow);
+}
+
+#bluetooth-connect:hover {
+  background-color: var(--surface-bright);
+}
+
+#bluetooth-paired,
+#bluetooth-available {
+  background-color: var(--surface);
+  border-radius: 20px;
+  padding: 4px;
+}
+
+#bt-sep {
+  /*padding: 1px;*/
+  border-radius: 16px;
+  /*background-color: var(--surface);*/
+  /*margin: 0 16px;*/
+}
+
+#bluetooth-scan-label,
+#network-refresh-label {
+  font-size: 20px;
+  color: var(--primary);
+}
+
+#bluetooth-scan.scanning {
+  animation: blink 0.5s ease infinite;
+}
+
+#bluetooth-scan-label.scanning {
+  animation: blink 0.5s ease infinite;
+}
+
+@keyframes blink {
+  0% {
+    background-color: var(--blue);
+    color: var(--shadow);
+  }
+  50% {
+    background-color: var(--shadow);
+    color: var(--blue);
+  }
+  100% {
+    background-color: var(--blue);
+    color: var(--shadow);
+  }
+}

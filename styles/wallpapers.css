@@ -1,0 +1,145 @@
+#wallpaper-icons {
+  border-radius: 20px;
+  transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+#wallpaper-icons:selected {
+  background-color: var(--outline);
+  border-radius: 8px;
+}
+
+#scheme-dropdown {
+  background-color: var(--surface);
+  padding: 8px;
+}
+
+#scheme-dropdown > * > * {
+  font-weight: bold;
+  color: var(--shadow);
+}
+
+#scheme-dropdown.box button.box.cellview {
+  background-color: var(--primary);
+}
+
+#scheme-dropdown.box button.box.cellview:selected {
+  background-color: var(--surface-bright);
+}
+
+#search-entry-walls {
+  /* min-width: 512px; */
+}
+
+/* Customize the overall switch appearance */
+#matugen-switcher,
+#dnd-switch {
+  min-width: 40px;
+  min-height: 20px;
+  background-color: var(--surface);
+  border-radius: 15px;
+  padding: 2px;
+  transition: background-color 0.3s ease;
+}
+
+/* Style the switch's slider */
+#matugen-switcher slider,
+#dnd-switch slider {
+  background-color: var(--primary);
+  border-radius: 16px;
+  min-width: 16px;
+  min-height: 8px;
+  transition:
+    background-color 0.1s cubic-bezier(0.5, 0.25, 0, 1.25),
+    transform 0.25s cubic-bezier(0.5, 0.25, 0, 1.25);
+}
+
+/* When the switch is active (checked) */
+#matugen-switcher:checked,
+#dnd-switch:checked {
+  background-color: var(--primary);
+}
+
+/* Optional: additional styling for the slider when active */
+#matugen-switcher:checked slider,
+#dnd-switch:checked slider {
+  background-color: var(--shadow);
+}
+
+#matugen-switcher:checked image,
+#dnd-switch:checked image {
+  color: var(--shadow);
+}
+
+#mat-label {
+  font-size: 24px;
+  margin-left: 4px;
+}
+
+#custom-color-selector-box {
+  background-color: var(--surface);
+  border-radius: 20px;
+  padding: 8px;
+}
+
+#hue-slider {
+  margin: 0 24px;
+}
+
+#hue-slider trough {
+  background-image: linear-gradient(
+    to right,
+    #ff0000,
+    #ffff00,
+    #00ff00,
+    #00ffff,
+    #0000ff,
+    #ff00ff,
+    #ff0000
+  );
+  border-radius: 8px;
+  min-height: 8px;
+}
+
+#hue-slider slider {
+  min-height: 16px;
+  min-width: 8px;
+  margin: -10px 0;
+  background-color: var(--primary);
+  box-shadow: 0 0 4px alpha(var(--shadow), 0.5);
+  transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+#hue-slider slider:hover,
+#hue-slider slider:active {
+  background-color: var(--foreground);
+}
+
+#hue-slider slider:active {
+  min-height: 24px;
+  min-width: 8px;
+}
+
+#apply-color-button {
+  background-color: var(--primary);
+  color: var(--shadow);
+  border-radius: 20px;
+  padding: 8px;
+  box-shadow: 0 0 4px alpha(var(--shadow), 0.5);
+}
+
+#apply-color-button:hover {
+  background-color: var(--foreground);
+}
+
+#apply-color-button:active {
+  background-color: var(--shadow);
+}
+
+#apply-color-label {
+  font-size: 16px;
+  color: var(--shadow);
+}
+
+#apply-color-button:active #apply-color-label {
+  color: var(--foreground);
+}

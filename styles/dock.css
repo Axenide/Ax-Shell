@@ -1,0 +1,112 @@
+#dock {
+  background-color: var(--shadow);
+  padding: 8px;
+  margin: 8px 8px 0 8px;
+  border-radius: 20px 20px 0 0;
+  transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+#dock.vertical {
+  margin: 8px 0 8px 8px;
+  border-radius: 20px 0 0 20px;
+}
+
+#dock.vertical.left {
+  margin: 8px 8px 8px 0;
+  border-radius: 0 20px 20px 0;
+}
+
+#dock.dense {
+  margin: 8px 8px 4px 8px;
+  border-radius: 20px;
+  border: 2px solid var(--surface);
+}
+
+#dock.edge {
+  border-radius: 20px 20px 0 0;
+  border: 2px solid var(--surface);
+  border-bottom: none;
+}
+
+#dock.dense.vertical {
+  margin: 8px 4px 8px 8px;
+  border-radius: 20px;
+  border: 2px solid var(--surface);
+}
+
+#dock.edge.vertical {
+  border-radius: 20px 0 0 20px;
+  border: 2px solid var(--surface);
+  border-right: none;
+}
+
+#dock.integrated {
+  background-color: var(--shadow);
+  padding: 4px;
+  margin: 0;
+  border-radius: 16px;
+  border: none;
+  transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+#dock.integrated.edge,
+#dock.integrated.dense {
+  background-color: var(--surface);
+  padding: 4px;
+  margin: 0;
+  border-radius: 12px;
+  border: none;
+  transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+#dock-full {
+  transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  opacity: 1;
+}
+
+#dock-separator {
+  padding: 2px;
+  border-radius: 16px;
+  background-color: var(--surface-bright);
+}
+
+#dock-app-button {
+  padding: 4px;
+  border-radius: 24px;
+  box-shadow: 0 0 4px alpha(var(--shadow), 0.5);
+  transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+#dock-app-button:hover {
+  background-color: var(--surface-bright);
+}
+
+#dock-app-button:hover.instance {
+  background-color: var(--outline);
+}
+
+#dock-app-button:active,
+#dock-app-button:active.instance {
+  background-color: var(--primary);
+}
+
+#dock-app-button.instance {
+  background: var(--surface-bright);
+  border-radius: 12px;
+}
+
+#dock-corner-left {
+  margin: 0 -8px 0 0;
+}
+
+#dock-corner-right {
+  margin: 0 0 0 -8px;
+}
+
+#dock-corner-top {
+  margin: 0 0 -8px 0;
+}
+
+#dock-corner-bottom {
+  margin: -8px 0 0 0;
+}

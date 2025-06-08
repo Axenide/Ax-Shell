@@ -1,0 +1,7 @@
+{
+	"version": "0.0.13",
+	"changelog": [
+    "<b>fix:</b> swww changed to swww-git",
+    "<b>fix:</b> Reverted notch to previous commit"
+	]
+}

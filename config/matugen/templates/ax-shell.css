@@ -1,0 +1,32 @@
+:vars {
+  --foreground: {{colors.on_background.default.hex}};
+  --background: {{colors.background.default.hex}};
+  --cursor: {{colors.on_background.default.hex}};
+  --primary: {{colors.primary.default.hex}};
+  --on-primary: {{colors.on_primary.default.hex}};
+  --secondary: {{colors.secondary.default.hex}};
+  --on-secondary: {{colors.on_secondary.default.hex}};
+  --tertiary: {{colors.tertiary.default.hex}};
+  --on-tertiary: {{colors.on_tertiary.default.hex}};
+  --surface: {{colors.surface.default.hex}};
+  --surface-bright: {{colors.surface_bright.default.hex}};
+  --error: {{colors.error.default.hex}};
+  --error-dim: {{colors.error.default.hex | set_lightness: -10.0}};
+  --on-error: {{colors.on_error.default.hex}};
+  --error-container: {{colors.error_container.default.hex}};
+  --outline: {{colors.outline.default.hex}};
+  --shadow: {{colors.shadow.default.hex}};
+  --red: {{colors.red.default.hex}};
+  --red-dim: {{colors.red.default.hex | set_lightness: -10.0}};
+  --green: {{colors.green.default.hex}};
+  --green-dim: {{colors.green.default.hex | set_lightness: -10.0}};
+  --yellow: {{colors.yellow.default.hex}};
+  --yellow-dim: {{colors.yellow.default.hex | set_lightness: -10.0}};
+  --blue: {{colors.blue.default.hex}};
+  --blue-dim: {{colors.blue.default.hex | set_lightness: -10.0}};
+  --magenta: {{colors.magenta.default.hex}};
+  --magenta-dim: {{colors.magenta.default.hex | set_lightness: -10.0}};
+  --cyan: {{colors.cyan.default.hex}};
+  --cyan-dim: {{colors.cyan.default.hex | set_lightness: -10.0}};
+  --white: {{colors.white.default.hex}};
+}

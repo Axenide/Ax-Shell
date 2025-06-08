@@ -1,0 +1,167 @@
+#search-entry,
+#session-name-entry,
+#search-entry-walls {
+  font-weight: bold;
+  background-color: var(--surface);
+  color: var(--foreground);
+  border-radius: 16px;
+  padding: 10px;
+}
+
+#search-entry selection,
+#search-entry-walls selection,
+#session-name-entry selection {
+  color: var(--background);
+  background-color: var(--primary);
+}
+
+#close-button,
+#clear-button,
+#config-button,
+#new-session-button,
+#random-wall-button {
+  background-color: var(--surface);
+  border-radius: 40px;
+  padding: 8px;
+  transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+#close-button:hover,
+#close-button:focus,
+#clear-button:hover,
+#clear-button:focus,
+#config-button:hover,
+#config-button:focus,
+#new-session-button:hover,
+#new-session-button:focus,
+#random-wall-button:hover {
+  background-color: var(--surface-bright);
+  border-radius: 16px;
+}
+
+#close-button:active,
+#clear-button:active {
+  background-color: var(--red-dim);
+  border-radius: 40px;
+}
+
+#close-label,
+#clear-label {
+  color: var(--red-dim);
+  font-size: 24px;
+}
+
+#close-button:active #close-label,
+#clear-button:active #clear-label {
+  color: var(--shadow);
+}
+
+#config-button:active,
+#new-session-button:active,
+#random-wall-button:active {
+  background-color: var(--primary);
+  border-radius: 40px;
+}
+
+#config-label,
+#new-session-label,
+#random-wall-label {
+  color: var(--primary);
+  font-size: 24px;
+}
+
+#config-button:active #config-label,
+#new-session-button:active #new-session-label,
+#random-wall-button:active #random-wall-label {
+  color: var(--shadow);
+}
+
+#scrolled-window {
+  border-radius: 16px;
+}
+
+#scrolled-window scrollbar,
+#bluetooth-devices scrollbar,
+#network-ap-scrolled-window scrollbar {
+  border-radius: 10px;
+  background-color: var(--surface);
+  padding: 4px;
+  margin-left: 6px;
+}
+
+#scrolled-window slider,
+#bluetooth-devices slider,
+#network-ap-scrolled-window slider {
+  border-radius: 8px;
+  min-width: 16px;
+  min-height: 48px;
+  background-color: var(--primary);
+}
+
+#slot-button {
+  border-radius: 40px;
+  padding: 0 16px;
+  animation: loadSlot 0.5s ease;
+  min-height: 52px;
+  transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes loadSlot {
+  0% {
+    opacity: 0;
+  }
+
+  100% {
+    opacity: 1;
+  }
+}
+
+#slot-button:hover,
+#slot-button:focus,
+#slot-button:selected,
+#slot-button.selected {
+  border-radius: 16px;
+  background-color: var(--surface);
+  padding-left: 20px;
+}
+
+#slot-button:active {
+  background-color: var(--primary);
+}
+
+#app-icon {
+  margin: -8px;
+  margin-right: 4px;
+}
+
+#app-label {
+  color: var(--foreground);
+  font-weight: bold;
+}
+
+#slot-button:hover #app-label,
+#slot-button:focus #app-label,
+#slot-button:selected #app-label,
+#slot-button.selected #app-label {
+  color: var(--primary);
+}
+
+#slot-button:active #app-label {
+  color: var(--shadow);
+}
+
+#tmux-icon,
+#clip-icon {
+  font-size: 20px;
+  color: var(--primary);
+}
+
+#app-desc {
+  color: var(--outline);
+  font-size: 12px;
+  font-style: italic;
+}
+
+#clip-label {
+  font-weight: bold;
+}

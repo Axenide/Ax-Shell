@@ -1,0 +1,142 @@
+#box-1,
+#box-2,
+#box-3,
+#box-x {
+  border-radius: 20px;
+  background-color: var(--surface);
+}
+
+#container-1,
+#container-2,
+#container-3 {
+  border-radius: 20px;
+}
+
+#container-sub-1 {
+  /* min-width: 750px; */
+}
+
+#box-3 {
+  min-width: 88px;
+  /*min-height: 226px;*/
+}
+
+#box-x {
+  min-height: 28px;
+}
+
+#switcher.stack-switcher > * {
+  /* background-color: var(--shadow); */
+  padding: 4px;
+  border-radius: 20px;
+  transition: all 0.1s ease;
+}
+
+#switcher.stack-switcher > *:checked {
+  background-color: var(--surface);
+}
+
+#switcher.stack-switcher > *:active,
+#switcher.stack-switcher > *:hover {
+  background-color: var(--surface-bright);
+}
+
+#switcher.stack-switcher > *:focus {
+  background-color: var(--surface-bright);
+}
+
+#switcher.stack-switcher button label {
+  font-weight: bold;
+}
+
+#switcher.stack-switcher > *:checked label {
+  color: var(--primary);
+}
+
+#coming-soon-label {
+  font-size: 16px;
+  font-weight: bold;
+  font-style: italic;
+}
+
+#metrics {
+  border-radius: 16px;
+  border: 4px solid var(--surface);
+  padding: 8px;
+}
+
+/* Common trough style */
+#gpu-usage trough,
+#cpu-usage trough,
+#ram-usage trough,
+#disk-usage trough {
+  background-color: var(--surface);
+  border-radius: 4px;
+}
+
+/* Common highlight style */
+#gpu-usage trough highlight,
+#cpu-usage trough highlight,
+#ram-usage trough highlight,
+#disk-usage trough highlight {
+  border-radius: 2px 2px;
+  margin-top: 4px;
+}
+
+/* Highlight colors por recurso */
+#gpu-usage trough highlight,
+#gpu-usage slider,
+#cpu-usage trough highlight,
+#cpu-usage slider {
+  background-color: var(--primary);
+}
+#ram-usage trough highlight,
+#ram-usage slider {
+  background-color: var(--secondary);
+}
+#disk-usage trough highlight,
+#disk-usage slider {
+  background-color: var(--tertiary);
+}
+
+/* Common slider style */
+#gpu-usage slider,
+#cpu-usage slider,
+#ram-usage slider,
+#disk-usage slider {
+  border-radius: 4px;
+  min-width: 16px;
+  min-height: 2px;
+  margin: 0 -4px;
+  box-shadow:
+    0 0 0px 2px var(--shadow),
+    0 0 0px 2px var(--shadow);
+}
+
+/* Common label style */
+#gpu-label,
+#cpu-label,
+#ram-label,
+#disk-label {
+  font-size: 16px;
+}
+
+/* Label colors por recurso */
+#gpu-label,
+#cpu-label {
+  color: var(--primary);
+}
+#ram-label {
+  color: var(--secondary);
+}
+#disk-label {
+  color: var(--tertiary);
+}
+
+#applet-stack {
+  /* min-width: 420px; */
+  border-radius: 20px;
+  border: 4px solid var(--surface);
+  padding: 4px;
+  /* min-width: 478px; */
+}

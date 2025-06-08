@@ -1,0 +1,120 @@
+#notch-box {
+  margin: 0 20px 10px 20px;
+}
+
+#notch-wrap {
+  transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+#notch-content {
+  background-color: var(--shadow);
+  border-radius: 0 0 20px 20px;
+  transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+#notch-content.open {
+  border-radius: 0 0 36px 36px;
+  padding: 2px;
+}
+
+#notch-content.open.invert {
+  padding: 2px;
+  padding-top: 0px;
+  border-radius: 0 0 36px 36px;
+}
+
+#notch-content.invert {
+  background-color: var(--surface);
+  border-radius: 0 0 12px 12px;
+}
+
+#notch-compact {
+  font-weight: bold;
+}
+
+#notch-corner-left {
+  margin-left: -16px;
+}
+
+#notch-corner-right {
+  margin-right: -16px;
+}
+
+#compact-mpris-icon-label {
+  color: var(--primary);
+}
+
+#compact-mpris-icon-label,
+#compact-mpris-button-label {
+  font-size: 20px;
+}
+
+#compact-mpris-icon,
+#compact-mpris-button {
+  margin: 0 10px;
+}
+
+#compact-mpris-icon:hover,
+#compact-mpris-button:hover {
+  background-color: var(--primary);
+}
+
+#compact-mpris-icon:active,
+#compact-mpris-button:active {
+  background-color: var(--primary);
+}
+
+#compact-mpris-icon:hover #compact-mpris-icon-label,
+#compact-mpris-button:hover #compact-mpris-button-label {
+  color: var(--background);
+}
+
+#hyprland-window label {
+  margin: 0px 8px;
+}
+
+#active-window-box {
+  margin: 10px;
+}
+
+#app-launcher,
+#power-menu,
+#toolbox,
+#dashboard,
+#tmux-manager,
+#clip-history,
+#overview,
+#emoji {
+  background-color: var(--shadow);
+  padding: 14px;
+  border-radius: 0 0 34px 34px;
+  transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1);
+}
+
+#notch-content.panel #app-launcher,
+#notch-content.panel #power-menu,
+#notch-content.panel #toolbox,
+#notch-content.panel #dashboard,
+#notch-content.panel #tmux-manager,
+#notch-content.panel #clip-history,
+#notch-content.panel #overview,
+#notch-content.panel #emoji {
+  border-radius: 34px;
+}
+
+#notch-content.panel {
+  border-radius: 36px;
+}
+
+#notch-box.panel {
+  margin: 6px;
+  padding: 2px;
+  background-color: var(--surface);
+  border-radius: 36px;
+}
+
+#notch-content.open.panel {
+  background-color: var(--shadow);
+  padding: 0px;
+  border-radius: 36px;
+}

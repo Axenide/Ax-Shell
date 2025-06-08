@@ -1,0 +1,191 @@
+#player {
+  min-width: 172px;
+  border-radius: 20px;
+  border: 4px solid var(--surface);
+  /* background-color: var(--shadow); */
+  padding: 8px;
+}
+
+#player-progress {
+  color: var(--surface-bright);
+  border: 8px solid var(--foreground);
+}
+
+#player-title,
+#player-album,
+#player-artist {
+  font-weight: bold;
+}
+
+#player-title {
+  margin-top: -10px;
+  font-size: 11pt;
+}
+
+#player-title.vertical {
+  margin-top: 0;
+  font-size: 11pt;
+}
+
+#player-album {
+  /* margin-top: -5px; */
+  font-size: 9pt;
+  color: var(--outline);
+}
+
+#player-artist {
+  font-size: 10pt;
+  color: var(--primary);
+}
+
+/* —————— Reemplazo de #player-btn-label —————— */
+#player-btn label {
+  font-size: 16px;
+  color: var(--foreground);
+}
+
+#player-btn label.play-pause {
+  font-size: 24px;
+  color: var(--shadow);
+}
+
+/* —————— Botón —————— */
+#player-btn {
+  padding: 4px;
+  transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+#player-btn.play-pause.playing {
+  background-color: var(--primary);
+  border-radius: 12px;
+  padding: 8px;
+}
+
+#player-btn.play-pause {
+  background-color: var(--surface);
+  border-radius: 20px;
+  padding: 8px;
+}
+
+#player-btn.play-pause label {
+  color: var(--outline);
+}
+
+#player-btn.play-pause:hover {
+  background-color: var(--surface-bright);
+}
+
+#player-btn.play-pause:hover label {
+  color: var(--outline);
+}
+
+#player-btn.play-pause.playing label {
+  color: var(--shadow);
+}
+
+#player-btn.play-pause.stop {
+  background-color: var(--shadow);
+}
+
+#player-btn.play-pause.stop label {
+  color: var(--foreground);
+}
+
+#player-btn.play-pause.stop:hover label {
+  color: var(--foreground);
+}
+
+#player-btn:hover {
+  background-color: var(--foreground);
+}
+
+#player-btn.play-pause.playing:hover {
+  background-color: var(--foreground);
+}
+
+#player-btn:hover label {
+  color: var(--shadow);
+}
+
+#player-btn:active {
+  background-color: var(--primary);
+}
+
+#player-btn:active label {
+  color: var(--foreground);
+}
+
+#player-time {
+  font-weight: bold;
+  color: var(--outline);
+  font-size: 10pt;
+}
+
+#player-switcher {
+  margin: 0 24px;
+}
+
+#player-switcher.stack-switcher > *:focus {
+  background-color: var(--surface-bright);
+}
+
+#player-switcher.stack-switcher button label {
+  font-size: 16px;
+  color: var(--surface-bright);
+}
+
+#player-switcher.stack-switcher button:hover label {
+  font-size: 16px;
+  color: var(--outline);
+}
+
+#player-switcher.stack-switcher > *:checked label {
+  font-size: 20px;
+  color: var(--foreground);
+}
+
+#player-switcher.stack-switcher > *:checked:hover label {
+  font-size: 20px;
+  color: var(--foreground);
+}
+
+#player-switcher-vertical {
+  margin: 0 8px;
+}
+
+#player-switcher-vertical.stack-switcher > *:focus {
+  background-color: var(--surface-bright);
+}
+
+#player-switcher-vertical.stack-switcher button {
+  font-size: 0px;
+  color: var(--surface-bright);
+  background-color: var(--surface-bright);
+  min-width: 8px;
+  min-height: 8px;
+  margin: 0 -1px;
+  transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+#player-switcher-vertical.stack-switcher button:hover {
+  font-size: 0px;
+  color: var(--outline);
+  background-color: var(--foreground);
+}
+
+#player-switcher-vertical.stack-switcher > *:checked {
+  font-size: 0px;
+  color: var(--foreground);
+  background-color: var(--primary);
+  min-width: 32px;
+}
+
+#player-switcher-vertical.stack-switcher > *:checked:hover {
+  font-size: 0px;
+  color: var(--foreground);
+  background-color: var(--foreground);
+}
+
+#player-switcher-vertical.stack-switcher button label {
+  font-size: 0px;
+}

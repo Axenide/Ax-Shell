@@ -1,0 +1,79 @@
+#calendar {
+  /* background-color: var(--shadow); */
+  border-radius: 20px;
+  border: 4px solid var(--surface);
+  padding: 4px;
+}
+
+#header {
+  /* background-color: var(--shadow); */
+  border-radius: 12px;
+  border: 2px solid var(--surface);
+  padding: 4px;
+}
+
+#weekday-row {
+  background-color: var(--surface);
+  border-radius: 8px;
+  padding: 4px;
+}
+
+#month-label,
+#weekday-label,
+#day-label {
+  font-weight: bold;
+}
+
+#day-label,
+#day-empty {
+  min-width: 32px;
+  min-height: 32px;
+  font-size: 9pt;
+}
+
+#day-empty {
+  color: var(--surface-bright);
+}
+
+#weekday-label {
+  color: var(--primary);
+  font-size: 9pt;
+}
+
+#calendar-grid {
+  border-radius: 16px;
+  padding: 4px;
+}
+
+#day-label.current-day {
+  background-color: var(--foreground);
+  color: var(--shadow);
+  border-radius: 20px;
+}
+
+#prev-month-button,
+#next-month-button {
+  background-color: var(--surface);
+  border-radius: 8px;
+  padding: 4px;
+}
+
+#prev-month-button:hover,
+#next-month-button:hover {
+  background-color: var(--surface-bright);
+}
+
+#prev-month-button:active,
+#next-month-button:active {
+  background-color: var(--primary);
+}
+
+#month-button-label {
+  color: var(--primary);
+  font-size: 20px;
+}
+
+#prev-month-button:active #month-button-label,
+#next-month-button:active #month-button-label {
+  color: var(--shadow);
+}

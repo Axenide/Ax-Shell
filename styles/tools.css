@@ -1,0 +1,73 @@
+#toolbox-button {
+  border-radius: 40px;
+  min-width: 52px;
+  min-height: 52px;
+  transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+#toolbox-button label {
+  font-size: 24px;
+  color: var(--foreground);
+}
+
+#toolbox-button.recording label {
+  color: var(--red-dim);
+}
+
+#toolbox-button.pomodoro label {
+  color: var(--yellow-dim);
+}
+
+#toolbox-button:hover,
+#toolbox-button:focus {
+  border-radius: 20px;
+  background-color: var(--surface-bright);
+}
+
+#toolbox-button:hover label,
+#toolbox-button:focus label {
+  color: var(--primary);
+}
+
+#toolbox-button.recording:hover label,
+#toolbox-button.recording:focus label {
+  color: var(--red-dim);
+}
+
+#toolbox-button.pomodoro:hover label,
+#toolbox-button.pomodoro:focus label {
+  color: var(--yellow-dim);
+}
+
+#toolbox-button:active {
+  border-radius: 40px;
+  background-color: var(--primary);
+}
+
+#toolbox-button:active label {
+  color: var(--shadow);
+}
+
+#toolbox-button.recording:active {
+  background-color: var(--red-dim);
+}
+
+#toolbox-button.pomodoro:active {
+  background-color: var(--yellow-dim);
+}
+
+#toolbox-button.recording:active label {
+  color: var(--shadow);
+}
+
+#toolbox-button.pomodoro:active label {
+  color: var(--shadow);
+}
+
+#tool-sep {
+  min-width: 4px;
+  min-height: 4px;
+  margin: 0px 4px;
+  border-radius: 16px;
+  background-color: var(--surface-bright);
+}

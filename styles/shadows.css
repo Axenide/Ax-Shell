@@ -1,0 +1,32 @@
+#button-bar,
+#bar-inner.dense,
+#bar-inner.edge,
+#bar-inner.edge.vertical,
+#bar-inner.edgecenter.vertical,
+#workspaces-container,
+#notch-content,
+#notch-box.panel,
+#date-time,
+#systray,
+#battery,
+#control-small,
+#notification-stack-box,
+#nav-button,
+#metrics-small,
+#weather,
+#language,
+#dock {
+  box-shadow: 0 0 3px alpha(black, 0.7);
+}
+
+#notch-content.panel {
+  box-shadow: 0 0 3px alpha(black, 0);
+}
+
+#bar-revealer {
+  padding: 10px;
+}
+
+#boxed-revealer {
+  margin: -10px;
+}
