@@ -105,39 +105,38 @@ def ensure_matugen_config():
     hypr_colors = os.path.expanduser(f"~/.config/{APP_NAME_CAP}/config/hypr/colors.conf")
     css_colors = os.path.expanduser(f"~/.config/{APP_NAME_CAP}/styles/colors.css")
     
-    if not os.path.exists(current_wall) or not os.path.exists(hypr_colors) or not os.path.exists(css_colors):
-        os.makedirs(os.path.dirname(hypr_colors), exist_ok=True)
-        os.makedirs(os.path.dirname(css_colors), exist_ok=True)
-        
-        image_path = ""
-        if not os.path.exists(current_wall):
-            example_wallpaper_path = os.path.expanduser(f"~/.config/{APP_NAME_CAP}/assets/wallpapers_example/example-1.jpg")
-            if os.path.exists(example_wallpaper_path):
-                try:
-                    # Si ya existe (posiblemente un enlace roto o archivo regular), eliminar y re-enlazar
-                    if os.path.lexists(current_wall): # lexists para no seguir el enlace si es uno
-                        os.remove(current_wall)
-                    os.symlink(example_wallpaper_path, current_wall)
-                    image_path = example_wallpaper_path
-                except Exception as e:
-                    print(f"Error creating symlink for wallpaper: {e}")
-        else:
-            image_path = os.path.realpath(current_wall) if os.path.islink(current_wall) else current_wall
-        
-        if image_path and os.path.exists(image_path): 
-            print(f"Generating color theme from wallpaper: {image_path}")
+    os.makedirs(os.path.dirname(hypr_colors), exist_ok=True)
+    os.makedirs(os.path.dirname(css_colors), exist_ok=True)
+
+    image_path = ""
+    if not os.path.exists(current_wall):
+        example_wallpaper_path = os.path.expanduser(f"~/.config/{APP_NAME_CAP}/assets/wallpapers_example/example-1.jpg")
+        if os.path.exists(example_wallpaper_path):
             try:
-                matugen_cmd = f"matugen image '{image_path}'"
-                exec_shell_command_async(matugen_cmd)
-                print("Matugen color theme generation initiated.")
-            except FileNotFoundError:
-                print("Error: matugen command not found. Please install matugen.")
+                if os.path.lexists(current_wall):
+                    os.remove(current_wall)
+                os.symlink(example_wallpaper_path, current_wall)
+                image_path = example_wallpaper_path
             except Exception as e:
-                print(f"Error initiating matugen: {e}")
-        elif not image_path:
-            print("Warning: No wallpaper path determined to generate matugen theme from.")
-        else: # image_path existe pero el archivo no
-            print(f"Warning: Wallpaper at {image_path} not found. Cannot generate matugen theme.")
+                print(f"Error creating symlink for wallpaper: {e}")
+    else:
+        image_path = os.path.realpath(current_wall) if os.path.islink(current_wall) else current_wall
+
+    # Always run matugen if we have a valid image_path
+    if image_path and os.path.exists(image_path): 
+        print(f"Generating color theme from wallpaper: {image_path}")
+        try:
+            matugen_cmd = f"matugen image '{image_path}'"
+            exec_shell_command_async(matugen_cmd)
+            print("Matugen color theme generation initiated.")
+        except FileNotFoundError:
+            print("Error: matugen command not found. Please install matugen.")
+        except Exception as e:
+            print(f"Error initiating matugen: {e}")
+    elif not image_path:
+        print("Warning: No wallpaper path determined to generate matugen theme from.")
+    else:
+        print(f"Warning: Wallpaper at {image_path} not found. Cannot generate matugen theme.")
 
 
 def load_bind_vars():
