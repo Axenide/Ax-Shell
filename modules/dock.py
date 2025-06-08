@@ -245,12 +245,10 @@ class Dock(Window):
             if data.DOCK_THEME in ["Edge", "Dense"]:
                 for corner in [self.corner_left, self.corner_right, self.corner_top, self.corner_bottom]:
                     corner.set_visible(False)
-
-
             if not data.DOCK_ENABLED or data.BAR_POSITION in ["Top", "Bottom"]:
-                self.set_visible(False)
-
-            if self.always_occluded:
+                self.set_visible(False) 
+            
+            if self.always_occluded: 
                 self.dock_full.add_style_class("occluded")
 
         self.view.drag_source_set(
@@ -702,7 +700,6 @@ class Dock(Window):
                 display = Gdk.Display.get_default()
                 _, x, y, _ = display.get_pointer()
                 window = self.get_window()
-
                 # Only proceed if pointer is outside dock window
                 if window:
                     win_x, win_y, width, height = window.get_geometry()
@@ -720,7 +717,6 @@ class Dock(Window):
                             elif app_id_dragged == pinned_app_item:
                                 app_index_dragged = i
                                 break
-
                         if app_index_dragged >= 0:
                             self.pinned.pop(app_index_dragged)
                             self.config["pinned_apps"] = self.pinned

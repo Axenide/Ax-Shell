@@ -414,7 +414,6 @@ class Notch(Window):
         else:
             self.notch_revealer.set_reveal_child(False)
 
-
         self.connect("key-press-event", self.on_key_press)
 
     def on_button_enter(self, widget, event):
@@ -780,7 +779,6 @@ class Notch(Window):
         if new_window_class != self._current_window_class:
 
             self._current_window_class = new_window_class
-
 
             if self._occlusion_timer_id is not None:
                 GLib.source_remove(self._occlusion_timer_id)
