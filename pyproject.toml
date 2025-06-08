@@ -5,12 +5,14 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
+  "dbus-python",
   "fabric",
   "ijson>=3.4.0",
   "numpy>=2.3.0",
   "pillow>=11.2.1",
   "pre-commit>=4.2.0",
   "psutil>=7.0.0",
+  "pygobject==3.52.3",
   "pygobject-stubs>=2.13.0",
   "python-hue-v2",
   "pywayland>=0.4.18",
