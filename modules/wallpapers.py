@@ -273,13 +273,16 @@ class WallpaperSelector(Box):
             if self.matugen_switcher.get_active():
                 exec_shell_command_async(f'matugen image "{full_path}" -t {selected_scheme}')
         elif self._is_video(file_name):
-            monitors = get_all_monitors()
-            for monitor in monitors:
-                subprocess.Popen(
-                    ["mpvpaper", monitor, full_path, "-o", "--loop-file=inf --no-audio --no-osd-bar --osc=no --input-default-bindings=no --no-osc --no-input-default-bindings"],
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
-                )
+            subprocess.Popen(
+                [
+                    "mpvpaper",
+                    "ALL",
+                    full_path,
+                    "-o=--loop-file=inf --no-audio --no-osd-bar --osc=no --input-default-bindings=no --no-osc --no-input-default-bindings",
+                ],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
             extracted_frame = self._extract_video_frame(full_path, size="1920:-1")
             if extracted_frame:
                 # update .current.wall to the extracted frame for Hyprlock
