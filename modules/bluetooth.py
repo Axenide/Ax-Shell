@@ -1,4 +1,5 @@
-from fabric.bluetooth import BluetoothClient, BluetoothDevice
+from fabric.utils import exec_shell_command_async
+from fabric.bluetooth.service import BluetoothClient, BluetoothDevice
 from fabric.widgets.box import Box
 from fabric.widgets.button import Button
 from fabric.widgets.centerbox import CenterBox
@@ -8,13 +9,12 @@ from fabric.widgets.scrolledwindow import ScrolledWindow
 from fabric.widgets.eventbox import EventBox
 from fabric.widgets.entry import Entry
 from fabric.core.service import Signal
-from gi.repository import Gdk
+from gi.repository import Gdk, Gtk
 
 import modules.icons as icons
 
-
-def add_hover_cursor(widget):
-    widget.add_events(Gdk.EventMask.ENTER_NOTIFY_MASK | Gdk.EventMask.LEAVE_NOTIFY_MASK)
+def add_hover_cursor(widget :Gtk.Widget):
+    widget.add_events(Gdk.EventMask.ENTER_NOTIFY_MASK | Gdk.EventMask.LEAVE_NOTIFY_MASK) # type: ignore
     widget.connect("enter-notify-event", lambda w, e: w.get_window().set_cursor(Gdk.Cursor.new_from_name(w.get_display(), "pointer")) if w.get_window() else None)
     widget.connect("leave-notify-event", lambda w, e: w.get_window().set_cursor(None) if w.get_window() else None)
 
@@ -41,11 +41,10 @@ class BluetoothDeviceSlot(CenterBox):
         self.nickname_label = Label(label=device.alias, h_expand=True, h_align="start", ellipsization="end")
         self.nickname_entry = Entry(name="search-entry-walls",text=device.alias, h_align="start", visible=False)
 
-        self.nickname_button = EventBox(events=["button-press-event"], child=Image(icon_name=device.icon_name + "-symbolic", size=16))
+        self.nickname_button = EventBox(events=["button-press-event"], child=Image(icon_name=device.icon_name + "-symbolic", size=16)) # type: ignore
         self.nickname_button.connect("button-press-event", self.nickname_edit)
         add_hover_cursor(self.nickname_button)
-        
-        self.nickname_entry.connect("focus-out-event", self.exit_edit)
+
         self.nickname_entry.connect("activate", self.exit_edit)
 
         self.start_children = [
@@ -82,21 +81,30 @@ class BluetoothDeviceSlot(CenterBox):
         else:
             self.connect_button.remove_style_class("connected")
         return
-    
+
     def nickname_edit(self, widget, event):
         if event.button == 1:
             toggle = False if self.nickname_entry.is_visible() else True
             self.editable(toggle)
             self.emit('editing', toggle)
-    
+
+    def focus_out(self, *args):
+        if self.nickname_entry.is_visible():
+            self.exit_edit()
+
     def exit_edit(self, *args):
         self.editable(False)
         self.emit('editing', False)
         if self.nickname_entry.get_text() == "":
             self.nickname_entry.set_text(self.device.name)
-        self.device.alias = self.nickname_entry.get_text()
-        print(self.device.alias)
-        self.nickname_label.set_label(self.nickname_entry.get_text())
+        # Get the text value before setting it
+        new_alias = self.nickname_entry.get_text()
+        cmd = f"bt-device --set {self.device.address} Alias {new_alias}"
+        print(f"Running command: {cmd}")
+        exec_shell_command_async(cmd)
+        # Set the device alias - the implementation in BluetoothDevice will handle the details
+        self.nickname_label.set_label(new_alias)
+        self.device.emit("changed")
 
     def editable(self, yes: bool):
         if yes:
@@ -209,6 +217,6 @@ class BluetoothConnections(Box):
             self.scan_label.remove_style_class("scanning")
             self.scan_button.remove_style_class("scanning")
             self.scan_button.set_tooltip_text("Scan for Bluetooth devices")
-    
+
     def on_editing(self, widget, state):
         self.editing = state

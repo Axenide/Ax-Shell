@@ -4,7 +4,7 @@ from fabric.widgets.label import Label
 from fabric.widgets.button import Button
 from fabric.widgets.scale import Scale
 from widgets.image import CustomImage
-from gi.repository import GLib, GdkPixbuf, Playerctl, Gtk, Gdk, Pango
+from gi.repository import GLib, GdkPixbuf, Playerctl, Gdk, Pango
 import modules.icons as icons
 import requests
 

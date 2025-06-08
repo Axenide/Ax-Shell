@@ -1,0 +1,43 @@
+# .pre-commit-config.yaml
+repos:
+  # Default pre-commit hooks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0 # Use the latest stable version
+    hooks:
+      - id: fix-byte-order-marker
+      - id: check-case-conflict
+      - id: check-symlinks
+      - id: debug-statements
+      - id: end-of-file-fixer # Ensures files end with a newline
+      - id: trailing-whitespace # Removes trailing whitespace
+      - id: mixed-line-ending # Converts mixed line endings to LF
+        args: ["--fix=lf"] # Set line endings to LF (Unix-style)
+      - id: check-merge-conflict # Prevents unresolved merge conflicts
+      - id: check-executables-have-shebangs
+      - id: requirements-txt-fixer
+
+  # Ruff for linting, formatting, and import sorting
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.11.9
+    hooks:
+      - id: ruff
+        args: ["--fix"]
+
+  # isort for import sorting
+  - repo: https://github.com/PyCQA/isort
+    rev: 6.0.1
+    hooks:
+      - id: isort
+        args: ["--profile", "black"]
+
+  - repo: https://github.com/biomejs/pre-commit
+    rev: v2.0.0-beta.3 # Use the sha / tag you want to point at
+    hooks:
+      - id: biome-check
+        exclude: |
+          (?x)^(
+              config.json|
+              example/config.json
+          )$
+
+default_stages: [pre-commit]
