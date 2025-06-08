@@ -26,6 +26,7 @@ PACKAGES=(
   nvtop
   playerctl
   python-fabric-git
+  python-gobject
   python-ijson
   python-numpy
   python-pillow
@@ -36,11 +37,12 @@ PACKAGES=(
   python-toml
   python-watchdog
   swappy
-  swww
+  swww-git
   tesseract
   tmux
   ttf-nerd-fonts-symbols-mono
   unzip
+  upower
   uwsm
   vte3
   webp-pixbuf-loader
@@ -82,12 +84,6 @@ $aur_helper -Syy --needed --devel --noconfirm "${PACKAGES[@]}" || true
 echo "Installing gray-git..."
 yes | $aur_helper -Syy --needed --devel --noconfirm gray-git || true
 
-# Downgrade python-gobject to 3.50.0-2 (Temporary fix)
-if [ "$(pacman -Q python-gobject | awk '{print $2}')" != "3.50.0-2" ]; then
-    echo "Downgrading python-gobject to 3.50.0-2..."
-    sudo pacman -U --noconfirm https://archive.archlinux.org/packages/p/python-gobject/python-gobject-3.50.0-2-x86_64.pkg.tar.zst
-fi
-
 echo "Installing required fonts..."
 
 FONT_URL="https://github.com/zed-industries/zed-fonts/releases/download/1.2.0/zed-sans-1.2.0.zip"
@@ -113,7 +109,7 @@ fi
 if [ ! -d "$HOME/.fonts/tabler-icons" ]; then
     echo "Copying local fonts to $HOME/.fonts/tabler-icons..."
     mkdir -p "$HOME/.fonts/tabler-icons"
-    cp -r "$INSTALL_DIR/assets/fonts/"* "$HOME/.fonts/tabler-icons"
+    cp -r "$INSTALL_DIR/assets/fonts/"* "$HOME/.fonts"
 else
     echo "Local fonts are already installed. Skipping copy."
 fi

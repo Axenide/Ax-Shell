@@ -6,7 +6,6 @@ from fabric.widgets.image import Image
 from fabric.widgets.label import Label
 from fabric.widgets.revealer import Revealer
 from fabric.widgets.stack import Stack
-from fabric.widgets.wayland import WaylandWindow as Window
 from gi.repository import Gdk, GLib, Gtk, Pango
 
 import config.data as data
@@ -22,6 +21,7 @@ from modules.tmux import TmuxManager
 from modules.tools import Toolbox
 from utils.icon_resolver import IconResolver
 from utils.occlusion import check_occlusion
+from widgets.wayland import WaylandWindow as Window
 
 
 class Notch(Window):

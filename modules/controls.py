@@ -286,7 +286,7 @@ class VolumeSmall(Box):
         if current_stream:
             current_stream.muted = not current_stream.muted
             if current_stream.muted:
-                self.vol_button.get_child().set_markup(icons.vol_off)
+                self.on_speaker_changed()
                 self.progress_bar.add_style_class("muted")
                 self.vol_label.add_style_class("muted")
             else:
@@ -306,8 +306,22 @@ class VolumeSmall(Box):
     def on_speaker_changed(self, *_):
         if not self.audio.speaker:
             return
+        
+        vol_high_icon = icons.vol_high
+        vol_medium_icon = icons.vol_medium
+        vol_mute_icon = icons.vol_off
+        vol_off_icon = icons.vol_mute
+
+        if "bluetooth" in self.audio.speaker.icon_name:
+            vol_high_icon = icons.bluetooth_connected
+            vol_medium_icon = icons.bluetooth
+            vol_mute_icon = icons.bluetooth_off
+            vol_off_icon = icons.bluetooth_disconnected
+
+        self.progress_bar.value = self.audio.speaker.volume / 100
+        
         if self.audio.speaker.muted:
-            self.vol_button.get_child().set_markup(icons.vol_off)
+            self.vol_button.get_child().set_markup(vol_mute_icon)
             self.progress_bar.add_style_class("muted")
             self.vol_label.add_style_class("muted")
             self.set_tooltip_text("Muted")
@@ -316,13 +330,12 @@ class VolumeSmall(Box):
             self.progress_bar.remove_style_class("muted")
             self.vol_label.remove_style_class("muted")
         self.set_tooltip_text(f"{round(self.audio.speaker.volume)}%")
-        self.progress_bar.value = self.audio.speaker.volume / 100
         if self.audio.speaker.volume > 74:
-            self.vol_button.get_child().set_markup(icons.vol_high)
+            self.vol_button.get_child().set_markup(vol_high_icon)
         elif self.audio.speaker.volume > 0:
-            self.vol_button.get_child().set_markup(icons.vol_medium)
+            self.vol_button.get_child().set_markup(vol_medium_icon)
         else:
-            self.vol_button.get_child().set_markup(icons.vol_mute)
+            self.vol_button.get_child().set_markup(vol_off_icon)
 
 class MicSmall(Box):
     def __init__(self, **kwargs):

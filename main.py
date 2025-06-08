@@ -1,16 +1,14 @@
 import os
-import subprocess
 
 import gi
 
-gi.require_version('GLib', '2.0')
+gi.require_version("GLib", "2.0")
 import setproctitle
 from fabric import Application
 from fabric.utils import exec_shell_command_async, get_relative_path
 from gi.repository import GLib
 
-from config.data import (APP_NAME, APP_NAME_CAP, CACHE_DIR, CONFIG_FILE,
-                         HOME_DIR)
+from config.data import APP_NAME, APP_NAME_CAP, CACHE_DIR, CONFIG_FILE, HOME_DIR
 from modules.bar import Bar
 from modules.corners import Corners
 from modules.dock import Dock
@@ -24,24 +22,25 @@ if __name__ == "__main__":
     setproctitle.setproctitle(APP_NAME)
 
     if not os.path.isfile(CONFIG_FILE):
-        config_script_path = get_relative_path('config/config.py')
+        config_script_path = get_relative_path("config/config.py")
         exec_shell_command_async(f"python {config_script_path}")
 
     current_wallpaper = os.path.expanduser("~/.current.wall")
     if not os.path.exists(current_wallpaper):
-        example_wallpaper = os.path.expanduser(f"~/.config/{APP_NAME_CAP}/assets/wallpapers_example/example-1.jpg")
-        exec_shell_command_async(f'rm {current_wallpaper}')
-        print(example_wallpaper, current_wallpaper)
+        example_wallpaper = os.path.expanduser(
+            f"~/.config/{APP_NAME_CAP}/assets/wallpapers_example/example-1.jpg"
+        )
         os.symlink(example_wallpaper, current_wallpaper)
 
     # Load configuration
     from config.data import load_config
+
     config = load_config()
 
     #GLib.idle_add(run_updater)
     # Every hour
     #GLib.timeout_add(3600000, run_updater)
-    
+
     corners = Corners()
     bar = Bar()
     notch = Notch()
@@ -49,12 +48,14 @@ if __name__ == "__main__":
     bar.notch = notch
     notch.bar = bar
     notification = NotificationPopup(widgets=notch.dashboard.widgets)
-    
+
     # Set corners visibility based on config
-    corners_visible = config.get('corners_visible', True)
+    corners_visible = config.get("corners_visible", True)
     corners.set_visible(corners_visible)
-    
-    app = Application(f"{APP_NAME}", bar, notch, dock, notification, corners)  # Make sure corners is added to the app
+
+    app = Application(
+        f"{APP_NAME}", bar, notch, dock, notification, corners
+    )  # Make sure corners is added to the app
 
     def set_css():
         app.set_stylesheet_from_file(

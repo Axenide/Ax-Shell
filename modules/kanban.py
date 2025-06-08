@@ -207,12 +207,12 @@ class KanbanColumn(Gtk.Frame):
         
         self.add_btn.connect("clicked", self.on_add_clicked)
         
-        scrolled = ScrolledWindow(name="scrolled-window", propagate_height=False, propagate_width=False)
-        scrolled.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
-        scrolled.add(self.listbox)
-        scrolled.set_vexpand(True)
+        self.scroller = ScrolledWindow(name="scrolled-window", propagate_height=False, propagate_width=False)
+        self.scroller.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
+        self.scroller.add(self.listbox)
+        self.scroller.set_vexpand(True)
         
-        self.box.pack_start(scrolled, True, True, 0)
+        self.box.pack_start(self.scroller, True, True, 0)
         self.box.pack_start(self.add_btn, False, False, 0)
         self.add(self.box)
         self.show_all()
@@ -247,8 +247,14 @@ class KanbanColumn(Gtk.Frame):
         def on_canceled(editor):
             row.destroy()
 
+        def scroll_to_bottom():
+            adj = self.scroller.get_vadjustment()
+            adj.set_value(adj.get_upper())
+
         editor.connect('confirmed', on_confirmed)
         editor.connect('canceled', on_canceled)
+
+        GLib.idle_add(scroll_to_bottom) # ensure this is called after row is loaded
 
     def add_note(self, text, suppress_signal=False):
         note = KanbanNote(text)

@@ -17,6 +17,7 @@ from fabric.widgets.scale import Scale
 from gi.repository import GLib
 
 import config.data as data
+from modules.upower.upower import UPowerManager
 import modules.icons as icons
 from services.network import NetworkClient
 
@@ -33,8 +34,11 @@ class MetricsProvider:
         self.mem = 0.0
         self.disk = []
 
+        self.upower = UPowerManager()
+        self.display_device = self.upower.get_display_device()
         self.bat_percent = 0.0
         self.bat_charging = None
+        self.bat_time = 0
 
         self._gpu_update_running = False
 
@@ -48,13 +52,15 @@ class MetricsProvider:
         if not self._gpu_update_running:
             self._start_gpu_update_async()
 
-        battery = psutil.sensors_battery()
+        battery = self.upower.get_full_device_information(self.display_device)
         if battery is None:
             self.bat_percent = 0.0
             self.bat_charging = None
+            self.bat_time = 0
         else:
-            self.bat_percent = battery.percent
-            self.bat_charging = battery.power_plugged
+            self.bat_percent = battery['Percentage']
+            self.bat_charging = battery['State'] == 1
+            self.bat_time = battery['TimeToFull'] if self.bat_charging else battery['TimeToEmpty']
 
         return True
 
@@ -116,7 +122,7 @@ class MetricsProvider:
         return (self.cpu, self.mem, self.disk, self.gpu)
 
     def get_battery(self):
-        return (self.bat_percent, self.bat_charging)
+        return (self.bat_percent, self.bat_charging, self.bat_time)
 
     def get_gpu_info(self):
         try:
@@ -468,7 +474,7 @@ class Battery(Button):
             return False
 
     def update_battery(self, sender, battery_data):
-        value, charging = battery_data
+        value, charging, time = battery_data
         if value == 0:
             self.set_visible(False)
         else:
@@ -484,18 +490,28 @@ class Battery(Button):
             self.bat_icon.remove_style_class("alert")
             self.bat_circle.remove_style_class("alert")
 
-        if percentage == 100:
+        if time < 60:
+            time_status = f"{int(time)}sec"
+        elif time < 60 * 60:
+            time_status = f"{int(time / 60)}min"
+        else:
+            time_status = f"{int(time / 60 / 60)}h"
+
+        if percentage == 100 and charging == False:
+            self.bat_icon.set_markup(icons.battery)
+            charging_status = f"{icons.bat_full} Fully Charged - {time_status} left"
+        elif percentage == 100 and charging == True:
             self.bat_icon.set_markup(icons.battery)
             charging_status = f"{icons.bat_full} Fully Charged"
         elif charging == True:
             self.bat_icon.set_markup(icons.charging)
-            charging_status = f"{icons.bat_charging} Charging"
+            charging_status = f"{icons.bat_charging} Charging - {time_status} left"
         elif percentage <= 15 and charging == False:
             self.bat_icon.set_markup(icons.alert)
-            charging_status = f"{icons.bat_low} Low Battery"
+            charging_status = f"{icons.bat_low} Low Battery - {time_status} left"
         elif charging == False:
             self.bat_icon.set_markup(icons.discharging)
-            charging_status = f"{icons.bat_discharging} Discharging"
+            charging_status = f"{icons.bat_discharging} Discharging - {time_status} left"
         else:
             self.bat_icon.set_markup(icons.battery)
             charging_status = "Battery"
