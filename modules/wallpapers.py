@@ -253,33 +253,60 @@ class WallpaperSelector(Box):
         if isinstance(label, Label):
             label.set_markup(chosen_icon)
 
+    def apply_wallpaper(self, file_name, external=False):
+        full_path = os.path.join(data.WALLPAPERS_DIR, file_name)
+        selected_scheme = self.scheme_dropdown.get_active_id()
+        current_wall = os.path.expanduser("~/.current.wall")
+
+        # Kill both wallpaper daemons before switching (for both image and video)
+        kill_swww_daemon()
+        kill_mpvpaper()
+
+        if self._is_image(file_name):
+            # Set symlink for images
+            if os.path.islink(current_wall) or os.path.isfile(current_wall):
+                os.remove(current_wall)
+            os.symlink(full_path, current_wall)
+            exec_shell_command_async(
+                f'swww img "{full_path}" -t outer --transition-duration 1.5 --transition-step 255 --transition-fps 60 -f Nearest'
+            )
+            if self.matugen_switcher.get_active():
+                exec_shell_command_async(f'matugen image "{full_path}" -t {selected_scheme}')
+        elif self._is_video(file_name):
+            monitors = get_all_monitors()
+            for monitor in monitors:
+                subprocess.Popen(
+                    ["mpvpaper", monitor, full_path, "-o", "--loop-file=inf --no-audio --no-osd-bar --osc=no --input-default-bindings=no --no-osc --no-input-default-bindings"],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                )
+            extracted_frame = self._extract_video_frame(full_path, size="1920:-1")
+            if extracted_frame:
+                # update .current.wall to the extracted frame for Hyprlock
+                if os.path.islink(current_wall) or os.path.isfile(current_wall):
+                    os.remove(current_wall)
+                os.symlink(extracted_frame, current_wall)
+                if self.matugen_switcher.get_active():
+                    exec_shell_command_async(f'matugen image "{extracted_frame}" -t {selected_scheme}')
+        else:
+            print(f"Unsupported wallpaper type: {file_name}")
+            return
+
+        print(f"Set wallpaper: {file_name}")
+
+        if external:
+            exec_shell_command_async(
+                f"notify-send '🎲 Wallpaper' 'Setting wallpaper 🎨' -a '{data.APP_NAME_CAP}' -i '{full_path}' -e"
+            )
+
+        self.randomize_dice_icon()
+
     def set_random_wallpaper(self, widget, external=False):
         if not self.files:
             print("No wallpapers available to set a random one.")
             return
-
         file_name = random.choice(self.files)
-        full_path = os.path.join(data.WALLPAPERS_DIR, file_name)
-        selected_scheme = self.scheme_dropdown.get_active_id()
-        current_wall = os.path.expanduser(f"~/.current.wall")
-
-        if os.path.isfile(current_wall) or os.path.islink(current_wall): # Check for link too
-            os.remove(current_wall)
-        os.symlink(full_path, current_wall)
-
-        if self.matugen_switcher.get_active():
-            exec_shell_command_async(f'matugen image "{full_path}" -t {selected_scheme}')
-        else:
-            exec_shell_command_async(
-                f'swww img "{full_path}" -t outer --transition-duration 1.5 --transition-step 255 --transition-fps 60 -f Nearest'
-            )
-        
-        print(f"Set random wallpaper: {file_name}")
-
-        if external:
-            exec_shell_command_async(f"notify-send '🎲 Wallpaper' 'Setting a random wallpaper 🎨' -a '{data.APP_NAME_CAP}' -i '{full_path}' -e")
-
-        self.randomize_dice_icon()
+        self.apply_wallpaper(file_name, external=external)
 
     def setup_file_monitor(self):
         gfile = Gio.File.new_for_path(data.WALLPAPERS_DIR)
@@ -347,41 +374,7 @@ class WallpaperSelector(Box):
     def on_wallpaper_selected(self, iconview, path):
         model = iconview.get_model()
         file_name = model[path][1]
-        full_path = os.path.join(data.WALLPAPERS_DIR, file_name)
-        selected_scheme = self.scheme_dropdown.get_active_id()
-        current_wall = os.path.expanduser("~/.current.wall")
-
-        # Kill both wallpaper daemons before switching
-        kill_swww_daemon()
-        kill_mpvpaper()
-
-        if self._is_image(file_name):
-            # Set symlink for images
-            if os.path.islink(current_wall) or os.path.isfile(current_wall):
-                os.remove(current_wall)
-            os.symlink(full_path, current_wall)
-            exec_shell_command_async(
-                    f'swww img "{full_path}" -t outer --transition-duration 1.5 --transition-step 255 --transition-fps 60 -f Nearest'
-            )
-            if self.matugen_switcher.get_active():
-                exec_shell_command_async(f'matugen image "{full_path}" -t {selected_scheme}')
-        elif self._is_video(file_name):
-            monitors = get_all_monitors()
-            for monitor in monitors:
-                subprocess.Popen(
-                    ["mpvpaper", monitor, full_path, "-o", "--loop-file=inf --no-audio --no-osd-bar --osc=no --input-default-bindings=no --no-osc --no-input-default-bindings"],
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
-                )
-            extracted_frame = self._extract_video_frame(full_path, size="1920:-1")
-            if extracted_frame:
-                # update .current.wall to the extracted frame for Hyprlock
-                if os.path.islink(current_wall) or os.path.isfile(current_wall):
-                    os.remove(current_wall)
-                os.symlink(extracted_frame, current_wall)
-                
-                if self.matugen_switcher.get_active():
-                    exec_shell_command_async(f'matugen image "{extracted_frame}" -t {selected_scheme}')
+        self.apply_wallpaper(file_name)
 
     def _extract_video_frame(self, video_path, size="1920:-1"):
         frame_name = hashlib.md5(video_path.encode("utf-8")).hexdigest() + f"_frame_{size}.png"
