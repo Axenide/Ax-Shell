@@ -493,6 +493,94 @@ class BrightnessIcon(Box):
             GLib.source_remove(self._update_source_id)
         super().destroy()
 
+class LightIcon(Box):
+    def __init__(self, **kwargs):
+        super().__init__(name="brightness-icon", **kwargs)
+        self.brightness = Brightness.get_initial()
+        if self.brightness.screen_brightness == -1:
+            self.destroy()
+            return
+            
+        self.brightness_label = Label(name="brightness-label-dash", markup=icons.brightness_high, h_align="center", v_align="center", h_expand=True, v_expand=True)
+        self.brightness_button = Button(child=self.brightness_label, h_align="center", v_align="center", h_expand=True, v_expand=True)
+        
+
+        self.event_box = EventBox(
+            events=["scroll", "smooth-scroll"],
+            child=self.brightness_button,
+            h_align="center", 
+            v_align="center", 
+            h_expand=True, 
+            v_expand=True
+        )
+        self.event_box.connect("scroll-event", self.on_scroll)
+        self.add(self.event_box)
+        
+        self._pending_value = None
+        self._update_source_id = None
+        self._updating_from_brightness = False
+        
+        self.brightness.connect("screen", self.on_brightness_changed)
+        self.on_brightness_changed()
+        self.add_events(Gdk.EventMask.SCROLL_MASK | Gdk.EventMask.SMOOTH_SCROLL_MASK)
+    
+    def on_scroll(self, _, event):
+        if self.brightness.max_screen == -1:
+            return
+            
+        step_size = 5
+        current_brightness = self.brightness.screen_brightness
+        
+        if event.direction == Gdk.ScrollDirection.SMOOTH:
+            if event.delta_y < 0:
+                new_brightness = min(current_brightness + step_size, self.brightness.max_screen)
+            elif event.delta_y > 0:
+                new_brightness = max(current_brightness - step_size, 0)
+            else:
+                return
+        else:
+            if event.direction == Gdk.ScrollDirection.UP:
+                new_brightness = min(current_brightness + step_size, self.brightness.max_screen)
+            elif event.direction == Gdk.ScrollDirection.DOWN:
+                new_brightness = max(current_brightness - step_size, 0)
+            else:
+                return
+        
+        self._pending_value = new_brightness
+        if self._update_source_id is None:
+            self._update_source_id = GLib.timeout_add(50, self._update_brightness_callback)
+    
+    def _update_brightness_callback(self):
+        if self._pending_value is not None and self._pending_value != self.brightness.screen_brightness:
+            self.brightness.screen_brightness = self._pending_value
+            self._pending_value = None
+            return True
+        else:
+            self._update_source_id = None
+            return False
+    
+    def on_brightness_changed(self, *args):
+        if self.brightness.max_screen == -1:
+            return
+            
+        self._updating_from_brightness = True
+        normalized = self.brightness.screen_brightness / self.brightness.max_screen
+        brightness_percentage = int(normalized * 100)
+        
+        if brightness_percentage >= 75:
+            self.brightness_label.set_markup("󰃠")
+        elif brightness_percentage >= 24:
+            self.brightness_label.set_markup("󰃠")
+        else:
+            self.brightness_label.set_markup("󰃠")
+        self.set_tooltip_text(f"{brightness_percentage}%")
+        self._updating_from_brightness = False
+        
+    def destroy(self):
+        if self._update_source_id is not None:
+            GLib.source_remove(self._update_source_id)
+        super().destroy()
+
 class VolumeIcon(Box):
     def __init__(self, **kwargs):
         super().__init__(name="vol-icon", **kwargs)

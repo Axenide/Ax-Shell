@@ -1,5 +1,5 @@
 [project]
-name = "ax-shell"
+name = "vin-shell"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
@@ -12,8 +12,6 @@ dependencies = [
   "pillow>=11.2.1",
   "pre-commit>=4.2.0",
   "psutil>=7.0.0",
-  "pygobject==3.52.3",
-  "pygobject-stubs>=2.13.0",
   "python-hue-v2",
   "pywayland>=0.4.18",
   "requests>=2.32.3",
@@ -29,7 +27,5 @@ fabric = { git = "https://github.com/Fabric-Development/fabric" }
 python-hue-v2 = { git = "https://github.com/FengChendian/python-hue-v2" }
 
 [tool.basedpyright]
-reportMissingTypeStubs = true
-reportAttributeAccessIssue = false
-reportUnreachable = false
 typeCheckingMode = "basic"
+extraPaths = ["/home/mathias/.cache/fakegir/"]

@@ -9,3 +9,5 @@ personal_config.json
 config/dock.json
 config/dock.json.bak
 .venv
+uv.lock
+typings/

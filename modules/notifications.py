@@ -19,7 +19,7 @@ from loguru import logger
 import config.data as data
 import modules.icons as icons
 from widgets.rounded_image import CustomImage
-from widgets.wayland import WaylandWindow as Window
+from fabric.widgets.wayland import WaylandWindow as Window
 
 PERSISTENT_DIR = f"/tmp/{data.APP_NAME}/notifications"
 PERSISTENT_HISTORY_FILE = os.path.join(PERSISTENT_DIR, "notification_history.json")
@@ -364,7 +364,7 @@ class NotificationHistory(Box):
             orientation="v",
             **kwargs
         )
-        
+
         self.containers = []
         self.header_label = Label(
             name="nhh",
@@ -572,7 +572,7 @@ class NotificationHistory(Box):
             notif_box.destroy(from_history_delete=True)
 
         target_note_id_str = str(note_id)
-        
+
         new_persistent_notifications = []
         removed_from_list = False
         for note_in_list in self.persistent_notifications:
@@ -582,7 +582,7 @@ class NotificationHistory(Box):
 
                 continue
             new_persistent_notifications.append(note_in_list)
-        
+
         if removed_from_list:
             self.persistent_notifications = new_persistent_notifications
             logger.info(f"Notification with ID {target_note_id_str} was marked for removal from persistent_notifications list.")
@@ -978,26 +978,26 @@ class NotificationContainer(Box):
         self.navigation.add(self.next_button)
 
         self.navigation_revealer = Revealer(
-            transition_type="slide-down", 
+            transition_type="slide-down",
             transition_duration=200,
             child=self.navigation,
-            reveal_child=False, 
+            reveal_child=False,
         )
 
         self.notification_box_container = Box(
-            name="notification-box-internal-container", 
+            name="notification-box-internal-container",
             orientation="v",
             children=[self.stack_box, self.navigation_revealer]
         )
-        
+
         self.main_revealer = Revealer(
             name="notification-main-revealer",
             transition_type=revealer_transition_type,
-            transition_duration=250, 
+            transition_duration=250,
             child_revealed=False,
             child=self.notification_box_container,
         )
-        
+
         self.add(self.main_revealer)
 
         self.notifications = []
@@ -1034,11 +1034,11 @@ class NotificationContainer(Box):
             if existing_notification_index != -1:
                 old_notification_box = self.notifications.pop(existing_notification_index)
                 self.stack.remove(old_notification_box)
-                old_notification_box.destroy() 
+                old_notification_box.destroy()
 
                 self.stack.add_named(new_box, str(id))
                 self.notifications.append(new_box)
-                self.current_index = len(self.notifications) - 1 
+                self.current_index = len(self.notifications) - 1
                 self.stack.set_visible_child(new_box)
             else:
                 while len(self.notifications) >= 5:
@@ -1067,7 +1067,7 @@ class NotificationContainer(Box):
 
         for notification_box in self.notifications:
             notification_box.start_timeout()
-        self.main_revealer.show_all() 
+        self.main_revealer.show_all()
         self.main_revealer.set_reveal_child(True)
         self.update_navigation_buttons()
 
@@ -1106,7 +1106,7 @@ class NotificationContainer(Box):
                 return
             i, notif_box = notif_to_remove
             reason_str = str(reason)
-            
+
             notification_history_instance = self.notification_history
 
             if reason_str == "NotificationCloseReason.DISMISSED_BY_USER":
@@ -1123,30 +1123,30 @@ class NotificationContainer(Box):
                 logger.warning(f"Unknown close reason: {reason_str} for notification {notification.id}. Defaulting to destroy.")
                 notif_box.destroy()
 
-            if len(self.notifications) == 1: 
+            if len(self.notifications) == 1:
                 self._is_destroying = True
-                self.main_revealer.set_reveal_child(False) 
+                self.main_revealer.set_reveal_child(False)
                 GLib.timeout_add(
-                    self.main_revealer.get_transition_duration(), 
+                    self.main_revealer.get_transition_duration(),
                     self._destroy_container
                 )
-                return 
-            
+                return
+
             new_index = i
             if i == self.current_index:
                 new_index = max(0, i - 1)
             elif i < self.current_index:
                 new_index = self.current_index - 1
-            
+
             if notif_box.get_parent() == self.stack:
                 self.stack.remove(notif_box)
-            self.notifications.pop(i) 
-            
+            self.notifications.pop(i)
+
             if new_index >= len(self.notifications) and len(self.notifications) > 0:
                 new_index = len(self.notifications) - 1
 
             self.current_index = new_index
-            
+
             if len(self.notifications) > 0:
                 self.stack.set_visible_child(self.notifications[self.current_index])
 
@@ -1158,15 +1158,15 @@ class NotificationContainer(Box):
         try:
             self.notifications.clear()
             self._destroyed_notifications.clear()
-            for child in self.stack.get_children(): 
-                self.stack.remove(child) 
-                child.destroy() 
+            for child in self.stack.get_children():
+                self.stack.remove(child)
+                child.destroy()
             self.current_index = 0
         except Exception as e:
             logger.error(f"Error cleaning up the container: {e}")
         finally:
             self._is_destroying = False
-            return False 
+            return False
 
     def pause_and_reset_all_timeouts(self):
         if self._is_destroying:

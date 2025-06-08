@@ -1,17 +1,22 @@
-from quopri import HEX
+from fabric import Service
 from fabric.widgets.box import Box
 from fabric.widgets.label import Label
 from fabric.widgets.scale import Scale
-import threading
-from fabric import Fabricator
 from python_hue_v2 import Hue
 import modules.icons as icons
-import gi
-gi.require_version("Gtk", "3.0")
-from gi.repository import Gtk, Gdk, GLib
 import numpy as np
 import cairo
 from modules.private_data import PrivateData
+import gi
+gi.require_version("Gtk", "3.0")
+from gi.repository import Gtk, Gdk, GLib  # noqa: E402
+
+private_data = PrivateData()
+
+class LightDevice(Hue, Service):
+    def __init__(self, **kwargs) -> None:
+        super().__init__(ip_address=private_data.hue_ip, hue_application_key=private_data.hue_key, **kwargs)
+        pass
 
 class Light(Box):
     def __init__(self, **kwargs):
@@ -29,8 +34,6 @@ class Light(Box):
         self.wheel_width = 300
         self.wheel_height = 300
 
-        self.private_config = PrivateData()
-
         self.buttons = self.widgets.buttons.light_button
         self.light_status_text = self.buttons.light_status_text
         self.light_status_button = self.buttons.light_status_button
@@ -39,7 +42,7 @@ class Light(Box):
         self.light_menu_button = self.buttons.light_menu_button
         self.light_menu_label = self.buttons.light_menu_label
 
-        self.hue = Hue(self.private_config.hue_ip, self.private_config.hue_key)  # create Hue instance, ip address, key
+        self.hue = LightDevice()  # create Hue instance, ip address, key
         self._add_light()
 
     def on_click(self, widget, event):
@@ -63,7 +66,7 @@ class Light(Box):
                 self.bulb.on = False
 
     def fetch_status(self):
-        threading.Thread(target=self._fetch_status_thread, daemon=True).start()
+        GLib.idle_add(self._fetch_status_thread)
         return True
 
     def _fetch_status_thread(self):

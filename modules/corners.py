@@ -3,7 +3,7 @@ from fabric.widgets.button import Button
 from fabric.widgets.centerbox import CenterBox
 from fabric.widgets.shapes import Corner
 
-from widgets.wayland import WaylandWindow as Window
+from fabric.widgets.wayland import WaylandWindow as Window
 
 
 class MyCorner(Box):

@@ -21,7 +21,7 @@ from modules.tmux import TmuxManager
 from modules.tools import Toolbox
 from utils.icon_resolver import IconResolver
 from utils.occlusion import check_occlusion
-from widgets.wayland import WaylandWindow as Window
+from fabric.widgets.wayland import WaylandWindow as Window
 
 
 class Notch(Window):
@@ -121,12 +121,12 @@ class Notch(Window):
                             current_margin_str = dense_edge_margin_top_str
                         case _:
                             current_margin_str = default_top_anchor_margin_str
-        
+
         super().__init__(
             name="notch",
             layer="top",
-            anchor=anchor_val, 
-            margin=current_margin_str, 
+            anchor=anchor_val,
+            margin=current_margin_str,
             keyboard_mode="none",
             exclusivity="none" if data.PANEL_THEME == "Notch" else "normal",
             visible=True,
@@ -141,7 +141,7 @@ class Notch(Window):
         self.is_hovered = False
         self._prevent_occlusion = False
         self._occlusion_timer_id = None
-        
+
         self.icon_resolver = IconResolver()
         self._all_apps = get_desktop_applications()
         self.app_identifiers = self._build_app_identifiers_map()
@@ -156,7 +156,7 @@ class Notch(Window):
         self.btdevices.set_visible(False)
         self.nwconnections.set_visible(False)
 
-        
+
         self.launcher = AppLauncher(notch=self)
         self.overview = Overview()
         self.emoji = EmojiPicker(notch=self)
@@ -316,7 +316,7 @@ class Notch(Window):
         )
 
         self.notch_box.add_style_class(data.PANEL_THEME.lower())
-        
+
         self.notch_revealer = Revealer(
             name="notch-revealer",
             transition_type=revealer_transition_type,
@@ -381,7 +381,7 @@ class Notch(Window):
             self.notch_children = [
                 self.notch_complete,
             ]
-        
+
         self.notch_wrap = Box(
             name="notch-wrap",
             children=self.notch_children,
@@ -395,16 +395,16 @@ class Notch(Window):
         self.add_keybinding("Ctrl Shift ISO_Left_Tab", lambda *_: self.dashboard.go_to_previous_child())
 
         self.update_window_icon()
-        
+
         self.active_window.connect("button-press-event", lambda widget, event: (self.open_notch("dashboard"), False)[1])
 
         if data.PANEL_THEME != "Notch":
             for corner in [self.corner_left, self.corner_right]:
                 corner.set_visible(False)
-        
+
 
         self._current_window_class = self._get_current_window_class()
-        
+
 
 
         if data.PANEL_THEME == "Notch" and data.BAR_POSITION != "Top":
@@ -413,7 +413,7 @@ class Notch(Window):
             self.notch_revealer.set_reveal_child(True)
         else:
             self.notch_revealer.set_reveal_child(False)
-        
+
 
         self.connect("key-press-event", self.on_key_press)
 
@@ -428,7 +428,7 @@ class Notch(Window):
 
         if event.detail == Gdk.NotifyType.INFERIOR:
             return False
-            
+
         self.is_hovered = False
         window = widget.get_window()
         if window:
@@ -447,7 +447,7 @@ class Notch(Window):
 
         if event.detail == Gdk.NotifyType.INFERIOR:
             return False
-            
+
         self.is_hovered = False
 
         return False
@@ -480,7 +480,7 @@ class Notch(Window):
                     self.close_notch()
                     return
 
-                self.set_keyboard_mode("exclusive") 
+                self.set_keyboard_mode("exclusive")
                 self.dashboard.go_to_section("widgets")
                 self.applet_stack.set_visible_child(self.nwconnections)
                 return
@@ -493,7 +493,7 @@ class Notch(Window):
                     self.close_notch()
                     return
 
-                self.set_keyboard_mode("exclusive") 
+                self.set_keyboard_mode("exclusive")
                 self.dashboard.go_to_section("widgets")
                 self.applet_stack.set_visible_child(self.btdevices)
                 return
@@ -575,14 +575,14 @@ class Notch(Window):
                 self.dashboard.go_to_section("widgets")
                 self.applet_stack.set_visible_child(self.nhistory)
 
-            
+
         if data.BAR_POSITION in ["Top", "Bottom"] and data.PANEL_THEME == "Panel" or data.BAR_POSITION in ["Bottom"] and data.PANEL_THEME == "Notch":
             self.bar.revealer_right.set_reveal_child(True)
             self.bar.revealer_left.set_reveal_child(True)
         else:
             self.bar.revealer_right.set_reveal_child(not hide_bar_revealers)
             self.bar.revealer_left.set_reveal_child(not hide_bar_revealers)
-        
+
         self._is_notch_open = True
 
     def toggle_hidden(self):
@@ -641,20 +641,20 @@ class Notch(Window):
 
             if app.name:
                 identifiers[app.name.lower()] = app
-                
+
 
             if app.display_name:
                 identifiers[app.display_name.lower()] = app
-                
+
 
             if app.window_class:
                 identifiers[app.window_class.lower()] = app
-                
+
 
             if app.executable:
                 exe_basename = app.executable.split('/')[-1].lower()
                 identifiers[exe_basename] = app
-                
+
 
             if app.command_line:
                 cmd_base = app.command_line.split()[0].split('/')[-1].lower()
@@ -673,17 +673,17 @@ class Notch(Window):
         label_widget = self.active_window.get_children()[0]
         if not isinstance(label_widget, Gtk.Label):
             return
-            
+
 
         title = label_widget.get_text()
         if title == 'Desktop' or not title:
 
             self.window_icon.set_visible(False)
             return
-        
+
 
         self.window_icon.set_visible(True)
-            
+
 
         from fabric.hyprland.widgets import get_hyprland_connection
         conn = get_hyprland_connection()
@@ -693,11 +693,11 @@ class Notch(Window):
                 active_window_json = conn.send_command("j/activewindow").reply.decode()
                 active_window_data = json.loads(active_window_json)
                 app_id = active_window_data.get("initialClass", "") or active_window_data.get("class", "")
-                
+
 
                 icon_size = 20
                 desktop_app = self.find_app(app_id)
-                
+
 
                 icon_pixbuf = None
                 if desktop_app:
@@ -739,15 +739,15 @@ class Notch(Window):
         and update the notch_revealer accordingly.
         """
 
-        
+
 
         occlusion_edge = "top"
         occlusion_size = 40
 
         if not (self.is_hovered or self._is_notch_open or self._prevent_occlusion):
-            is_occluded = check_occlusion((occlusion_edge, occlusion_size)) 
+            is_occluded = check_occlusion((occlusion_edge, occlusion_size))
             self.notch_revealer.set_reveal_child(not is_occluded)
-        
+
         return True
 
     def _get_current_window_class(self):
@@ -772,33 +772,33 @@ class Notch(Window):
 
         if data.PANEL_THEME != "Notch":
             return
-            
+
 
         new_window_class = self._get_current_window_class()
-        
+
 
         if new_window_class != self._current_window_class:
 
             self._current_window_class = new_window_class
-            
+
 
             if self._occlusion_timer_id is not None:
                 GLib.source_remove(self._occlusion_timer_id)
                 self._occlusion_timer_id = None
-            
+
 
             self._prevent_occlusion = True
             self.notch_revealer.set_reveal_child(True)
-            
+
 
             self._occlusion_timer_id = GLib.timeout_add(500, self._restore_occlusion_check)
-        
+
     def _restore_occlusion_check(self):
         """Re-enable occlusion checking after temporary visibility"""
 
         self._prevent_occlusion = False
         self._occlusion_timer_id = None
-        
+
 
         return False
 
@@ -806,11 +806,11 @@ class Notch(Window):
         """Open the launcher with initial text in the search field."""
 
         self._launcher_transitioning = True
-        
+
 
         if initial_text:
             self._typed_chars_buffer = initial_text
-        
+
 
         if self.stack.get_visible_child() == self.launcher:
 
@@ -821,39 +821,39 @@ class Notch(Window):
             self.launcher.search_entry.select_region(-1, -1)
             self.launcher.search_entry.grab_focus()
             return
-        
+
 
         self.set_keyboard_mode("exclusive")
-        
+
 
         for style in ["launcher", "dashboard", "notification", "overview", "emoji", "power", "tools", "tmux"]:
             self.stack.remove_style_class(style)
         for w in [self.launcher, self.dashboard, self.overview, self.emoji, self.power, self.tools, self.tmux, self.cliphist]:
             w.remove_style_class("open")
-            
+
 
         self.stack.add_style_class("launcher")
         self.stack.set_visible_child(self.launcher)
         self.launcher.add_style_class("open")
-        
+
 
         self.launcher.ensure_initialized()
-        
+
 
         self.launcher.open_launcher()
-        
+
 
         if self._launcher_transition_timeout:
             GLib.source_remove(self._launcher_transition_timeout)
-            
+
         self._launcher_transition_timeout = GLib.timeout_add(150, self._finalize_launcher_transition)
-        
+
 
         self.bar.revealer_right.set_reveal_child(True)
         self.bar.revealer_left.set_reveal_child(True)
-        
+
         self._is_notch_open = True
-    
+
     def _finalize_launcher_transition(self):
         """Apply buffered text and finalize launcher transition"""
 
@@ -861,48 +861,48 @@ class Notch(Window):
 
             entry = self.launcher.search_entry
             entry.set_text(self._typed_chars_buffer)
-            
+
 
             entry.grab_focus()
-            
+
 
             GLib.timeout_add(10, self._ensure_no_text_selection)
             GLib.timeout_add(50, self._ensure_no_text_selection)
             GLib.timeout_add(100, self._ensure_no_text_selection)
-            
+
 
             print(f"Applied buffered text: '{self._typed_chars_buffer}'")
-            
+
 
             self._typed_chars_buffer = ""
-        
+
 
         self._launcher_transitioning = False
         self._launcher_transition_timeout = None
-        
+
         return False
-    
+
     def _ensure_no_text_selection(self):
         """Make absolutely sure no text is selected in the search entry"""
         entry = self.launcher.search_entry
-        
+
 
         text_len = len(entry.get_text())
-        
+
 
         entry.set_position(text_len)
-        
+
 
         entry.select_region(text_len, text_len)
-        
+
 
         if not entry.has_focus():
             entry.grab_focus()
 
             GLib.idle_add(lambda: entry.select_region(text_len, text_len))
-        
+
         return False
-    
+
 
     def on_key_press(self, widget, event):
         """Handle key presses at the notch level"""
@@ -910,7 +910,7 @@ class Notch(Window):
         if self._launcher_transitioning:
             keyval = event.keyval
             keychar = chr(keyval) if 32 <= keyval <= 126 else None
-            
+
 
             is_valid_char = (
                 (keyval >= Gdk.KEY_a and keyval <= Gdk.KEY_z) or
@@ -918,27 +918,27 @@ class Notch(Window):
                 (keyval >= Gdk.KEY_0 and keyval <= Gdk.KEY_9) or
                 keyval in (Gdk.KEY_space, Gdk.KEY_underscore, Gdk.KEY_minus, Gdk.KEY_period)
             )
-            
+
             if is_valid_char and keychar:
 
                 self._typed_chars_buffer += keychar
                 print(f"Buffered character: {keychar}, buffer now: '{self._typed_chars_buffer}'")
                 return True
-        
 
-        if (self.stack.get_visible_child() == self.dashboard and 
+
+        if (self.stack.get_visible_child() == self.dashboard and
             self.dashboard.stack.get_visible_child() == self.dashboard.widgets):
-            
+
             if (self.applet_stack.get_visible_child() == self.dashboard.widgets.bluetooth and
             self.dashboard.widgets.bluetooth.editing):
                 return False
             if self.stack.get_visible_child() == self.launcher:
                 return False
-                
+
 
             keyval = event.keyval
             keychar = chr(keyval) if 32 <= keyval <= 126 else None
-            
+
 
             is_valid_char = (
                 (keyval >= Gdk.KEY_a and keyval <= Gdk.KEY_z) or
@@ -946,11 +946,11 @@ class Notch(Window):
                 (keyval >= Gdk.KEY_0 and keyval <= Gdk.KEY_9) or
                 keyval in (Gdk.KEY_space, Gdk.KEY_underscore, Gdk.KEY_minus, Gdk.KEY_period)
             )
-            
+
             if is_valid_char and keychar:
                 print(f"Notch received keypress: {keychar}")
 
                 self.open_launcher_with_text(keychar)
                 return True
-                    
+
         return False

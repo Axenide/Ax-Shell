@@ -5,12 +5,12 @@ from fabric.utils import get_relative_path
 # Class to get personal data from a JSON file, like location and nightscoutURL
 
 class PrivateData:
-    def __init__(self):
+    def __init__(self) -> None:
         try:
-            path = get_relative_path('../personal_config.json')
+            path: str = get_relative_path(path='../personal_config.json')
             if os.path.exists(path):
-                with open(path, 'r') as f:
-                    data = json.load(f)
+                with open(file=path, mode='r') as f:
+                    data = json.load(fp=f)
                     _location = data.get("location", "")
                     _nightscout = data.get("nightscout", "")
                     _nightscout_api = data.get("nightscout_api", "")
@@ -46,8 +46,8 @@ class PrivateData:
     def get_hue_key(self) -> str:
         return f'{self._hue_key}'
 
-    nightscout = property(get_nightscout)
-    location = property(get_location)
-    nightscout_api = property(get_nightscout_api)
-    hue_ip = property(get_hue_ip)
-    hue_key = property(get_hue_key)
+    nightscout: property = property(fget=get_nightscout)
+    location: property = property(fget=get_location)
+    nightscout_api: property = property(fget=get_nightscout_api)
+    hue_ip: property = property(fget=get_hue_ip)
+    hue_key: property = property(fget=get_hue_key)

@@ -20,7 +20,7 @@ from modules.dock import Dock
 from modules.metrics import Battery, MetricsSmall, NetworkApplet
 from modules.systemtray import SystemTray
 from modules.weather import Weather
-from widgets.wayland import WaylandWindow as Window
+from fabric.widgets.wayland import WaylandWindow as Window
 from modules.cgmsugar import SmallCgm
 
 CHINESE_NUMERALS = ["一", "二", "三", "四", "五", "六", "七", "八", "九", "〇"]
@@ -215,9 +215,9 @@ class Bar(Window):
         self.control = ControlSmall()
         self.metrics = MetricsSmall()
         self.battery = Battery()
-        
+
         self.apply_component_props()
-        
+
         self.rev_right = [
             self.metrics,
             self.control,
@@ -234,14 +234,14 @@ class Bar(Window):
                 children=self.rev_right if not data.VERTICAL else None,
             ),
         )
-        
+
         self.boxed_revealer_right = Box(
             name="boxed-revealer",
             children=[
                 self.revealer_right,
             ],
         )
-        
+
         self.rev_left = [
             self.weather,
             self.network,
@@ -266,14 +266,14 @@ class Bar(Window):
                 self.revealer_left,
             ],
         )
-        
+
         self.h_start_children = [
             self.button_apps,
             self.ws_container,
             self.button_overview,
             self.boxed_revealer_left,
         ]
-        
+
         self.h_end_children = [
             self.boxed_revealer_right,
             self.battery,
@@ -283,7 +283,7 @@ class Bar(Window):
             self.date_time,
             self.button_power,
         ]
-        
+
         self.v_start_children = [
             self.button_apps,
             self.systray,
@@ -291,13 +291,13 @@ class Bar(Window):
             self.network,
             self.button_tools,
         ]
-        
+
         self.v_center_children = [
             self.button_overview,
             self.ws_container,
             self.weather,
         ]
-        
+
         self.v_end_children = [
             self.battery,
             self.metrics,
@@ -305,28 +305,28 @@ class Bar(Window):
             self.date_time,
             self.button_power,
         ]
-        
+
         self.v_all_children = []
         self.v_all_children.extend(self.v_start_children)
         self.v_all_children.extend(self.v_center_children)
         self.v_all_children.extend(self.v_end_children)
 
         if data.DOCK_ENABLED and data.BAR_POSITION == "Bottom" or data.PANEL_THEME == "Panel" and data.BAR_POSITION in ["Top", "Bottom"]:
-            if not data.VERTICAL: 
+            if not data.VERTICAL:
                 self.dock_instance = Dock(integrated_mode=True)
                 self.integrated_dock_widget = self.dock_instance.wrapper
 
-        
+
         is_centered_bar = data.VERTICAL and getattr(data, 'CENTERED_BAR', False)
-        
+
         bar_center_actual_children = None
-        
+
         if self.integrated_dock_widget is not None:
             bar_center_actual_children = self.integrated_dock_widget
         elif data.VERTICAL:
             bar_center_actual_children = Box(
-                orientation=Gtk.Orientation.VERTICAL, 
-                spacing=4, 
+                orientation=Gtk.Orientation.VERTICAL,
+                spacing=4,
                 children=self.v_all_children if is_centered_bar else self.v_center_children
             )
 
@@ -376,7 +376,7 @@ class Bar(Window):
         theme_classes = ["pills", "dense", "edge", "edgecenter"]
         for tc in theme_classes:
             self.bar_inner.remove_style_class(tc)
-        
+
         self.style = None
         match current_theme:
             case "Pills":
@@ -392,7 +392,7 @@ class Bar(Window):
                 self.style = "pills"
 
         self.bar_inner.add_style_class(self.style)
-        
+
         if self.integrated_dock_widget and hasattr(self.integrated_dock_widget, 'add_style_class'):
 
             for theme_class_to_remove in ["pills", "dense", "edge"]:
@@ -440,11 +440,11 @@ class Bar(Window):
             'date_time': self.date_time,
             'button_power': self.button_power,
         }
-        
+
         for component_name, widget in components.items():
             if component_name in self.component_visibility:
                 widget.set_visible(self.component_visibility[component_name])
-    
+
     def toggle_component_visibility(self, component_name):
         components = {
             'button_apps': self.button_apps,
@@ -461,26 +461,26 @@ class Bar(Window):
             'date_time': self.date_time,
             'button_power': self.button_power,
         }
-        
+
         if component_name in components and component_name in self.component_visibility:
             self.component_visibility[component_name] = not self.component_visibility[component_name]
             components[component_name].set_visible(self.component_visibility[component_name])
-            
+
             config_file = os.path.expanduser(f"~/.config/{data.APP_NAME}/config/config.json")
             if os.path.exists(config_file):
                 try:
                     with open(config_file, 'r') as f:
                         config = json.load(f)
-                    
+
                     config[f'bar_{component_name}_visible'] = self.component_visibility[component_name]
-                    
+
                     with open(config_file, 'w') as f:
                         json.dump(config, f, indent=4)
                 except Exception as e:
                     print(f"Error updating config file: {e}")
-            
+
             return self.component_visibility[component_name]
-        
+
         return None
 
     def on_button_enter(self, widget, event):
@@ -516,7 +516,7 @@ class Bar(Window):
         else:
             self.lang_label.add_style_class("icon")
             self.lang_label.set_markup(icons.keyboard)
-            
+
     def toggle_hidden(self):
         self.hidden = not self.hidden
         if self.hidden:
