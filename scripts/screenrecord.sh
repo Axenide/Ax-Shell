@@ -26,7 +26,7 @@ if pgrep -f "gpu-screen-recorder" >/dev/null; then
   if [ "$ACTION" = "view" ] && [ -n "$LAST_VIDEO" ]; then
     xdg-open "$LAST_VIDEO"
   elif [ "$ACTION" = "open" ]; then
-    xdg-open "$SAVE_DIR"
+    nautilus "$SAVE_DIR"
   fi
   exit 0
 fi

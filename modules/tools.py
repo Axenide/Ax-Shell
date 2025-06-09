@@ -438,7 +438,7 @@ class Toolbox(Box):
                                     'Recordings')
 
         os.makedirs(recordings_dir, exist_ok=True)
-        exec_shell_command_async(f"xdg-open {recordings_dir}")
+        exec_shell_command_async(f"nautilus {recordings_dir}")
         self.close_menu()
 
     def emoji(self, *args):

@@ -98,7 +98,7 @@ if [ -f "$full_path" ]; then
     case "$ACTION" in
         view) xdg-open "$full_path" ;;
         edit) swappy -f "$full_path" ;;
-        open) xdg-open "$save_dir" ;;
+        open) nautilus "$save_dir" ;;
     esac
 else
     notify-send -a "Ax-Shell" "Screenshot Aborted"
