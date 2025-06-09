@@ -22,7 +22,7 @@ from fabric.utils.helpers import get_relative_path
 import config.data as data
 
 # File locations
-VERSION_FILE = get_relative_path("../utils/version.json")
+VERSION_FILE = get_relative_path("../version.json")
 REMOTE_VERSION_FILE = "/tmp/remote_version.json"
 REMOTE_URL = "https://raw.githubusercontent.com/Axenide/Ax-Shell/refs/heads/main/version.json"
 REPO_DIR = get_relative_path("../")

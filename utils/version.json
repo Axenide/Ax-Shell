@@ -1,9 +1,0 @@
-{
-	"version": "0.0.9",
-	"changelog": [
-    "<b>feat:</b> Implemented upower for more robust battery data and future power management. (<a href='https://github.com/Axenide/Ax-Shell/pull/156'>#156</a>)",
-    "<b>tweak:</b> Moved version file to root directory for easier access.",
-    "<b>fix:</b> Tabler Icons font not being recognized by some systems. (<a href='https://github.com/Axenide/Ax-Shell/pull/146'>#146</a>)\nYou can safely delete <b>~/.fonts/tabler-icons/</b> after updating. (Or leave it, it won't cause any issues.)",
-    "Herobrine removed."
-	]
-}

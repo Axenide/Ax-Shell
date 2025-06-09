@@ -1,8 +1,7 @@
 {
-	"version": "0.0.9",
+	"version": "0.0.13",
 	"changelog": [
-    "<b>feat:</b> Implemented upower for more robust battery data and future power management. (<a href='https://github.com/Axenide/Ax-Shell/pull/156'>#156</a>)",
-    "<b>tweak:</b> Moved version file to root directory for easier access.",
-    "Herobrine removed."
+    "<b>fix:</b> swww changed to swww-git",
+    "<b>fix:</b> Reverted notch to previous commit"
 	]
 }
