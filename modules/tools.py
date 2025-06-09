@@ -429,7 +429,7 @@ class Toolbox(Box):
                                      'Screenshots')
 
         os.makedirs(screenshots_dir, exist_ok=True)
-        exec_shell_command_async(f"xdg-open {screenshots_dir}")
+        exec_shell_command_async(f"nautilus {screenshots_dir}")
         self.close_menu()
 
     def open_recordings_folder(self, *args):
