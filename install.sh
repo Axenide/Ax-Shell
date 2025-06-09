@@ -51,6 +51,7 @@ PACKAGES=(
   vte3
   webp-pixbuf-loader
   wl-clipboard
+  mpvpaper
 )
 
 # Prevent running as root
