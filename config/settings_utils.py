@@ -98,8 +98,8 @@ def ensure_matugen_config():
     hypr_colors = os.path.expanduser(f"~/.config/{APP_NAME_CAP}/config/hypr/colors.conf")
     css_colors = os.path.expanduser(f"~/.config/{APP_NAME_CAP}/styles/colors.css")
     
-    # Only do the following if any of the files are missing
    # if not os.path.exists(current_wall) or not os.path.exists(hypr_colors) or not os.path.exists(css_colors):
+   #now im always regenerating colors
     os.makedirs(os.path.dirname(hypr_colors), exist_ok=True)
     os.makedirs(os.path.dirname(css_colors), exist_ok=True)
     image_path = ""
