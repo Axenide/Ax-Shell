@@ -110,6 +110,7 @@ class Units():
             "s": 1,
             "minute": 60,
             "min": 60,
+            "m": 60,
             "hour": 3600,
             "h": 3600,
             "milisecond": 1e-3,
@@ -120,7 +121,7 @@ class Units():
             "w": 604800,
             "fortnight": 1209600,
             "month": 2628000,  # Approximation (30.44 days)
-            "m": 2628000,  # Approximation (30.44 days)
+            "mo": 2628000,  # Approximation (30.44 days)
             "year": 31536000,  # Approximation (365 days)
             "yr": 31536000,  # Approximation (365 days)
             "decade": 315360000,  # Approximation (10 years)
@@ -345,6 +346,14 @@ class Conversion():
                     to_kelvin = chart[from_type][0]
                     from_kelvin = chart[to_type][1]
                     return from_kelvin(to_kelvin(value))
+                
+                # Handle WEIGHT_CHART separately (tuple values)
+                if chart_name == "WEIGHT_CHART":
+                    if from_type == to_type:
+                        return value
+                    to_kg = chart[from_type][0]
+                    from_kg = chart[to_type][1]
+                    return value * to_kg * from_kg
 
                 # Cualquier otro chart numérico
                 if from_type == to_type:
