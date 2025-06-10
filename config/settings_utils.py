@@ -43,9 +43,6 @@ def ensure_matugen_config():
     expected_config = {
         'config': {
             'reload_apps': True,
-            'wallpaper': {
-                'set': False 
-            },
             'custom_colors': {
                 'red': {'color': "#FF0000", 'blend': True},
                 'green': {'color': "#00FF00", 'blend': True},
