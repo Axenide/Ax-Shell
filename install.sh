@@ -72,14 +72,18 @@ elif ! command -v yay &>/dev/null; then
   rm -rf "$tmpdir"
 fi
 
-# Clean if repo exists but points to the wrong origin
-if [ -d "$INSTALL_DIR/.git" ]; then
+# Clean if repo exists but is invalid or points to the wrong origin
+if git -C "$INSTALL_DIR" rev-parse --is-inside-work-tree &>/dev/null; then
   CURRENT_REMOTE=$(git -C "$INSTALL_DIR" remote get-url origin || echo "")
   if [ "$CURRENT_REMOTE" != "$REPO_URL" ]; then
     echo "Removing old repository from $INSTALL_DIR..."
     rm -rf "$INSTALL_DIR"
   fi
+elif [ -d "$INSTALL_DIR" ]; then
+  echo "$INSTALL_DIR exists but is not a valid git repository. Removing it..."
+  rm -rf "$INSTALL_DIR"
 fi
+
 
 # Clone or update the repository
 if [ -d "$INSTALL_DIR" ]; then
