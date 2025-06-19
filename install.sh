@@ -1,52 +1,53 @@
 #!/bin/bash
 
-set -e  # Exit immediately if a command fails
-set -u  # Treat unset variables as errors
-set -o pipefail  # Prevent errors in a pipeline from being masked
+# Ax-Shell Installation Script
+# Ported by:
+
+# ________  ________  ___  __        ___    ___ _____ ______   ________  ________     
+#|\   __  \|\   __  \|\  \|\  \     |\  \  /  /|\   _ \  _   \|\   __  \|\   ____\    
+#\ \  \|\  \ \  \|\  \ \  \/  /|_   \ \  \/  / | \  \\\__\ \  \ \  \|\  \ \  \___|    
+# \ \  \\\  \ \   __  \ \   ___  \   \ \    / / \ \  \\|__| \  \ \   __  \ \  \       
+#  \ \  \\\  \ \  \ \  \ \  \\ \  \   \/  /  /   \ \  \    \ \  \ \  \ \  \ \  \____  
+#   \ \_______\ \__\ \__\ \__\\ \__\__/  / /      \ \__\    \ \__\ \__\ \__\ \_______\
+#    \|_______|\|__|\|__|\|__| \|__|\___/ /        \|__|     \|__|\|__|\|__|\|_______|
+#                                  \|___|/                                            
+# https://gh.io/SufremOak
+# https://youtube.com/@OakyMac
+
+
+set -e
+set -u
+set -o pipefail
 
 REPO_URL="https://github.com/Axenide/Ax-Shell.git"
 INSTALL_DIR="$HOME/.config/Ax-Shell"
 PACKAGES=(
-  brightnessctl
-  cava
-  cliphist
-  fabric-cli-git
-  gnome-bluetooth-3.0
-  gobject-introspection
-  gpu-screen-recorder
-  hypridle
-  hyprlock
-  hyprpicker
-  hyprshot
-  hyprsunset
-  imagemagick
-  libnotify
-  matugen-bin
-  noto-fonts-emoji
-  nvtop
-  playerctl
-  python-fabric-git
-  python-gobject
-  python-ijson
-  python-numpy
-  python-pillow
-  python-psutil
-  python-pywayland
-  python-requests
-  python-setproctitle
-  python-toml
-  python-watchdog
-  swappy
-  swww-git
-  tesseract
-  tmux
-  ttf-nerd-fonts-symbols-mono
-  unzip
-  upower
-  uwsm
-  vte3
-  webp-pixbuf-loader
-  wl-clipboard
+    brightnessctl
+    cava
+    gnome-bluetooth
+    gir1.2-gtk-3.0
+    imagemagick
+    libnotify-bin
+    fonts-noto-color-emoji
+    nvtop
+    playerctl
+    python3
+    python3-gi
+    python3-numpy
+    python3-pil
+    python3-psutil
+    python3-requests
+    python3-toml
+    python3-venv
+    python3-watchdog
+    tesseract-ocr
+    tmux
+    unzip
+    upower
+    webp
+    wl-clipboard
+    curl
+    git
 )
 
 # Prevent running as root
@@ -55,18 +56,12 @@ if [ "$(id -u)" -eq 0 ]; then
     exit 1
 fi
 
-aur_helper="yay"
+# Update and install required packages
+echo "Updating package lists..."
+sudo apt update
 
-# Check if paru exists, otherwise use yay
-if command -v paru &>/dev/null; then
-    aur_helper="paru"
-elif ! command -v yay &>/dev/null; then
-    echo "Installing yay-bin..."
-    tmpdir=$(mktemp -d)
-    git clone --depth=1 https://aur.archlinux.org/yay-bin.git "$tmpdir/yay-bin"
-    (cd "$tmpdir/yay-bin" && makepkg -si --noconfirm)
-    rm -rf "$tmpdir"
-fi
+echo "Installing required packages..."
+sudo apt install -y "${PACKAGES[@]}"
 
 # Clone or update the repository
 if [ -d "$INSTALL_DIR" ]; then
@@ -77,20 +72,12 @@ else
     git clone --depth=1 "$REPO_URL" "$INSTALL_DIR"
 fi
 
-# Install required packages using the detected AUR helper (only if missing)
-echo "Installing required packages..."
-$aur_helper -Syy --needed --devel --noconfirm "${PACKAGES[@]}" || true
-
-echo "Installing gray-git..."
-yes | $aur_helper -Syy --needed --devel --noconfirm gray-git || true
-
 echo "Installing required fonts..."
 
 FONT_URL="https://github.com/zed-industries/zed-fonts/releases/download/1.2.0/zed-sans-1.2.0.zip"
 FONT_DIR="$HOME/.fonts/zed-sans"
 TEMP_ZIP="/tmp/zed-sans-1.2.0.zip"
 
-# Check if fonts are already installed
 if [ ! -d "$FONT_DIR" ]; then
     echo "Downloading fonts from $FONT_URL..."
     curl -L -o "$TEMP_ZIP" "$FONT_URL"
@@ -109,14 +96,25 @@ fi
 if [ ! -d "$HOME/.fonts/tabler-icons" ]; then
     echo "Copying local fonts to $HOME/.fonts/tabler-icons..."
     mkdir -p "$HOME/.fonts/tabler-icons"
-    cp -r "$INSTALL_DIR/assets/fonts/"* "$HOME/.fonts"
+    cp -r "$INSTALL_DIR/assets/fonts/." "$HOME/.fonts/tabler-icons"
 else
     echo "Local fonts are already installed. Skipping copy."
 fi
 
-python "$INSTALL_DIR/config/config.py"
+# Update font cache
+fc-cache -fv
+
+echo "Starting Python Enviroment Configuration..."
+python3 -m venv $INSTALL_DIR/venv
+source $INSTALL_DIR/venv/bin/activate
+pip install --upgrade pip
+pip install git+https://github.com/Fabric-Development/fabric.git
+
+python3 "$INSTALL_DIR/config/config.py"
 echo "Starting Ax-Shell..."
 killall ax-shell 2>/dev/null || true
-uwsm app -- python "$INSTALL_DIR/main.py" > /dev/null 2>&1 & disown
+# 'uwsm' is not available on Debian/Ubuntu, so we run directly
+python3 "$INSTALL_DIR/main.py" > /dev/null 2>&1 & disown
 
 echo "Installation complete."
+
