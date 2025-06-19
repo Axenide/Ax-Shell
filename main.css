@@ -115,3 +115,16 @@
 #later-button:active {
   background-color: var(--surface-bright);
 }
+
+#toggle-updater-button {
+  background-color: var(--surface-bright);
+  border-radius: 16px;
+  padding: 8px 16px;
+  font-weight: bold;
+  transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+#toggle-updater-button:hover {
+  background-color: var(--outline);
+  border-radius: 8px;
+}

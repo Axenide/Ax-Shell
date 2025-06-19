@@ -213,6 +213,27 @@ class HyprConfGUI(Window):
         separator1 = Box(style="min-height: 1px; background-color: alpha(@fg_color, 0.2); margin: 5px 0px;", h_expand=True)
         vbox.add(separator1)
 
+        # START NEW SECTION FOR DATETIME FORMAT
+        datetime_format_header = Label(markup="<b>Date & Time Format</b>", h_align="start")
+        vbox.add(datetime_format_header)
+
+        datetime_grid = Gtk.Grid()
+        datetime_grid.set_column_spacing(20)
+        datetime_grid.set_row_spacing(10)
+        datetime_grid.set_margin_start(10)
+        datetime_grid.set_margin_top(5)
+        datetime_grid.set_margin_bottom(10) # Adds space before the next section
+        vbox.add(datetime_grid)
+
+        datetime_12h_label = Label(label="Use 12-Hour Clock", h_align="start", v_align="center")
+        datetime_grid.attach(datetime_12h_label, 0, 0, 1, 1)
+
+        datetime_12h_switch_container = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, halign=Gtk.Align.START, valign=Gtk.Align.CENTER)
+        self.datetime_12h_switch = Gtk.Switch(active=bind_vars.get('datetime_12h_format', False))
+        datetime_12h_switch_container.add(self.datetime_12h_switch)
+        datetime_grid.attach(datetime_12h_switch_container, 1, 0, 1, 1)
+        # END NEW SECTION FOR DATETIME FORMAT
+
         layout_header = Label(markup="<b>Layout Options</b>", h_align="start")
         vbox.add(layout_header)
         layout_grid = Gtk.Grid()
@@ -634,6 +655,7 @@ class HyprConfGUI(Window):
         current_bind_vars_snapshot['vertical'] = current_bind_vars_snapshot['bar_position'] in ["Left", "Right"]
         
         current_bind_vars_snapshot['centered_bar'] = self.centered_switch.get_active()
+        current_bind_vars_snapshot['datetime_12h_format'] = self.datetime_12h_switch.get_active()
         current_bind_vars_snapshot['dock_enabled'] = self.dock_switch.get_active()
         current_bind_vars_snapshot['dock_always_occluded'] = self.dock_hover_switch.get_active()
         current_bind_vars_snapshot['dock_icon_size'] = int(self.dock_size_scale.value)
@@ -803,6 +825,8 @@ class HyprConfGUI(Window):
             self.centered_switch.set_active(settings_utils.bind_vars.get('centered_bar', False))
             self.centered_switch.set_sensitive(default_position in ["Left", "Right"])
             
+            self.datetime_12h_switch.set_active(settings_utils.bind_vars.get('datetime_12h_format', False))
+
             self.dock_switch.set_active(settings_utils.bind_vars.get('dock_enabled', True))
             self.dock_hover_switch.set_active(settings_utils.bind_vars.get('dock_always_occluded', False))
             self.dock_hover_switch.set_sensitive(self.dock_switch.get_active())

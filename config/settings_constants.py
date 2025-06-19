@@ -50,6 +50,7 @@ DEFAULTS = {
     'bar_position': "Top",  # New default position setting
     'vertical': False,  # Kept for backward compatibility
     'centered_bar': False,
+    'datetime_12h_format': False,  # Add this line
     'terminal_command': "kitty -e",
     'dock_enabled': True,
     'dock_icon_size': 28,

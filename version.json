@@ -1,7 +1,7 @@
 {
-	"version": "0.0.13",
+	"version": "0.0.18",
+  "pkg_update": false,
 	"changelog": [
-    "<b>fix:</b> swww changed to swww-git",
-    "<b>fix:</b> Reverted notch to previous commit"
+    "<b>tweak:</b> Only update packages when necessary."
 	]
 }
