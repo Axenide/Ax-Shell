@@ -24,7 +24,9 @@ import config.data as data
 # File locations
 VERSION_FILE = get_relative_path("../version.json")
 REMOTE_VERSION_FILE = "/tmp/remote_version.json"
-REMOTE_URL = "https://raw.githubusercontent.com/Axenide/Ax-Shell/refs/heads/main/version.json"
+REMOTE_URL = (
+    "https://raw.githubusercontent.com/Axenide/Ax-Shell/refs/heads/main/version.json"
+)
 REPO_DIR = get_relative_path("../")
 
 SNOOZE_FILE_NAME = "updater_snooze.txt"
@@ -33,6 +35,7 @@ SNOOZE_DURATION_SECONDS = 8 * 60 * 60  # 8 hours
 
 # --- Global state for standalone execution control ---
 _QUIT_GTK_IF_NO_WINDOW_STANDALONE = False
+
 
 def get_cache_dir():
     """Returns the cache directory path, creating it if necessary."""
@@ -43,11 +46,13 @@ def get_cache_dir():
         print(f"Error creating cache directory {cache_dir_base}: {e}")
     return cache_dir_base
 
+
 def get_snooze_file_path():
     """
     Returns the path to the 'snooze' file inside ~/.cache/APP_NAME.
     """
     return os.path.join(get_cache_dir(), SNOOZE_FILE_NAME)
+
 
 def get_disable_file_path():
     """
@@ -62,9 +67,17 @@ def fetch_remote_version():
     """
     try:
         subprocess.run(
-            ["curl", "-sL", "--connect-timeout", "10", REMOTE_URL, "-o", REMOTE_VERSION_FILE],
+            [
+                "curl",
+                "-sL",
+                "--connect-timeout",
+                "10",
+                REMOTE_URL,
+                "-o",
+                REMOTE_VERSION_FILE,
+            ],
             check=False,
-            timeout=15
+            timeout=15,
         )
     except subprocess.TimeoutExpired:
         print("Error: curl timed out while fetching the remote version.")
@@ -82,7 +95,9 @@ def get_local_version():
         try:
             with open(VERSION_FILE, "r") as f:
                 data_content = json.load(f)
-                return data_content.get("version", "0.0.0"), data_content.get("changelog", [])
+                return data_content.get("version", "0.0.0"), data_content.get(
+                    "changelog", []
+                )
         except json.JSONDecodeError:
             print(f"Error: Invalid JSON in local file: {VERSION_FILE}")
             return "0.0.0", []
@@ -150,7 +165,7 @@ class UpdateWindow(Gtk.Window):
 
         self.is_standalone_mode = is_standalone_mode
         self.quit_gtk_main_on_destroy = False
-        self.pkg_update = pkg_update # Store pkg_update
+        self.pkg_update = pkg_update  # Store pkg_update
 
         # Main vertical container
         self.main_vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=15)
@@ -158,7 +173,9 @@ class UpdateWindow(Gtk.Window):
 
         # Title
         title_label = Gtk.Label(name="update-title")
-        title_label.set_markup("<span size='xx-large' weight='bold'>📦 Update Available ✨</span>")
+        title_label.set_markup(
+            "<span size='xx-large' weight='bold'>📦 Update Available ✨</span>"
+        )
         title_label.get_style_context().add_class("title-1")
         self.main_vbox.pack_start(title_label, False, False, 10)
 
@@ -191,7 +208,9 @@ class UpdateWindow(Gtk.Window):
         self.changelog_label = Gtk.Label()
         self.changelog_label.set_xalign(0)
         self.changelog_label.set_yalign(0)
-        self.changelog_label.set_line_wrap(Gtk.WrapMode.WORD_CHAR) # Gtk.WrapMode instead of just True
+        self.changelog_label.set_line_wrap(
+            Gtk.WrapMode.WORD_CHAR
+        )  # Gtk.WrapMode instead of just True
         self.changelog_label.set_selectable(False)
         self.changelog_label.set_markup(joined)
 
@@ -211,13 +230,17 @@ class UpdateWindow(Gtk.Window):
         # "Disable/Enable Updater" Button (aligned left)
         self.toggle_updater_button = Gtk.Button(name="toggle-updater-button")
         self.toggle_updater_button.connect("clicked", self.on_toggle_updater_clicked)
-        self._update_toggle_updater_button_label() # Set initial label
+        self._update_toggle_updater_button_label()  # Set initial label
         action_box.pack_start(self.toggle_updater_button, False, False, 0)
 
         # Box for right-aligned buttons
-        right_aligned_buttons_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
+        right_aligned_buttons_box = Gtk.Box(
+            orientation=Gtk.Orientation.HORIZONTAL, spacing=10
+        )
         right_aligned_buttons_box.set_halign(Gtk.Align.END)
-        action_box.pack_end(right_aligned_buttons_box, True, True, 0) # This box expands
+        action_box.pack_end(
+            right_aligned_buttons_box, True, True, 0
+        )  # This box expands
 
         # Update button (will now show embedded VTE terminal)
         self.update_button = Gtk.Button(name="update-button", label="Update")
@@ -251,7 +274,7 @@ class UpdateWindow(Gtk.Window):
                 print("Updater enabled.")
             else:
                 with open(disable_file, "w") as f:
-                    pass # File content doesn't matter, its existence is the flag
+                    pass  # File content doesn't matter, its existence is the flag
                 print("Updater disabled.")
             self._update_toggle_updater_button_label()
         except Exception as e:
@@ -263,7 +286,9 @@ class UpdateWindow(Gtk.Window):
                 buttons=Gtk.ButtonsType.OK,
                 text="Error Changing Updater Setting",
             )
-            error_dialog.format_secondary_text(f"Could not change the updater setting: {e}")
+            error_dialog.format_secondary_text(
+                f"Could not change the updater setting: {e}"
+            )
             error_dialog.run()
             error_dialog.destroy()
 
@@ -288,7 +313,9 @@ class UpdateWindow(Gtk.Window):
         # Disable the buttons so they can't be clicked again
         self.update_button.set_sensitive(False)
         self.close_button.set_sensitive(False)
-        self.toggle_updater_button.set_sensitive(False) # Disable toggle button during update
+        self.toggle_updater_button.set_sensitive(
+            False
+        )  # Disable toggle button during update
 
         # Hide the progress bar (we don't need it now)
         self.progress_bar.set_visible(False)
@@ -299,7 +326,9 @@ class UpdateWindow(Gtk.Window):
             self.terminal_container = Gtk.ScrolledWindow()
             self.terminal_container.set_hexpand(True)
             self.terminal_container.set_vexpand(True)
-            self.terminal_container.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
+            self.terminal_container.set_policy(
+                Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC
+            )
 
             # Create the VTE terminal
             self.vte_terminal = Vte.Terminal()
@@ -320,21 +349,20 @@ class UpdateWindow(Gtk.Window):
             # Ensure REPO_DIR is correctly defined at the top of the file.
             update_command = f"git -C \"{REPO_DIR}\" pull && echo 'Reloading in 3...' && sleep 1 && echo '2...' && sleep 1 && echo '1...' && sleep 1 && killall {data.APP_NAME} && setsid python \"{REPO_DIR}main.py\""
 
-
         # Spawn the process asynchronously inside the terminal
         self.vte_terminal.spawn_async(
             Vte.PtyFlags.DEFAULT,
-            os.environ.get("HOME", "/"), # CWD for the command
-            ["/bin/bash", "-lc", update_command], # Command and args
-            [], # envv
-            GLib.SpawnFlags.DO_NOT_REAP_CHILD, # spawn_flags
-            None, # child_setup
-            None, # child_setup_data
-            -1, # timeout
-            None, # cancellable
-            None, # callback_data for Vte.Terminal.spawn_async_wait_finish
-            self.on_curl_script_exit, # callback for when process finishes
-            None # user_data for callback
+            os.environ.get("HOME", "/"),  # CWD for the command
+            ["/bin/bash", "-lc", update_command],  # Command and args
+            [],  # envv
+            GLib.SpawnFlags.DO_NOT_REAP_CHILD,  # spawn_flags
+            None,  # child_setup
+            None,  # child_setup_data
+            -1,  # timeout
+            None,  # cancellable
+            None,  # callback_data for Vte.Terminal.spawn_async_wait_finish
+            self.on_curl_script_exit,  # callback for when process finishes
+            None,  # user_data for callback
         )
 
     def on_curl_script_exit(self, terminal, exit_status, user_data):
@@ -349,9 +377,16 @@ class UpdateWindow(Gtk.Window):
         else:
             # If there was an error, read the last part of the buffer to display it
             end_iter = self.vte_terminal.get_end_iter()
-            start_iter = self.vte_terminal.get_iter_at_line(max(0, self.vte_terminal.get_line_count() - 5))
-            error_excerpt = self.vte_terminal.get_text_range(start_iter, end_iter, False)
-            GLib.idle_add(self.handle_update_failure, f"Script exited with status {exit_status}. Last lines:\n{error_excerpt}")
+            start_iter = self.vte_terminal.get_iter_at_line(
+                max(0, self.vte_terminal.get_line_count() - 5)
+            )
+            error_excerpt = self.vte_terminal.get_text_range(
+                start_iter, end_iter, False
+            )
+            GLib.idle_add(
+                self.handle_update_failure,
+                f"Script exited with status {exit_status}. Last lines:\n{error_excerpt}",
+            )
 
     def handle_update_success(self):
         """
@@ -423,7 +458,7 @@ class UpdateWindow(Gtk.Window):
         # Buttons are re-enabled to retry or close
         self.update_button.set_sensitive(True)
         self.close_button.set_sensitive(True)
-        self.toggle_updater_button.set_sensitive(True) # Re-enable toggle button
+        self.toggle_updater_button.set_sensitive(True)  # Re-enable toggle button
 
         # Error dialog
         error_dialog = Gtk.MessageDialog(
@@ -449,7 +484,9 @@ class UpdateWindow(Gtk.Window):
             Gtk.main_quit()
 
 
-def _initiate_update_check_flow(is_standalone_mode, force=False): # Added force argument with default
+def _initiate_update_check_flow(
+    is_standalone_mode, force=False
+):  # Added force argument with default
     """
     Logic that checks connection, snooze, and downloads the remote version.
     If there's a new version or force is True, launches the update window.
@@ -459,7 +496,9 @@ def _initiate_update_check_flow(is_standalone_mode, force=False): # Added force 
     # --- Check if updater is permanently disabled ---
     disable_file_path = get_disable_file_path()
     if os.path.exists(disable_file_path) and not force:
-        print(f"Updater is disabled via {UPDATER_DISABLE_FILE_NAME}. Skipping update check.")
+        print(
+            f"Updater is disabled via {UPDATER_DISABLE_FILE_NAME}. Skipping update check."
+        )
         if is_standalone_mode and _QUIT_GTK_IF_NO_WINDOW_STANDALONE:
             GLib.idle_add(Gtk.main_quit)
         return
@@ -471,14 +510,24 @@ def _initiate_update_check_flow(is_standalone_mode, force=False): # Added force 
         return
 
     fetch_remote_version()
-    latest_version, changelog, _, pkg_update = get_remote_version() # Unpack pkg_update
+    latest_version, changelog, _, pkg_update = get_remote_version()  # Unpack pkg_update
 
     if force:
-        print(f"Force update mode enabled. Opening updater for version {latest_version}.")
-        if latest_version == "0.0.0" and not changelog: # And pkg_update will be True (default)
-            print(f"Warning: Could not fetch remote version details for {data.APP_NAME_CAP}. Updater will show default/empty info.")
-        GLib.idle_add(launch_update_window, latest_version, changelog, pkg_update, is_standalone_mode) # Pass pkg_update
-        return # Exit after launching in force mode
+        print(
+            f"Force update mode enabled. Opening updater for version {latest_version}."
+        )
+        if (
+            latest_version == "0.0.0" and not changelog
+        ):  # And pkg_update will be True (default)
+            print(
+                f"Warning: Could not fetch remote version details for {data.APP_NAME_CAP}. Updater will show default/empty info."
+            )
+        GLib.idle_add(
+            launch_update_window(
+                latest_version, changelog, pkg_update, is_standalone_mode
+            )
+        )  # Pass pkg_update
+        return  # Exit after launching in force mode
 
     # --- Regular update check flow (if not forced) ---
     snooze_file_path = get_snooze_file_path()
@@ -491,7 +540,9 @@ def _initiate_update_check_flow(is_standalone_mode, force=False): # Added force 
             current_time = time.time()
             if current_time - snooze_timestamp < SNOOZE_DURATION_SECONDS:
                 snooze_until_time = snooze_timestamp + SNOOZE_DURATION_SECONDS
-                snooze_until_time_str = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(snooze_until_time))
+                snooze_until_time_str = time.strftime(
+                    "%Y-%m-%d %H:%M:%S", time.localtime(snooze_until_time)
+                )
                 print(f"Check postponed. It will resume after {snooze_until_time_str}.")
                 if is_standalone_mode and _QUIT_GTK_IF_NO_WINDOW_STANDALONE:
                     GLib.idle_add(Gtk.main_quit)
@@ -500,24 +551,33 @@ def _initiate_update_check_flow(is_standalone_mode, force=False): # Added force 
                 print("Snooze period expired. Removing file and checking for updates.")
                 os.remove(snooze_file_path)
         except ValueError:
-            print(f"Error: invalid content in snooze file. Removing: {snooze_file_path}")
+            print(
+                f"Error: invalid content in snooze file. Removing: {snooze_file_path}"
+            )
             try:
                 os.remove(snooze_file_path)
             except OSError as e_remove:
                 print(f"Error removing corrupt snooze file: {e_remove}")
         except Exception as e_snooze:
-            print(f"Error processing snooze file {snooze_file_path}: {e_snooze}. Proceeding with check.")
+            print(
+                f"Error processing snooze file {snooze_file_path}: {e_snooze}. Proceeding with check."
+            )
             try:
-                os.remove(snooze_file_path) # Attempt to remove problematic snooze file
+                os.remove(snooze_file_path)  # Attempt to remove problematic snooze file
             except OSError as e_remove_generic:
                 print(f"Error removing problematic snooze file: {e_remove_generic}")
-
 
     current_version, _ = get_local_version()
 
     # Basic version comparison (not strict semver)
     if latest_version > current_version and latest_version != "0.0.0":
-        GLib.idle_add(launch_update_window, latest_version, changelog, pkg_update, is_standalone_mode) # Pass pkg_update
+        GLib.idle_add(
+            launch_update_window,
+            latest_version,
+            changelog,
+            pkg_update,
+            is_standalone_mode,
+        )  # Pass pkg_update
     else:
         print(f"{data.APP_NAME_CAP} is up to date or the remote version is invalid.")
         if is_standalone_mode and _QUIT_GTK_IF_NO_WINDOW_STANDALONE:
@@ -528,7 +588,9 @@ def launch_update_window(latest_version, changelog, pkg_update, is_standalone_mo
     """
     Creates and shows the update window.
     """
-    win = UpdateWindow(latest_version, changelog, pkg_update, is_standalone_mode) # Pass pkg_update
+    win = UpdateWindow(
+        latest_version, changelog, pkg_update, is_standalone_mode
+    )  # Pass pkg_update
     if is_standalone_mode:
         win.quit_gtk_main_on_destroy = True
     win.show_all()
@@ -541,11 +603,13 @@ def check_for_updates():
     """
     # _initiate_update_check_flow's 'force' parameter defaults to False,
     # so passing args=(False,) correctly sets is_standalone_mode=False and force=False.
-    thread = threading.Thread(target=_initiate_update_check_flow, args=(False,), daemon=True)
+    thread = threading.Thread(
+        target=_initiate_update_check_flow, args=(False,), daemon=True
+    )
     thread.start()
 
 
-def run_updater(force=False): # Modified to accept force argument
+def run_updater(force=False):  # Modified to accept force argument
     """
     Standalone entry point: starts Gtk.main and the update check.
     Args:
@@ -556,7 +620,9 @@ def run_updater(force=False): # Modified to accept force argument
     _QUIT_GTK_IF_NO_WINDOW_STANDALONE = True
 
     # Pass the force argument to the target function
-    update_check_thread = threading.Thread(target=_initiate_update_check_flow, args=(True, force), daemon=True)
+    update_check_thread = threading.Thread(
+        target=_initiate_update_check_flow, args=(True, force), daemon=True
+    )
     update_check_thread.start()
 
     Gtk.main()
