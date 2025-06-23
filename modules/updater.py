@@ -572,11 +572,11 @@ def _initiate_update_check_flow(
     # Basic version comparison (not strict semver)
     if latest_version > current_version and latest_version != "0.0.0":
         GLib.idle_add(
-            launch_update_window,
+            launch_update_window(
             latest_version,
             changelog,
             pkg_update,
-            is_standalone_mode,
+            is_standalone_mode)
         )  # Pass pkg_update
     else:
         print(f"{data.APP_NAME_CAP} is up to date or the remote version is invalid.")
