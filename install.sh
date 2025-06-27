@@ -117,6 +117,7 @@ fi
 
 cd "$INSTALL_DIR"
 uv sync
+uv pip uninstall fabric
 uv pip install git+https://github.com/Fabric-Development/fabric
 uv pip uninstall PyGObject
 uv pip install PyGObject # TODO: Move the PyGObject installation into pyproject once its required version becomes available in UV.
