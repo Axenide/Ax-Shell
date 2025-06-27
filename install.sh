@@ -25,17 +25,18 @@ PACKAGES=(
   noto-fonts-emoji
   nvtop
   playerctl
-  python-fabric-git
-  python-gobject
-  python-ijson
-  python-numpy
-  python-pillow
-  python-psutil
-  python-pywayland
-  python-requests
-  python-setproctitle
-  python-toml
-  python-watchdog
+  # python-fabric-git
+  # python-gobject
+  # python-ijson
+  # python-numpy
+  # python-pillow
+  # python-psutil
+  # python-pywayland
+  # python-requests
+  # python-setproctitle
+  # python-toml
+  # python-watchdog
+  uv
   swappy
   swww-git
   tesseract
@@ -117,6 +118,9 @@ fi
 python "$INSTALL_DIR/config/config.py"
 echo "Starting Ax-Shell..."
 killall ax-shell 2>/dev/null || true
-uwsm app -- python "$INSTALL_DIR/main.py" > /dev/null 2>&1 & disown
+cd "$INSTALL_DIR"
+uv sync
+uv pip install PyGObject # TODO: Move the PyGObject installation into pyproject once its required version becomes available in UV.
+uwsm app -- uv run main.py > /dev/null 2>&1 & disown
 
 echo "Installation complete."
