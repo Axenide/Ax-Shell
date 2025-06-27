@@ -115,13 +115,13 @@ else
     echo "Local fonts are already installed. Skipping copy."
 fi
 
-python "$INSTALL_DIR/config/config.py"
-echo "Starting Ax-Shell..."
-killall ax-shell 2>/dev/null || true
 cd "$INSTALL_DIR"
 uv sync
 uv pip uninstall PyGObject
 uv pip install PyGObject # TODO: Move the PyGObject installation into pyproject once its required version becomes available in UV.
+uv run config/config.py
+echo "Starting Ax-Shell..."
+killall ax-shell 2>/dev/null || true
 uwsm app -- uv run main.py > /dev/null 2>&1 & disown
 
 echo "Installation complete."
