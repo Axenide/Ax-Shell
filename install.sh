@@ -120,6 +120,7 @@ echo "Starting Ax-Shell..."
 killall ax-shell 2>/dev/null || true
 cd "$INSTALL_DIR"
 uv sync
+uv pip uninstall PyGObject
 uv pip install PyGObject # TODO: Move the PyGObject installation into pyproject once its required version becomes available in UV.
 uwsm app -- uv run main.py > /dev/null 2>&1 & disown
 
