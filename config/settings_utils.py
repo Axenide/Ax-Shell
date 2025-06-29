@@ -243,8 +243,7 @@ def generate_hyprconf() -> str:
     is_vertical = bar_position in ["Left", "Right"]
     animation_type = "slidefadevert" if is_vertical else "slidefade"
 
-    return f"""{"exec-once = ax-shell" if subprocess.run(["uwsm", "check", "is-active"]).returncode == 0 else ""}
-exec = pgrep -x "hypridle" > /dev/null || uwsm app -- hypridle
+    return f"""exec = pgrep -x "hypridle" > /dev/null || uwsm app -- hypridle
 exec = uwsm app -- swww-daemon
 exec-once =  wl-paste --type text --watch cliphist store
 exec-once =  wl-paste --type image --watch cliphist store
