@@ -760,9 +760,9 @@ class HyprConfGUI(Window):
             print(f"{time.time():.4f}: Finished start_config().")
 
             print(f"{time.time():.4f}: Initiating Ax-Shell restart using Popen...")
-            main_py = os.path.expanduser(f"~/.config/{APP_NAME_CAP}/main.py")
+            main_folder = os.path.expanduser(f"~/.config/{APP_NAME_CAP}")
             kill_cmd = f"killall {APP_NAME}"
-            start_cmd = ["uwsm", "app", "--", "python", main_py]
+            start_cmd = ["uwsm", "--", "app", "uv", "run", "main.py"]
             try:
                 kill_proc = subprocess.Popen(kill_cmd, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
                 kill_proc.wait(timeout=2)
@@ -771,7 +771,7 @@ class HyprConfGUI(Window):
             except Exception as e: print(f"Error running killall: {e}")
             
             try:
-                subprocess.Popen(start_cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True)
+                subprocess.Popen(start_cmd, cwd=main_folder, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True)
                 print(f"{APP_NAME_CAP} restart initiated via Popen.")
             except FileNotFoundError as e: print(f"Error restarting {APP_NAME_CAP}: Command not found ({e})")
             except Exception as e: print(f"Error restarting {APP_NAME_CAP} via Popen: {e}")
