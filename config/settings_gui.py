@@ -305,9 +305,16 @@ class HyprConfGUI(Window):
         self.ws_chinese_switch = Gtk.Switch(active=bind_vars.get('bar_workspace_use_chinese_numerals', False), sensitive=self.ws_num_switch.get_active())
         ws_chinese_switch_container.add(self.ws_chinese_switch)
         layout_grid.attach(ws_chinese_switch_container, 3, 3, 1, 1)
+        
+        special_ws_label = Label(label="Hide Special Workspace", h_align="start", v_align="center")
+        layout_grid.attach(special_ws_label, 0, 4, 1, 1)
+        special_ws_switch_container = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, halign=Gtk.Align.START, valign=Gtk.Align.CENTER)
+        self.special_ws_switch = Gtk.Switch(active=bind_vars.get('bar_hide_special_workspace', True))
+        special_ws_switch_container.add(self.special_ws_switch)
+        layout_grid.attach(special_ws_switch_container, 1, 4, 1, 1)
 
         bar_theme_label = Label(label="Bar Theme", h_align="start", v_align="center")
-        layout_grid.attach(bar_theme_label, 0, 4, 1, 1)
+        layout_grid.attach(bar_theme_label, 0, 5, 1, 1)
         bar_theme_combo_container = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, halign=Gtk.Align.START, valign=Gtk.Align.CENTER)
         self.bar_theme_combo = Gtk.ComboBoxText()
         self.bar_theme_combo.set_tooltip_text("Select the visual theme for the bar")
@@ -319,10 +326,10 @@ class HyprConfGUI(Window):
         except ValueError:
             self.bar_theme_combo.set_active(0)
         bar_theme_combo_container.add(self.bar_theme_combo)
-        layout_grid.attach(bar_theme_combo_container, 1, 4, 3, 1)
+        layout_grid.attach(bar_theme_combo_container, 1, 5, 3, 1)
 
         dock_theme_label = Label(label="Dock Theme", h_align="start", v_align="center")
-        layout_grid.attach(dock_theme_label, 0, 5, 1, 1) 
+        layout_grid.attach(dock_theme_label, 0, 6, 1, 1) 
         dock_theme_combo_container = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, halign=Gtk.Align.START, valign=Gtk.Align.CENTER)
         self.dock_theme_combo = Gtk.ComboBoxText() 
         self.dock_theme_combo.set_tooltip_text("Select the visual theme for the dock")
@@ -333,10 +340,10 @@ class HyprConfGUI(Window):
         except ValueError:
             self.dock_theme_combo.set_active(0) 
         dock_theme_combo_container.add(self.dock_theme_combo)
-        layout_grid.attach(dock_theme_combo_container, 1, 5, 3, 1)
+        layout_grid.attach(dock_theme_combo_container, 1, 6, 3, 1)
 
         panel_theme_label = Label(label="Panel Theme", h_align="start", v_align="center")
-        layout_grid.attach(panel_theme_label, 0, 6, 1, 1)
+        layout_grid.attach(panel_theme_label, 0, 7, 1, 1)
         panel_theme_combo_container = Box(orientation=Gtk.Orientation.HORIZONTAL, halign=Gtk.Align.START, valign=Gtk.Align.CENTER)
         self.panel_theme_combo = Gtk.ComboBoxText()
         self.panel_theme_combo.set_tooltip_text("Select the theme/mode for panels like toolbox, clipboard, etc.")
@@ -348,7 +355,7 @@ class HyprConfGUI(Window):
         except ValueError:
             self.panel_theme_combo.set_active(0) 
         panel_theme_combo_container.add(self.panel_theme_combo)
-        layout_grid.attach(panel_theme_combo_container, 1, 6, 1, 1)
+        layout_grid.attach(panel_theme_combo_container, 1, 7, 1, 1)
         self.panel_theme_combo.connect("changed", self._on_panel_theme_changed_for_position_sensitivity)
 
         self.panel_position_options = [
@@ -356,7 +363,7 @@ class HyprConfGUI(Window):
         ]
 
         panel_position_label = Label(label="Panel Position", h_align="start", v_align="center")
-        layout_grid.attach(panel_position_label, 2, 6, 1, 1)
+        layout_grid.attach(panel_position_label, 2, 7, 1, 1)
 
         panel_position_combo_container = Box(orientation=Gtk.Orientation.HORIZONTAL, halign=Gtk.Align.START, valign=Gtk.Align.CENTER)
         self.panel_position_combo = Gtk.ComboBoxText()
@@ -374,10 +381,10 @@ class HyprConfGUI(Window):
                 self.panel_position_combo.set_active(0) 
 
         panel_position_combo_container.add(self.panel_position_combo)
-        layout_grid.attach(panel_position_combo_container, 3, 6, 1, 1)
+        layout_grid.attach(panel_position_combo_container, 3, 7, 1, 1)
 
         notification_pos_label = Label(label="Notification Position", h_align="start", v_align="center")
-        layout_grid.attach(notification_pos_label, 0, 7, 1, 1)
+        layout_grid.attach(notification_pos_label, 0, 8, 1, 1)
 
         notification_pos_combo_container = Box(orientation=Gtk.Orientation.HORIZONTAL, halign=Gtk.Align.START, valign=Gtk.Align.CENTER)
         
@@ -397,7 +404,7 @@ class HyprConfGUI(Window):
         self.notification_pos_combo.connect("changed", self.on_notification_position_changed)
         
         notification_pos_combo_container.add(self.notification_pos_combo)
-        layout_grid.attach(notification_pos_combo_container, 1, 7, 3, 1)
+        layout_grid.attach(notification_pos_combo_container, 1, 8, 3, 1)
 
         separator2 = Box(style="min-height: 1px; background-color: alpha(@fg_color, 0.2); margin: 5px 0px;", h_expand=True)
         vbox.add(separator2)
@@ -663,6 +670,7 @@ class HyprConfGUI(Window):
         current_bind_vars_snapshot['corners_visible'] = self.corners_switch.get_active()
         current_bind_vars_snapshot['bar_workspace_show_number'] = self.ws_num_switch.get_active()
         current_bind_vars_snapshot['bar_workspace_use_chinese_numerals'] = self.ws_chinese_switch.get_active()
+        current_bind_vars_snapshot['bar_hide_special_workspace'] = self.special_ws_switch.get_active()
         current_bind_vars_snapshot['bar_theme'] = self.bar_theme_combo.get_active_text()
         current_bind_vars_snapshot['dock_theme'] = self.dock_theme_combo.get_active_text()
         current_bind_vars_snapshot['panel_theme'] = self.panel_theme_combo.get_active_text()
@@ -835,6 +843,7 @@ class HyprConfGUI(Window):
             self.ws_num_switch.set_active(settings_utils.bind_vars.get('bar_workspace_show_number', False))
             self.ws_chinese_switch.set_active(settings_utils.bind_vars.get('bar_workspace_use_chinese_numerals', False))
             self.ws_chinese_switch.set_sensitive(self.ws_num_switch.get_active())
+            self.special_ws_switch.set_active(settings_utils.bind_vars.get('bar_hide_special_workspace', True))
             
             default_theme_val = DEFAULTS.get('bar_theme', "Pills") 
             themes = ["Pills", "Dense", "Edge"]

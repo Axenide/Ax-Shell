@@ -70,6 +70,7 @@ if os.path.exists(CONFIG_FILE):
     DOCK_ICON_SIZE = config.get('dock_icon_size', 28)
     BAR_WORKSPACE_SHOW_NUMBER = config.get('bar_workspace_show_number', False)
     BAR_WORKSPACE_USE_CHINESE_NUMERALS = config.get('bar_workspace_use_chinese_numerals', False)
+    BAR_HIDE_SPECIAL_WORKSPACE = config.get('bar_hide_special_workspace', True)
     BAR_THEME = config.get('bar_theme', "Pills")
     DOCK_THEME = config.get('dock_theme', "Pills")
     PANEL_THEME = config.get('panel_theme', "Pills")
@@ -109,6 +110,7 @@ else:
     DOCK_ICON_SIZE = 28
     BAR_WORKSPACE_SHOW_NUMBER = False
     BAR_WORKSPACE_USE_CHINESE_NUMERALS = False
+    BAR_HIDE_SPECIAL_WORKSPACE = True
     BAR_THEME = "Pills"
     DOCK_THEME = "Pills"
     PANEL_THEME = "Notch"

@@ -57,6 +57,7 @@ DEFAULTS = {
     'dock_always_occluded': False,
     'bar_workspace_show_number': False,
     'bar_workspace_use_chinese_numerals': False,
+    'bar_hide_special_workspace': True, # Toggle (Hide/Show) special workspace
     'bar_theme': "Pills",
     'dock_theme': "Pills",
     'panel_theme': "Notch", # Default panel theme
