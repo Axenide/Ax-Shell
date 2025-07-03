@@ -4,6 +4,7 @@ from .data import (APP_NAME, APP_NAME_CAP, NOTIF_POS_DEFAULT, NOTIF_POS_KEY,
 
 SOURCE_STRING = f"""
 # {APP_NAME_CAP}
+{"exec-once = ax-shell" if not subprocess.run(["uwsm", "check", "is-active"]).returncode == 0 else ""}
 source = ~/.config/{APP_NAME_CAP}/config/hypr/{APP_NAME}.conf
 """
 
