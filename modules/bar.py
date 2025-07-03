@@ -17,7 +17,7 @@ import config.data as data
 import modules.icons as icons
 from modules.controls import ControlSmall
 from modules.dock import Dock
-from modules.metrics import Battery, MetricsSmall, NetworkApplet
+from modules.metrics import Battery, MetricsSmall, NetworkApplet, TemperaturesBar
 from modules.systemtray import SystemTray
 from modules.weather import Weather
 from widgets.wayland import WaylandWindow as Window
@@ -219,12 +219,14 @@ class Bar(Window):
         self.button_overview.connect("leave_notify_event", self.on_button_leave)
 
         self.control = ControlSmall()
+        self.temperatures_bar = TemperaturesBar()
         self.metrics = MetricsSmall()
         self.battery = Battery()
         
         self.apply_component_props()
         
         self.rev_right = [
+            self.temperatures_bar,
             self.metrics,
             self.control,
         ]
@@ -441,6 +443,7 @@ class Bar(Window):
             'weather': self.weather,
             'battery': self.battery,
             'metrics': self.metrics,
+            'temperatures': self.temperatures_bar,
             'language': self.language,
             'date_time': self.date_time,
             'button_power': self.button_power,
@@ -462,6 +465,7 @@ class Bar(Window):
             'weather': self.weather,
             'battery': self.battery,
             'metrics': self.metrics,
+            'temperatures': self.temperatures_bar,
             'language': self.language,
             'date_time': self.date_time,
             'button_power': self.button_power,

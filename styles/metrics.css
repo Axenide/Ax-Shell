@@ -101,3 +101,9 @@
 #upload-icon-label.urgent {
   color: var(--shadow);
 }
+
+#temps-bar {
+  background-color: var(--surface);
+  padding-left: 6px;
+  padding-right: 6px;
+}

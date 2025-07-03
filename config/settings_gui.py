@@ -26,6 +26,7 @@ from .data import (APP_NAME, APP_NAME_CAP, NOTIF_POS_DEFAULT, NOTIF_POS_KEY,
 from .settings_utils import backup_and_replace, bind_vars, start_config
 
 
+
 class HyprConfGUI(Window):
     def __init__(self, show_lock_checkbox: bool, show_idle_checkbox: bool, **kwargs):
         super().__init__(
@@ -416,7 +417,7 @@ class HyprConfGUI(Window):
             'button_apps': "App Launcher Button", 'systray': "System Tray", 'control': "Control Panel",
             'network': "Network Applet", 'button_tools': "Toolbox Button", 'button_overview': "Overview Button",
             'ws_container': "Workspaces", 'weather': "Weather Widget", 'battery': "Battery Indicator",
-            'metrics': "System Metrics", 'language': "Language Indicator", 'date_time': "Date & Time",
+            'metrics': "System Metrics", 'temperatures': "System Temps", 'language': "Language Indicator", 'date_time': "Date & Time",
             'button_power': "Power Button",
         }
 

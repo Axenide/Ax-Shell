@@ -1,7 +1,10 @@
 import json
 import logging
+import os
+import glob
 import subprocess
 import time
+import shutil
 
 import psutil
 from fabric.core.fabricator import Fabricator
@@ -33,6 +36,8 @@ class MetricsProvider:
         self.cpu = 0.0
         self.mem = 0.0
         self.disk = []
+        self.cpu_temp = None
+        self.gpu_temp = None
 
         self.upower = UPowerManager()
         self.display_device = self.upower.get_display_device()
@@ -49,6 +54,12 @@ class MetricsProvider:
         self.mem = psutil.virtual_memory().percent
         self.disk = [psutil.disk_usage(path).percent for path in data.BAR_METRICS_DISKS]
 
+        # Fetch CPU temperature using multiple providers
+        self.cpu_temp = self._get_cpu_temperature()
+
+        # Fetch GPU temperature using multiple providers
+        self.gpu_temp = self._get_gpu_temperature()
+
         if not self._gpu_update_running:
             self._start_gpu_update_async()
 
@@ -63,6 +74,80 @@ class MetricsProvider:
             self.bat_time = battery['TimeToFull'] if self.bat_charging else battery['TimeToEmpty']
 
         return True
+
+    def _get_cpu_temperature(self):
+        """Attempt to get CPU temperature from multiple sources."""
+        # Provider 1: psutil sensors_temperatures
+        try:
+            temps = psutil.sensors_temperatures()
+            cpu_temp = None
+            for key in temps:
+                if key.lower().startswith("coretemp") or key.lower().startswith("k10temp") or key.lower().startswith("cpu"):
+                    entries = temps[key]
+                    if entries:
+                        cpu_temp = entries[0].current
+                        break
+            if cpu_temp is not None:
+                return int(cpu_temp)
+        except Exception:
+            pass
+
+        # Provider 2: Read from /sys/class/thermal
+        try:
+            thermal_paths = glob.glob("/sys/class/thermal/thermal_zone*/temp")
+            for path in thermal_paths:
+                with open(path, 'r') as f:
+                    temp = int(f.read().strip()) / 1000  # Temp is in millidegrees Celsius
+                    if 0 < temp < 150:  # Basic sanity check
+                        return int(temp)
+        except Exception:
+            pass
+
+        # If no providers succeed, return None
+        return None
+
+    def _get_gpu_temperature(self):
+        """Attempt to get GPU temperature from multiple sources."""
+        # Provider 1: AMD GPU via sysfs
+        try:
+            hwmon_paths = glob.glob("/sys/class/drm/card*/device/hwmon/hwmon*/temp*_input")
+            amd_temps = []
+            for path in hwmon_paths:
+                name_file = os.path.join(os.path.dirname(path), "name")
+                if os.path.exists(name_file):
+                    with open(name_file, 'r') as f_name:
+                        if 'amdgpu' not in f_name.read().lower():
+                            continue
+                try:
+                    with open(path, 'r') as f:
+                        temp = int(f.read().strip()) / 1000
+                        amd_temps.append(temp)
+                except Exception:
+                    continue
+            if amd_temps:
+                max_temp = max(amd_temps)
+                if 0 < max_temp < 150:
+                    return int(max_temp)
+        except Exception:
+            pass
+
+        # Provider 2: NVIDIA via nvidia-smi
+        try:
+            if shutil.which("nvidia-smi") is not None:
+                result = subprocess.check_output(
+                    ["nvidia-smi", "--query-gpu=temperature.gpu", "--format=csv,noheader,nounits"],
+                    text=True, timeout=2
+                )
+                lines = result.strip().splitlines()
+                if lines:
+                    nvidia_temp = int(lines[0])
+                    if 0 < nvidia_temp < 150:
+                        return nvidia_temp
+        except Exception:
+            pass
+
+        # If no providers succeed, return None
+        return None
 
     def _start_gpu_update_async(self):
         """Starts a new GLib thread to run nvtop in the background."""
@@ -119,7 +204,14 @@ class MetricsProvider:
         return False
 
     def get_metrics(self):
-        return (self.cpu, self.mem, self.disk, self.gpu)
+        return {
+            "cpu": self.cpu,
+            "mem": self.mem,
+            "disk": self.disk,
+            "gpu": self.gpu,
+            "cpu_temp": self.cpu_temp,
+            "gpu_temp": self.gpu_temp,
+        }
 
     def get_battery(self):
         return (self.bat_percent, self.bat_charging, self.bat_time)
@@ -146,8 +238,73 @@ class MetricsProvider:
 
 shared_provider = MetricsProvider()
 
+class TemperatureIndicator(Box):
+    def __init__(self, id, icon):
+        super().__init__(
+            name=f"{id}-temp-indicator",
+            orientation="h",
+            spacing=4,
+            visible=True,
+            all_visible=True,
+        )
+        self.icon = Label(
+            name=f"{id}-temp-icon",
+            markup=icon,
+            use_markup=True,
+        )
+        self.bar = Scale(
+            name=f"{id}-temp-bar",
+            value=0,
+            orientation="h",
+            h_align="fill",
+            h_expand=True,
+            style_classes=[id, "temp-bar"],
+        )
+        self.temp_label = Label(
+            name=f"{id}-temp-label",
+            label="--°C",
+            use_markup=True,
+        )
+        self.add(self.icon)
+        self.add(self.bar)
+        self.add(self.temp_label)
+        self.bar.set_sensitive(False)
+
+    def set_temp(self, temp):
+        if temp is not None:
+            value = max(0, min(100, temp)) / 100.0
+            self.bar.value = value
+            self.temp_label.set_label(f"{temp}°C")
+        else:
+            self.bar.value = 0
+            self.temp_label.set_label("--°C")
+
+class TemperaturesBar(Box):
+    def __init__(self):
+        super().__init__(
+            name="temps-bar",
+            orientation="h",
+            spacing=8,
+            visible=True,
+            all_visible=True,
+            style_classes=["temps-bar-container"],
+        )
+        self.cpu = TemperatureIndicator("cpu", icons.cpu)
+        self.gpu = TemperatureIndicator("gpu", icons.gpu)
+        self.add(self.cpu)
+        self.add(self.gpu)
+        GLib.timeout_add_seconds(1, self.update_temps)
+
+    def update_temps(self):
+        metrics = shared_provider.get_metrics()
+        self.cpu.set_temp(metrics["cpu_temp"])
+        self.gpu.set_temp(metrics["gpu_temp"])
+        return True
+
+
 class SingularMetric:
     def __init__(self, id, name, icon):
+        # Usage bar (vertical)
         self.usage = Scale(
             name=f"{id}-usage",
             value=0.25,
@@ -157,15 +314,18 @@ class SingularMetric:
             v_expand=True,
         )
 
+        # Icon label (icon only)
         self.label = Label(
             name=f"{id}-label",
             markup=icon,
+            use_markup=True,
         )
 
+        # Outer box for this metric
         self.box = Box(
             name=f"{id}-box",
             orientation='v',
-            spacing=8,
+            spacing=2,
             children=[
                 self.usage,
                 self.label,
@@ -217,20 +377,18 @@ class Metrics(Box):
         GLib.timeout_add_seconds(1, self.update_status)
 
     def update_status(self):
-        cpu, mem, disks, gpus = shared_provider.get_metrics()
+        metrics = shared_provider.get_metrics()
 
         if self.cpu:
-            self.cpu.usage.value = cpu / 100.0
+            self.cpu.usage.value = metrics["cpu"] / 100.0
         if self.ram:
-            self.ram.usage.value = mem / 100.0
+            self.ram.usage.value = metrics["mem"] / 100.0
         for i, disk in enumerate(self.disk):
-
-            if i < len(disks):
-                disk.usage.value = disks[i] / 100.0
+            if i < len(metrics["disk"]):
+                disk.usage.value = metrics["disk"][i] / 100.0
         for i, gpu in enumerate(self.gpu):
-
-            if i < len(gpus):
-                gpu.usage.value = gpus[i] / 100.0
+            if i < len(metrics["gpu"]):
+                gpu.usage.value = metrics["gpu"][i] / 100.0
         return True
 
 class SingularMetricSmall:
@@ -238,7 +396,8 @@ class SingularMetricSmall:
         self.name_markup = name
         self.icon_markup = icon
 
-        self.icon = Label(name="metrics-icon", markup=icon)
+        # Icon only, no temp
+        self.icon = Label(name="metrics-icon", markup=icon, use_markup=True)
         self.circle = CircularProgressBar(
             name="metrics-circle",
             value=0,
@@ -265,6 +424,7 @@ class SingularMetricSmall:
             spacing=0,
             children=[self.circle, self.revealer],
         )
+
 
     def markup(self):
         return f"{self.icon_markup} {self.name_markup}" if not data.VERTICAL else f"{self.icon_markup} {self.name_markup}: {self.level.get_label()}"
@@ -357,24 +517,22 @@ class MetricsSmall(Button):
             return False
 
     def update_metrics(self):
-        cpu, mem, disks, gpus = shared_provider.get_metrics()
+        metrics = shared_provider.get_metrics()
 
         if self.cpu:
-            self.cpu.circle.set_value(cpu / 100.0)
-            self.cpu.level.set_label(self._format_percentage(int(cpu)))
+            self.cpu.circle.set_value(metrics["cpu"] / 100.0)
+            self.cpu.level.set_label(self._format_percentage(int(metrics["cpu"])))
         if self.ram:
-            self.ram.circle.set_value(mem / 100.0)
-            self.ram.level.set_label(self._format_percentage(int(mem)))
+            self.ram.circle.set_value(metrics["mem"] / 100.0)
+            self.ram.level.set_label(self._format_percentage(int(metrics["mem"])))
         for i, disk in enumerate(self.disk):
-
-            if i < len(disks):
-                disk.circle.set_value(disks[i] / 100.0)
-                disk.level.set_label(self._format_percentage(int(disks[i])))
+            if i < len(metrics["disk"]):
+                disk.circle.set_value(metrics["disk"][i] / 100.0)
+                disk.level.set_label(self._format_percentage(int(metrics["disk"][i])))
         for i, gpu in enumerate(self.gpu):
-
-            if i < len(gpus):
-                gpu.circle.set_value(gpus[i] / 100.0)
-                gpu.level.set_label(self._format_percentage(int(gpus[i])))
+            if i < len(metrics["gpu"]):
+                gpu.circle.set_value(metrics["gpu"][i] / 100.0)
+                gpu.level.set_label(self._format_percentage(int(metrics["gpu"][i])))
 
         tooltip_metrics = []
         if self.disk: tooltip_metrics.extend(self.disk)
@@ -473,8 +631,8 @@ class Battery(Button):
             self.hide_timer = None
             return False
 
-    def update_battery(self, sender, battery_data):
-        value, charging, time = battery_data
+    def update_battery(self, sender, value):
+        value, charging, time = value
         if value == 0:
             self.set_visible(False)
         else:
