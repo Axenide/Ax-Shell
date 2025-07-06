@@ -108,7 +108,8 @@ curl -fsSL https://raw.githubusercontent.com/Axenide/Ax-Shell/main/install.sh | 
 2. Download and run Ax-Shell:
     ```bash
     git clone https://github.com/Axenide/Ax-Shell.git ~/.config/Ax-Shell
-    uwsm -- app python ~/.config/Ax-Shell/main.py > /dev/null 2>&1 & disown
+    cd ~/.config/Ax-Shell
+    uwsm -- app uv run main.py > /dev/null 2>&1 & disown
     ```
 
 <h2><sub><img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Travel%20and%20places/Rocket.png" alt="Rocket" width="25" height="25" /></sub> Roadmap</h2>
