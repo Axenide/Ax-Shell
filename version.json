@@ -1,7 +1,7 @@
 {
-	"version": "0.0.18",
+	"version": "0.0.22",
   "pkg_update": false,
 	"changelog": [
-    "<b>tweak:</b> Only update packages when necessary."
+    "<b>feat:</b> Customizable ignored notifications in history."
 	]
 }
