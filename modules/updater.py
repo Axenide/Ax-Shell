@@ -318,7 +318,34 @@ class UpdateWindow(Gtk.Window):
             update_command = "curl -fsSL https://raw.githubusercontent.com/Axenide/Ax-Shell/main/install.sh | bash"
         else:
             # Ensure REPO_DIR is correctly defined at the top of the file.
-            update_command = f"git -C \"{REPO_DIR}\" pull && echo 'Reloading in 3...' && sleep 1 && echo '2...' && sleep 1 && echo '1...' && sleep 1 && killall {data.APP_NAME} && setsid python \"{REPO_DIR}main.py\""
+            update_command = f"""git -C \"{REPO_DIR}\" pull
+if [ ! $(test $HOME/.local/bin/{data.APP_NAME}) ]; then
+	echo 'Symlinking executable'
+	ln -s \"{REPO_DIR}run_shell.sh\" \"$HOME/.local/bin/{data.APP_NAME}\"
+fi
+if [ $(which uwm) ]; then
+    install -Dm0644 /dev/stdin \"$XDG_CONFIG_HOME/systemd/user/{data.APP_NAME}.service\" <<EOF
+[Unit]
+Description=A hackable shell for Hyprland, powered by Fabric.
+After=graphical-session.target
+
+[Service]
+Type=exec
+ExecStart=$HOME/.local/bin/{data.APP_NAME}
+Restart=on-failure
+Slice=app-graphical.slice
+
+[Install]
+WantedBy=graphical-session.target
+EOF
+fi
+echo 'Reloading in 3...' && sleep 1 && echo '2...' && sleep 1 && echo '1...' && sleep 1
+uwsm check is-active
+if [ $? ]; then
+	systemctl --user restart {data.APP_NAME}.service
+else
+    killall {data.APP_NAME} && setsid python \"{REPO_DIR}main.py\"
+fi"""
 
 
         # Spawn the process asynchronously inside the terminal

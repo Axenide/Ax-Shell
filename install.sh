@@ -150,5 +150,6 @@ else
 	killall ax-shell 2>/dev/null || true
 	$EXECUTABLE_PATH >/dev/null 2>&1 &
 	disown
+fi
 
 echo "Installation complete."
