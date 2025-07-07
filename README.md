@@ -105,10 +105,34 @@ curl -fsSL https://raw.githubusercontent.com/Axenide/Ax-Shell/main/install.sh | 
         - Zed Sans
         - Tabler Icons
 
-2. Download and run Ax-Shell:
+2. Download:
     ```bash
     git clone https://github.com/Axenide/Ax-Shell.git ~/.config/Ax-Shell
-    uwsm -- app python ~/.config/Ax-Shell/main.py > /dev/null 2>&1 & disown
+    ln -s ~/.config/Ax-Shell/run_shell.sh ~/.local/bin/ax-shell # make sure to have ~/.local/bin/ in your PATH
+    ```
+- If using uwsm, install te service:
+    ```bash
+	  install -Dm0644 /dev/stdin "$XDG_CONFIG_HOME/systemd/user/ax-shell.service" <<EOF
+    [Unit]
+    Description=A hackable shell for Hyprland, powered by Fabric.
+    After=graphical-session.target
+
+    [Service]
+    Type=exec
+    ExecStart=$HOME/.local/bin/ax-shell
+    Restart=on-failure
+    Slice=app-graphical.slice
+
+    [Install]
+    WantedBy=graphical-session.target
+    EOF
+    ```
+3. Run Ax-Shell:
+    ```bash
+    # with service (for uwsm)
+    systemctl --user enable --now ax-shell
+    # with executable
+    ax-shell
     ```
 
 <h2><sub><img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Travel%20and%20places/Rocket.png" alt="Rocket" width="25" height="25" /></sub> Roadmap</h2>
