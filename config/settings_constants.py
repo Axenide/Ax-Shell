@@ -7,7 +7,6 @@ from .data import (
     PANEL_POSITION_KEY,
     WALLPAPERS_DIR_DEFAULT,
 )
-import subprocess
 
 SOURCE_STRING = f"""
 # {APP_NAME_CAP}
