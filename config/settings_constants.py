@@ -1,3 +1,4 @@
+import subprocess
 from .data import (
     APP_NAME,
     APP_NAME_CAP,
