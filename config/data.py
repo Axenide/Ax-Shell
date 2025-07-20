@@ -90,6 +90,7 @@ if os.path.exists(CONFIG_FILE):
         'weather': config.get('bar_weather_visible', True),
         'battery': config.get('bar_battery_visible', True),
         'metrics': config.get('bar_metrics_visible', True),
+        'temperatures': config.get('bar_temperatures_visible', False),
         'language': config.get('bar_language_visible', True),
         'date_time': config.get('bar_date_time_visible', True),
         'button_power': config.get('bar_button_power_visible', True),
@@ -98,6 +99,7 @@ if os.path.exists(CONFIG_FILE):
     BAR_METRICS_DISKS = config.get('bar_metrics_disks', ["/"])
     METRICS_VISIBLE = config.get('metrics_visible', {'cpu': True, 'ram': True, 'disk': True, 'gpu': True})
     METRICS_SMALL_VISIBLE = config.get('metrics_small_visible', {'cpu': True, 'ram': True, 'disk': True, 'gpu': True})
+    TEMPERATURE_POLL_INTERVAL = config.get('temperature_poll_interval', 1)
 else:
     WALLPAPERS_DIR = WALLPAPERS_DIR_DEFAULT
     BAR_POSITION = "Top"
@@ -130,6 +132,7 @@ else:
         'weather': True,
         'battery': True,
         'metrics': True,
+        'temperatures': False,
         'language': True,
         'date_time': True,
         'button_power': True,
