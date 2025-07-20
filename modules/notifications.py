@@ -25,6 +25,17 @@ PERSISTENT_DIR = f"/tmp/{data.APP_NAME}/notifications"
 PERSISTENT_HISTORY_FILE = os.path.join(PERSISTENT_DIR, "notification_history.json")
 
 
+# Get configurable app lists from settings
+def get_limited_apps_history():
+    config = data.load_config()
+    return config.get("limited_apps_history", ["Spotify"])
+
+
+def get_history_ignored_apps():
+    config = data.load_config()
+    return config.get("history_ignored_apps", ["Hyprshot"])
+
+
 def cache_notification_pixbuf(notification_box):
     """
     Saves a scaled pixbuf (48x48) in the cache directory and returns the cache file path.
@@ -179,7 +190,6 @@ class NotificationBox(Box):
         if timeout_ms == 0:
             self.timeout_ms = 0
         else:
-
             live_timeout = getattr(self.notification, "timeout", -1)
             self.timeout_ms = live_timeout if live_timeout != -1 else timeout_ms
         self._timeout_id = None
@@ -527,8 +537,6 @@ class NotificationHistory(Box):
         self._cleanup_orphan_cached_images()
         self.schedule_midnight_update()
 
-        self.LIMITED_APPS_HISTORY = ["Spotify"]
-
     def get_ordinal(self, n):
         if 11 <= (n % 100) <= 13:
             return "th"
@@ -844,7 +852,14 @@ class NotificationHistory(Box):
 
     def add_notification(self, notification_box):
         app_name = notification_box.notification.app_name
-        if app_name in self.LIMITED_APPS_HISTORY:
+        if app_name in get_history_ignored_apps():
+            logger.info(
+                f"Ignoring notification from {app_name} as it is in the ignored list."
+            )
+            notification_box.destroy(from_history_delete=True)
+            return
+
+        if app_name in get_limited_apps_history():
             self.clear_history_for_app(app_name)
 
         if len(self.containers) >= 50:
@@ -1111,8 +1126,6 @@ class NotificationHistory(Box):
 
 
 class NotificationContainer(Box):
-    LIMITED_APPS = ["Spotify"]
-
     def __init__(
         self,
         notification_history_instance: NotificationHistory,
@@ -1214,7 +1227,7 @@ class NotificationContainer(Box):
         notification.connect("closed", self.on_notification_closed)
 
         app_name = notification.app_name
-        if app_name in self.LIMITED_APPS:
+        if app_name in get_limited_apps_history():
             notification_history_instance.clear_history_for_app(app_name)
 
             existing_notification_index = -1

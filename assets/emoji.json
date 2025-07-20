@@ -1241,7 +1241,7 @@
 	},
 	"💯": {
 		"name": "hundred points",
-		"slug": "hundred_points",
+		"slug": "hundred_points 100",
 		"group": "Smileys & Emotion",
 		"emoji_version": "0.6",
 		"unicode_version": "0.6",
@@ -11547,7 +11547,7 @@
 		"skin_tone_support": false
 	},
 	"🗿": {
-		"name": "moai",
+		"name": "moyai",
 		"slug": "moai",
 		"group": "Objects",
 		"emoji_version": "0.6",

@@ -8,3 +8,4 @@ modules/tools.py
 config/dock.json
 config/dock.json.bak
 .aider*
+AGENTS.md

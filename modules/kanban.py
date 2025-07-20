@@ -37,7 +37,7 @@ class InlineEditor(Gtk.Box):
         super().__init__(name="inline-editor", spacing=4)
 
         self.text_view = Gtk.TextView()
-        self.text_view.set_wrap_mode(Gtk.WrapMode.WORD)
+        self.text_view.set_wrap_mode(Gtk.WrapMode.WORD_CHAR)
         buffer = self.text_view.get_buffer()
         buffer.set_text(initial_text)
 

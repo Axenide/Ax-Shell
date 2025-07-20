@@ -40,32 +40,32 @@ BAR_THEME = "Pills"
 DOCK_THEME = "Pills"
 
 PANEL_THEME = "Notch"
-DATETIME_12H_FORMAT = False # Default value if config file doesn't exist
+DATETIME_12H_FORMAT = False  # Default value if config file doesn't exist
 
 
 def load_config():
     """Load the configuration from config.json"""
     config_path = os.path.expanduser(f"~/.config/{APP_NAME_CAP}/config/config.json")
     config = {}
-    
+
     if os.path.exists(config_path):
         try:
-            with open(config_path, 'r') as f:
+            with open(config_path, "r") as f:
                 config = json.load(f)
         except Exception as e:
             print(f"Error loading config: {e}")
-    
+
     return config
 
 
 if os.path.exists(CONFIG_FILE):
-    with open(CONFIG_FILE, 'r') as f:
+    with open(CONFIG_FILE, "r") as f:
         config = json.load(f)
-    WALLPAPERS_DIR = config.get('wallpapers_dir', WALLPAPERS_DIR_DEFAULT)
-    BAR_POSITION = config.get('bar_position', "Top")
+    WALLPAPERS_DIR = config.get("wallpapers_dir", WALLPAPERS_DIR_DEFAULT)
+    BAR_POSITION = config.get("bar_position", "Top")
     VERTICAL = BAR_POSITION in ["Left", "Right"]
     CENTERED_BAR = config.get("centered_bar", False)
-    DATETIME_12H_FORMAT = config.get('datetime_12h_format', False)
+    DATETIME_12H_FORMAT = config.get("datetime_12h_format", False)
     TERMINAL_COMMAND = config.get("terminal_command", "kitty -e")
     DOCK_ENABLED = config.get("dock_enabled", True)
     DOCK_ALWAYS_OCCLUDED = config.get("dock_always_occluded", False)
@@ -79,6 +79,7 @@ if os.path.exists(CONFIG_FILE):
     PANEL_THEME = config.get("panel_theme", "Pills")
     UPDATER = config.get("misc_updater", True)
     OTHERPLAYERS = config.get("misc_otherplayers", False)
+    BAR_HIDE_SPECIAL_WORKSPACE = config.get("bar_hide_special_workspace", True)
     PANEL_POSITION = config.get(PANEL_POSITION_KEY, PANEL_POSITION_DEFAULT)
     NOTIF_POS = config.get(NOTIF_POS_KEY, NOTIF_POS_DEFAULT)
 
@@ -136,6 +137,7 @@ else:
     DOCK_ICON_SIZE = 28
     BAR_WORKSPACE_SHOW_NUMBER = False
     BAR_WORKSPACE_USE_CHINESE_NUMERALS = False
+    BAR_HIDE_SPECIAL_WORKSPACE = True
     BAR_THEME = "Pills"
     DOCK_THEME = "Pills"
     PANEL_THEME = "Notch"

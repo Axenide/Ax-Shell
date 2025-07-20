@@ -271,6 +271,7 @@ bind = {bind_vars.get('prefix_caffeine', 'SUPER SHIFT')}, {bind_vars.get('suffix
 bind = {bind_vars.get('prefix_css', 'SUPER SHIFT')}, {bind_vars.get('suffix_css', 'B')}, exec, $fabricSend 'app.set_css()' # Reload CSS
 bind = {bind_vars.get('prefix_restart_inspector', 'SUPER CTRL ALT')}, {bind_vars.get('suffix_restart_inspector', 'B')}, exec, killall {APP_NAME}; uwsm-app $(GTK_DEBUG=interactive python {home}/.config/{APP_NAME_CAP}/main.py) # Restart with inspector
 bind = {bind_vars["prefix_config"]}, {bind_vars["suffix_config"]}, exec,uwsm app -- python {home}/.config/{APP_NAME_CAP}/config/config.py
+bind = {bind_vars.get("prefix_mixer", "SUPER")}, {bind_vars.get("suffix_mixer", "M")}, exec, $fabricSend 'notch.open_notch("mixer")' # Audio Mixer
 
 
 # Wallpapers directory: {bind_vars.get('wallpapers_dir', f'~/.config/{APP_NAME_CAP}/assets/wallpapers_example')}

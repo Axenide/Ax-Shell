@@ -38,16 +38,20 @@ DEFAULTS = {
     "suffix_overview": "TAB",
     "prefix_wallpapers": "SUPER",
     "suffix_wallpapers": "COMMA",
+    "prefix_randwall": "SUPER SHIFT",
+    "suffix_randwall": "COMMA",
+    "prefix_mixer": "SUPER",
+    "suffix_mixer": "M",
     "prefix_emoji": "SUPER",
     "suffix_emoji": "PERIOD",
     "prefix_power": "SUPER",
     "suffix_power": "ESCAPE",
     "prefix_toggle": "SUPER CTRL",
+    "suffix_toggle": "B",
     "prefix_randwall": "SUPER SHIFT",
     "suffix_randwall": "COMMA",
     "prefix_caffeine": "SUPER SHIFT",
     "suffix_caffeine": "M",
-    "suffix_toggle": "B",
     "prefix_css": "SUPER SHIFT",
     "suffix_css": "B",
     "prefix_config": "SUPER",
@@ -58,18 +62,19 @@ DEFAULTS = {
     "bar_position": "Top",  # New default position setting
     "vertical": False,  # Kept for backward compatibility
     "centered_bar": False,
+    "datetime_12h_format": False,  # Add this line
     "terminal_command": "kitty -e",
     "dock_enabled": True,
     "dock_icon_size": 28,
     "dock_always_occluded": False,
     "bar_workspace_show_number": False,
     "bar_workspace_use_chinese_numerals": False,
+    "bar_hide_special_workspace": True,  # Toggle (Hide/Show) special workspace
     "bar_theme": "Pills",
     "dock_theme": "Pills",
     "panel_theme": "Notch",  # Default panel theme
     PANEL_POSITION_KEY: PANEL_POSITION_DEFAULT,  # Default panel position
     NOTIF_POS_KEY: NOTIF_POS_DEFAULT,  # Nueva entrada para la posición de notificaciones
-    'datetime_12h_format': False,  # Add this line
     "bar_button_apps_visible": True,
     "bar_systray_visible": True,
     "bar_control_visible": True,
@@ -111,4 +116,6 @@ DEFAULTS = {
         "disk": True,
         "gpu": True,
     },
+    "limited_apps_history": ["Spotify"],
+    "history_ignored_apps": ["Hyprshot"],
 }

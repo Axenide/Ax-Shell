@@ -88,7 +88,6 @@ class Bar(Window):
                     if data.BAR_POSITION == "Bottom":
                         self.margin_var = "-8px -4px -4px -4px"
                     else:
-
                         self.margin_var = "-4px -4px -8px -4px"
 
         self.set_anchor(self.anchor_var)
@@ -119,6 +118,11 @@ class Bar(Window):
                 )
                 for i in range(1, 11)
             ],
+            buttons_factory=(
+                None
+                if data.BAR_HIDE_SPECIAL_WORKSPACE
+                else Workspaces.default_buttons_factory
+            ),
         )
 
         self.workspaces_num = Workspaces(
@@ -144,6 +148,11 @@ class Bar(Window):
                 )
                 for i in range(1, 11)
             ],
+            buttons_factory=(
+                None
+                if data.BAR_HIDE_SPECIAL_WORKSPACE
+                else Workspaces.default_buttons_factory
+            ),
         )
 
         self.ws_container = Box(
@@ -188,7 +197,11 @@ class Bar(Window):
 
         self.date_time = DateTime(
             name="date-time",
-            formatters=[time_format_horizontal] if not data.VERTICAL else [time_format_vertical],
+            formatters=(
+                [time_format_horizontal]
+                if not data.VERTICAL
+                else [time_format_vertical]
+            ),
             h_align="center" if not data.VERTICAL else "fill",
             v_align="center",
             h_expand=True,
@@ -442,7 +455,6 @@ class Bar(Window):
         if self.integrated_dock_widget and hasattr(
             self.integrated_dock_widget, "add_style_class"
         ):
-
             for theme_class_to_remove in ["pills", "dense", "edge"]:
                 style_context = self.integrated_dock_widget.get_style_context()
                 if style_context.has_class(theme_class_to_remove):
@@ -518,12 +530,10 @@ class Bar(Window):
             self.component_visibility[component_name] = not self.component_visibility[
                 component_name
             ]
-            # Apply the new state
             components[component_name].set_visible(
                 self.component_visibility[component_name]
             )
 
-            # Update the configuration
             config_file = os.path.expanduser(
                 f"~/.config/{data.APP_NAME}/config/config.json"
             )

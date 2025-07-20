@@ -32,8 +32,8 @@
 * {
   all: unset;
   color: var(--foreground);
-  font-size: 10pt;
-  font-family: "Cantarell Bold";
+  font-size: unset;
+  font-family: unset;
   border-radius: 16px;
 }
 

@@ -153,6 +153,7 @@ class HyprConfGUI(Window):
             ("Reload CSS", "prefix_css", "suffix_css"),
             ("Toggle Caffeine", "prefix_caffeine", "suffix_caffeine"),
             ("Open config", "prefix_config", "suffix_config"),
+            ("Audio Mixer", "prefix_mixer", "suffix_mixer"),
             (
                 "Restart with inspector",
                 "prefix_restart_inspector",
@@ -251,7 +252,9 @@ class HyprConfGUI(Window):
         vbox.add(separator1)
 
         # START NEW SECTION FOR DATETIME FORMAT
-        datetime_format_header = Label(markup="<b>Date & Time Format</b>", h_align="start")
+        datetime_format_header = Label(
+            markup="<b>Date & Time Format</b>", h_align="start"
+        )
         vbox.add(datetime_format_header)
 
         datetime_grid = Gtk.Grid()
@@ -259,14 +262,22 @@ class HyprConfGUI(Window):
         datetime_grid.set_row_spacing(10)
         datetime_grid.set_margin_start(10)
         datetime_grid.set_margin_top(5)
-        datetime_grid.set_margin_bottom(10) # Adds space before the next section
+        datetime_grid.set_margin_bottom(10)  # Adds space before the next section
         vbox.add(datetime_grid)
 
-        datetime_12h_label = Label(label="Use 12-Hour Clock", h_align="start", v_align="center")
+        datetime_12h_label = Label(
+            label="Use 12-Hour Clock", h_align="start", v_align="center"
+        )
         datetime_grid.attach(datetime_12h_label, 0, 0, 1, 1)
 
-        datetime_12h_switch_container = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, halign=Gtk.Align.START, valign=Gtk.Align.CENTER)
-        self.datetime_12h_switch = Gtk.Switch(active=bind_vars.get('datetime_12h_format', False))
+        datetime_12h_switch_container = Gtk.Box(
+            orientation=Gtk.Orientation.HORIZONTAL,
+            halign=Gtk.Align.START,
+            valign=Gtk.Align.CENTER,
+        )
+        self.datetime_12h_switch = Gtk.Switch(
+            active=bind_vars.get("datetime_12h_format", False)
+        )
         datetime_12h_switch_container.add(self.datetime_12h_switch)
         datetime_grid.attach(datetime_12h_switch_container, 1, 0, 1, 1)
         # END NEW SECTION FOR DATETIME FORMAT
@@ -393,8 +404,23 @@ class HyprConfGUI(Window):
         ws_chinese_switch_container.add(self.ws_chinese_switch)
         layout_grid.attach(ws_chinese_switch_container, 3, 3, 1, 1)
 
+        special_ws_label = Label(
+            label="Hide Special Workspace", h_align="start", v_align="center"
+        )
+        layout_grid.attach(special_ws_label, 0, 4, 1, 1)
+        special_ws_switch_container = Gtk.Box(
+            orientation=Gtk.Orientation.HORIZONTAL,
+            halign=Gtk.Align.START,
+            valign=Gtk.Align.CENTER,
+        )
+        self.special_ws_switch = Gtk.Switch(
+            active=bind_vars.get("bar_hide_special_workspace", True)
+        )
+        special_ws_switch_container.add(self.special_ws_switch)
+        layout_grid.attach(special_ws_switch_container, 1, 4, 1, 1)
+
         bar_theme_label = Label(label="Bar Theme", h_align="start", v_align="center")
-        layout_grid.attach(bar_theme_label, 0, 4, 1, 1)
+        layout_grid.attach(bar_theme_label, 0, 5, 1, 1)
         bar_theme_combo_container = Gtk.Box(
             orientation=Gtk.Orientation.HORIZONTAL,
             halign=Gtk.Align.START,
@@ -411,10 +437,10 @@ class HyprConfGUI(Window):
         except ValueError:
             self.bar_theme_combo.set_active(0)
         bar_theme_combo_container.add(self.bar_theme_combo)
-        layout_grid.attach(bar_theme_combo_container, 1, 4, 3, 1)
+        layout_grid.attach(bar_theme_combo_container, 1, 5, 3, 1)
 
         dock_theme_label = Label(label="Dock Theme", h_align="start", v_align="center")
-        layout_grid.attach(dock_theme_label, 0, 5, 1, 1)
+        layout_grid.attach(dock_theme_label, 0, 6, 1, 1)
         dock_theme_combo_container = Gtk.Box(
             orientation=Gtk.Orientation.HORIZONTAL,
             halign=Gtk.Align.START,
@@ -430,12 +456,12 @@ class HyprConfGUI(Window):
         except ValueError:
             self.dock_theme_combo.set_active(0)
         dock_theme_combo_container.add(self.dock_theme_combo)
-        layout_grid.attach(dock_theme_combo_container, 1, 5, 3, 1)
+        layout_grid.attach(dock_theme_combo_container, 1, 6, 3, 1)
 
         panel_theme_label = Label(
             label="Panel Theme", h_align="start", v_align="center"
         )
-        layout_grid.attach(panel_theme_label, 0, 6, 1, 1)
+        layout_grid.attach(panel_theme_label, 0, 7, 1, 1)
         panel_theme_combo_container = Box(
             orientation=Gtk.Orientation.HORIZONTAL,
             halign=Gtk.Align.START,
@@ -454,7 +480,7 @@ class HyprConfGUI(Window):
         except ValueError:
             self.panel_theme_combo.set_active(0)
         panel_theme_combo_container.add(self.panel_theme_combo)
-        layout_grid.attach(panel_theme_combo_container, 1, 6, 1, 1)
+        layout_grid.attach(panel_theme_combo_container, 1, 7, 1, 1)
         self.panel_theme_combo.connect(
             "changed", self._on_panel_theme_changed_for_position_sensitivity
         )
@@ -464,7 +490,7 @@ class HyprConfGUI(Window):
         panel_position_label = Label(
             label="Panel Position", h_align="start", v_align="center"
         )
-        layout_grid.attach(panel_position_label, 2, 6, 1, 1)
+        layout_grid.attach(panel_position_label, 2, 7, 1, 1)
 
         panel_position_combo_container = Box(
             orientation=Gtk.Orientation.HORIZONTAL,
@@ -494,12 +520,12 @@ class HyprConfGUI(Window):
                 self.panel_position_combo.set_active(0)
 
         panel_position_combo_container.add(self.panel_position_combo)
-        layout_grid.attach(panel_position_combo_container, 3, 6, 1, 1)
+        layout_grid.attach(panel_position_combo_container, 3, 7, 1, 1)
 
         notification_pos_label = Label(
             label="Notification Position", h_align="start", v_align="center"
         )
-        layout_grid.attach(notification_pos_label, 0, 7, 1, 1)
+        layout_grid.attach(notification_pos_label, 0, 8, 1, 1)
 
         notification_pos_combo_container = Box(
             orientation=Gtk.Orientation.HORIZONTAL,
@@ -529,7 +555,7 @@ class HyprConfGUI(Window):
         )
 
         notification_pos_combo_container.add(self.notification_pos_combo)
-        layout_grid.attach(notification_pos_combo_container, 1, 7, 3, 1)
+        layout_grid.attach(notification_pos_combo_container, 1, 8, 3, 1)
 
         separator2 = Box(
             style="min-height: 1px; background-color: alpha(@fg_color, 0.2); margin: 5px 0px;",
@@ -898,6 +924,62 @@ class HyprConfGUI(Window):
             )
             system_grid.attach(note_label, 2, row, 2, 1)
 
+        # Notifications app lists section
+        notifications_header = Label(
+            markup="<b>Notification Settings</b>", h_align="start"
+        )
+        vbox.add(notifications_header)
+
+        notif_grid = Gtk.Grid()
+        notif_grid.set_column_spacing(20)
+        notif_grid.set_row_spacing(10)
+        notif_grid.set_margin_start(10)
+        notif_grid.set_margin_top(5)
+        notif_grid.set_margin_bottom(15)
+        vbox.add(notif_grid)
+
+        # Limited Apps History
+        limited_apps_label = Label(
+            label="Limited Apps History:", h_align="start", v_align="center"
+        )
+        notif_grid.attach(limited_apps_label, 0, 0, 1, 1)
+
+        limited_apps_list = bind_vars.get("limited_apps_history", ["Spotify"])
+        limited_apps_text = ", ".join(f'"{app}"' for app in limited_apps_list)
+        self.limited_apps_entry = Entry(
+            text=limited_apps_text,
+            tooltip_text='Enter app names separated by commas, e.g: "Spotify", "Discord"',
+            h_expand=True,
+        )
+        notif_grid.attach(self.limited_apps_entry, 1, 0, 1, 1)
+
+        limited_apps_hint = Label(
+            markup='<small>Apps with limited notification history (format: "App1", "App2")</small>',
+            h_align="start",
+        )
+        notif_grid.attach(limited_apps_hint, 0, 1, 2, 1)
+
+        # History Ignored Apps
+        ignored_apps_label = Label(
+            label="History Ignored Apps:", h_align="start", v_align="center"
+        )
+        notif_grid.attach(ignored_apps_label, 0, 2, 1, 1)
+
+        ignored_apps_list = bind_vars.get("history_ignored_apps", ["Hyprshot"])
+        ignored_apps_text = ", ".join(f'"{app}"' for app in ignored_apps_list)
+        self.ignored_apps_entry = Entry(
+            text=ignored_apps_text,
+            tooltip_text='Enter app names separated by commas, e.g: "Hyprshot", "Screenshot"',
+            h_expand=True,
+        )
+        notif_grid.attach(self.ignored_apps_entry, 1, 2, 1, 1)
+
+        ignored_apps_hint = Label(
+            markup='<small>Apps whose notifications are ignored in history (format: "App1", "App2")</small>',
+            h_align="start",
+        )
+        notif_grid.attach(ignored_apps_hint, 0, 3, 2, 1)
+
         metrics_header = Label(markup="<b>System Metrics Options</b>", h_align="start")
         vbox.add(metrics_header)
         metrics_grid = Gtk.Grid(
@@ -1089,30 +1171,52 @@ class HyprConfGUI(Window):
         dialog.destroy()
 
     def on_accept(self, widget):
-
         current_bind_vars_snapshot = {}
         for prefix_key, suffix_key, prefix_entry, suffix_entry in self.entries:
             current_bind_vars_snapshot[prefix_key] = prefix_entry.get_text()
             current_bind_vars_snapshot[suffix_key] = suffix_entry.get_text()
 
-        current_bind_vars_snapshot['wallpapers_dir'] = self.wall_dir_chooser.get_filename()
-        
-        current_bind_vars_snapshot['bar_position'] = self.position_combo.get_active_text()
-        current_bind_vars_snapshot['vertical'] = current_bind_vars_snapshot['bar_position'] in ["Left", "Right"]
-        
-        current_bind_vars_snapshot['centered_bar'] = self.centered_switch.get_active()
-        current_bind_vars_snapshot['datetime_12h_format'] = self.datetime_12h_switch.get_active()
-        current_bind_vars_snapshot['dock_enabled'] = self.dock_switch.get_active()
-        current_bind_vars_snapshot['dock_always_occluded'] = self.dock_hover_switch.get_active()
-        current_bind_vars_snapshot['dock_icon_size'] = int(self.dock_size_scale.value)
-        current_bind_vars_snapshot['terminal_command'] = self.terminal_entry.get_text()
-        current_bind_vars_snapshot['corners_visible'] = self.corners_switch.get_active()
-        current_bind_vars_snapshot['bar_workspace_show_number'] = self.ws_num_switch.get_active()
-        current_bind_vars_snapshot['bar_workspace_use_chinese_numerals'] = self.ws_chinese_switch.get_active()
-        current_bind_vars_snapshot['bar_theme'] = self.bar_theme_combo.get_active_text()
-        current_bind_vars_snapshot['dock_theme'] = self.dock_theme_combo.get_active_text()
-        current_bind_vars_snapshot['panel_theme'] = self.panel_theme_combo.get_active_text()
-        current_bind_vars_snapshot[PANEL_POSITION_KEY] = self.panel_position_combo.get_active_text()
+        current_bind_vars_snapshot["wallpapers_dir"] = (
+            self.wall_dir_chooser.get_filename()
+        )
+
+        current_bind_vars_snapshot["bar_position"] = (
+            self.position_combo.get_active_text()
+        )
+        current_bind_vars_snapshot["vertical"] = current_bind_vars_snapshot[
+            "bar_position"
+        ] in ["Left", "Right"]
+
+        current_bind_vars_snapshot["centered_bar"] = self.centered_switch.get_active()
+        current_bind_vars_snapshot["datetime_12h_format"] = (
+            self.datetime_12h_switch.get_active()
+        )
+        current_bind_vars_snapshot["dock_enabled"] = self.dock_switch.get_active()
+        current_bind_vars_snapshot["dock_always_occluded"] = (
+            self.dock_hover_switch.get_active()
+        )
+        current_bind_vars_snapshot["dock_icon_size"] = int(self.dock_size_scale.value)
+        current_bind_vars_snapshot["terminal_command"] = self.terminal_entry.get_text()
+        current_bind_vars_snapshot["corners_visible"] = self.corners_switch.get_active()
+        current_bind_vars_snapshot["bar_workspace_show_number"] = (
+            self.ws_num_switch.get_active()
+        )
+        current_bind_vars_snapshot["bar_workspace_use_chinese_numerals"] = (
+            self.ws_chinese_switch.get_active()
+        )
+        current_bind_vars_snapshot["bar_hide_special_workspace"] = (
+            self.special_ws_switch.get_active()
+        )
+        current_bind_vars_snapshot["bar_theme"] = self.bar_theme_combo.get_active_text()
+        current_bind_vars_snapshot["dock_theme"] = (
+            self.dock_theme_combo.get_active_text()
+        )
+        current_bind_vars_snapshot["panel_theme"] = (
+            self.panel_theme_combo.get_active_text()
+        )
+        current_bind_vars_snapshot[PANEL_POSITION_KEY] = (
+            self.panel_position_combo.get_active_text()
+        )
         selected_notif_pos_text = self.notification_pos_combo.get_active_text()
         if selected_notif_pos_text:
             current_bind_vars_snapshot[NOTIF_POS_KEY] = selected_notif_pos_text
@@ -1143,6 +1247,29 @@ class HyprConfGUI(Window):
             and child.get_children()
             and isinstance(child.get_children()[0], Entry)
         ]
+
+        # Parse notification app lists
+        def parse_app_list(text):
+            """Parse comma-separated app names with quotes"""
+            if not text.strip():
+                return []
+            apps = []
+            for app in text.split(","):
+                app = app.strip()
+                if app.startswith('"') and app.endswith('"'):
+                    app = app[1:-1]
+                elif app.startswith("'") and app.endswith("'"):
+                    app = app[1:-1]
+                if app:
+                    apps.append(app)
+            return apps
+
+        current_bind_vars_snapshot["limited_apps_history"] = parse_app_list(
+            self.limited_apps_entry.get_text()
+        )
+        current_bind_vars_snapshot["history_ignored_apps"] = parse_app_list(
+            self.ignored_apps_entry.get_text()
+        )
 
         selected_icon_path = self.selected_face_icon
         replace_lock = self.lock_switch and self.lock_switch.get_active()
@@ -1338,6 +1465,10 @@ class HyprConfGUI(Window):
             )
             self.centered_switch.set_sensitive(default_position in ["Left", "Right"])
 
+            self.datetime_12h_switch.set_active(
+                settings_utils.bind_vars.get("datetime_12h_format", False)
+            )
+
             self.dock_switch.set_active(
                 settings_utils.bind_vars.get("dock_enabled", True)
             )
@@ -1358,6 +1489,9 @@ class HyprConfGUI(Window):
                 )
             )
             self.ws_chinese_switch.set_sensitive(self.ws_num_switch.get_active())
+            self.special_ws_switch.set_active(
+                settings_utils.bind_vars.get("bar_hide_special_workspace", True)
+            )
 
             default_theme_val = DEFAULTS.get("bar_theme", "Pills")
             themes = ["Pills", "Dense", "Edge"]
@@ -1441,6 +1575,15 @@ class HyprConfGUI(Window):
 
             for p in DEFAULTS.get("bar_metrics_disks", ["/"]):
                 self._add_disk_edit_entry_func(p)
+
+            # Reset notification app lists
+            limited_apps_list = DEFAULTS.get("limited_apps_history", ["Spotify"])
+            limited_apps_text = ", ".join(f'"{app}"' for app in limited_apps_list)
+            self.limited_apps_entry.set_text(limited_apps_text)
+
+            ignored_apps_list = DEFAULTS.get("history_ignored_apps", ["Hyprshot"])
+            ignored_apps_text = ", ".join(f'"{app}"' for app in ignored_apps_list)
+            self.ignored_apps_entry.set_text(ignored_apps_text)
 
             self._update_panel_position_sensitivity()
 
