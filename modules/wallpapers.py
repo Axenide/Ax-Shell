@@ -2,8 +2,9 @@ import colorsys
 import concurrent.futures
 import hashlib
 import os
-import random  # <--- AÑADIDO
 import shutil
+import subprocess
+import random  # <--- AÑADIDO
 from concurrent.futures import ThreadPoolExecutor
 
 from fabric.utils.helpers import exec_shell_command_async
@@ -18,6 +19,32 @@ from PIL import Image
 import config.config
 import config.data as data
 import modules.icons as icons
+
+
+
+def kill_swww_daemon():
+    try:
+        subprocess.run(
+            ["pkill", "-x", "swww"],
+            check=False,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        print("Killed swww-daemon if it was running.")
+    except Exception as e:
+        print(f"Failed to kill swww: {e}")
+
+def kill_mpvpaper():
+    try:
+        subprocess.run(
+            ["pkill", "-x", "mpvpaper"],
+            check=False,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        print("Killed mpvpaper if it was running.")
+    except Exception as e:
+        print(f"Failed to kill mpvpaper: {e}")
 
 
 class WallpaperSelector(Box):
@@ -37,7 +64,7 @@ class WallpaperSelector(Box):
         # and with hyphens instead of spaces)
         with os.scandir(data.WALLPAPERS_DIR) as entries:
             for entry in entries:
-                if entry.is_file() and self._is_image(entry.name):
+                if entry.is_file() and self._is_media(entry.name):
                     # Check if the file needs renaming: file should be lowercase and have hyphens instead of spaces
                     if entry.name != entry.name.lower() or " " in entry.name:
                         new_name = entry.name.lower().replace(" ", "-")
@@ -50,7 +77,7 @@ class WallpaperSelector(Box):
                             print(f"Error renaming file {full_path}: {e}")
 
         # Refresh the file list after potential renaming
-        self.files = sorted([f for f in os.listdir(data.WALLPAPERS_DIR) if self._is_image(f)])
+        self.files = sorted([f for f in os.listdir(data.WALLPAPERS_DIR) if self._is_media(f)])
         self.thumbnails = []
         self.thumbnail_queue = []
         self.executor = ThreadPoolExecutor(max_workers=4)  # Shared executor
@@ -196,6 +223,8 @@ class WallpaperSelector(Box):
         self.connect("map", self.on_map)
         self.setup_file_monitor()
         self.show_all()
+        self.search_entry.grab_focus()
+
         self.randomize_dice_icon()
         # Ensure the search entry gets focus when starting
         self.search_entry.grab_focus()
@@ -214,33 +243,54 @@ class WallpaperSelector(Box):
         if isinstance(label, Label):
             label.set_markup(chosen_icon)
 
+    def apply_wallpaper(self, file_name, external=False):
+        full_path = os.path.join(data.WALLPAPERS_DIR, file_name)
+        selected_scheme = self.scheme_dropdown.get_active_id()
+        current_wall = os.path.expanduser("~/.current.wall")
+
+        # Kill both wallpaper daemons before switching (for both image and video)
+        kill_swww_daemon()
+        kill_mpvpaper()
+
+        if self._is_image(file_name):
+            # Set symlink for images
+            if os.path.islink(current_wall) or os.path.isfile(current_wall):
+                os.remove(current_wall)
+            os.symlink(full_path, current_wall)
+            exec_shell_command_async(
+                f'swww img "{full_path}" -t outer --transition-duration 1.5 --transition-step 255 --transition-fps 60 -f Nearest'
+            )
+            if self.matugen_switcher.get_active():
+                exec_shell_command_async(f'matugen image "{full_path}" -t {selected_scheme}')
+        elif self._is_video(file_name):
+            exec_shell_command_async(f'mpvpaper ALL "{full_path}" -o "--loop-file=inf --no-audio --no-osd-bar --osc=no --input-default-bindings=no --no-osc --no-input-default-bindings"')
+            extracted_frame = self._extract_video_frame(full_path, size="1920:-1")
+            if extracted_frame:
+                # update .current.wall to the extracted frame for Hyprlock
+                if os.path.islink(current_wall) or os.path.isfile(current_wall):
+                    os.remove(current_wall)
+                os.symlink(extracted_frame, current_wall)
+                if self.matugen_switcher.get_active():
+                    exec_shell_command_async(f'matugen image "{extracted_frame}" -t {selected_scheme}')
+        else:
+            print(f"Unsupported wallpaper type: {file_name}")
+            return
+
+        print(f"Set wallpaper: {file_name}")
+
+        if external:
+            exec_shell_command_async(
+                f"notify-send '🎲 Wallpaper' 'Setting wallpaper 🎨' -a '{data.APP_NAME_CAP}' -i '{full_path}' -e"
+            )
+
+        self.randomize_dice_icon()
+
     def set_random_wallpaper(self, widget, external=False):
         if not self.files:
             print("No wallpapers available to set a random one.")
             return
-
         file_name = random.choice(self.files)
-        full_path = os.path.join(data.WALLPAPERS_DIR, file_name)
-        selected_scheme = self.scheme_dropdown.get_active_id()
-        current_wall = os.path.expanduser(f"~/.current.wall")
-
-        if os.path.isfile(current_wall) or os.path.islink(current_wall): # Check for link too
-            os.remove(current_wall)
-        os.symlink(full_path, current_wall)
-
-        if self.matugen_switcher.get_active():
-            exec_shell_command_async(f'matugen image "{full_path}" -t {selected_scheme}')
-        else:
-            exec_shell_command_async(
-                f'swww img "{full_path}" -t outer --transition-duration 1.5 --transition-step 255 --transition-fps 60 -f Nearest'
-            )
-        
-        print(f"Set random wallpaper: {file_name}")
-
-        if external:
-            exec_shell_command_async(f"notify-send '🎲 Wallpaper' 'Setting a random wallpaper 🎨' -a '{data.APP_NAME_CAP}' -i '{full_path}' -e")
-
-        self.randomize_dice_icon()
+        self.apply_wallpaper(file_name, external=external)
 
     def setup_file_monitor(self):
         gfile = Gio.File.new_for_path(data.WALLPAPERS_DIR)
@@ -261,7 +311,7 @@ class WallpaperSelector(Box):
                 self.thumbnails = [(p, n) for p, n in self.thumbnails if n != file_name]
                 GLib.idle_add(self.arrange_viewport, self.search_entry.get_text())
         elif event_type == Gio.FileMonitorEvent.CREATED:
-            if self._is_image(file_name):
+            if self._is_media(file_name):
                 # Convert filename to lowercase and replace spaces with "-"
                 new_name = file_name.lower().replace(" ", "-")
                 full_path = os.path.join(data.WALLPAPERS_DIR, file_name)
@@ -278,7 +328,7 @@ class WallpaperSelector(Box):
                     self.files.sort()
                     self.executor.submit(self._process_file, file_name)
         elif event_type == Gio.FileMonitorEvent.CHANGED:
-            if self._is_image(file_name) and file_name in self.files:
+            if self._is_media(file_name) and file_name in self.files:
                 cache_path = self._get_cache_path(file_name)
                 if os.path.exists(cache_path):
                     try:
@@ -308,20 +358,31 @@ class WallpaperSelector(Box):
     def on_wallpaper_selected(self, iconview, path):
         model = iconview.get_model()
         file_name = model[path][1]
-        full_path = os.path.join(data.WALLPAPERS_DIR, file_name)
-        selected_scheme = self.scheme_dropdown.get_active_id()
-        current_wall = os.path.expanduser(f"~/.current.wall")
-        if os.path.isfile(current_wall) or os.path.islink(current_wall):
-            os.remove(current_wall)
-        os.symlink(full_path, current_wall)
-        if self.matugen_switcher.get_active():
-            # Matugen is enabled: run the normal command.
-            exec_shell_command_async(f'matugen image "{full_path}" -t {selected_scheme}')
-        else:
-            # Matugen is disabled: run the alternative swww command.
-            exec_shell_command_async(
-                f'swww img "{full_path}" -t outer --transition-duration 1.5 --transition-step 255 --transition-fps 60 -f Nearest'
+        self.apply_wallpaper(file_name)
+
+    def _extract_video_frame(self, video_path, size="1920:-1"):
+        frame_name = hashlib.md5(video_path.encode("utf-8")).hexdigest() + f"_frame_{size}.png"
+        frame_path = os.path.join(self.CACHE_DIR, frame_name)
+        try:
+            subprocess.run(
+                [
+                    "ffmpeg",
+                    "-y",
+                    "-ss", "0.5",
+                    "-i", video_path,
+                    "-vframes", "1",
+                    "-vf", f"scale={size}",
+                    frame_path
+                ],
+                check=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE
             )
+            if os.path.exists(frame_path):
+                return frame_path
+        except Exception as e:
+            print(f"Error extracting frame from video {video_path}: {e}")
+        return None
 
     def on_scheme_changed(self, combo):
         selected_scheme = combo.get_active_id()
@@ -453,16 +514,32 @@ class WallpaperSelector(Box):
         cache_path = self._get_cache_path(file_name)
         if not os.path.exists(cache_path):
             try:
-                with Image.open(full_path) as img:
-                    width, height = img.size
-                    side = min(width, height)
-                    left = (img.width - side) // 2
-                    top = (height - side) // 2
-                    right = left + side
-                    bottom = top + side
-                    img_cropped = img.crop((left, top, right, bottom))
-                    img_cropped.thumbnail((96, 96), Image.Resampling.LANCZOS)
-                    img_cropped.save(cache_path, "PNG")
+                if self._is_image(file_name):
+                    with Image.open(full_path) as img:
+                        width, height = img.size
+                        side = min(width, height)
+                        left = (img.width - side) // 2
+                        top = (height - side) // 2
+                        right = left + side
+                        bottom = top + side
+                        img_cropped = img.crop((left, top, right, bottom))
+                        img_cropped.thumbnail((96, 96), Image.Resampling.LANCZOS)
+                        img_cropped.save(cache_path, "PNG")
+                elif self._is_video(file_name):
+                    subprocess.run(
+                        [
+                            "ffmpeg",
+                            "-y",
+                            "-ss", "0.5",
+                            "-i", full_path,
+                            "-vframes", "1",
+                            "-vf", "scale=96:96:force_original_aspect_ratio=decrease",
+                            cache_path
+                        ],
+                        check=True,
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.PIPE
+                    )
             except Exception as e:
                 print(f"Error processing {file_name}: {e}")
                 return
@@ -491,14 +568,20 @@ class WallpaperSelector(Box):
     def _is_image(file_name: str) -> bool:
         return file_name.lower().endswith(('.png', '.jpg', '.jpeg', '.bmp', '.gif', '.webp'))
 
+    @staticmethod
+    def _is_video(file_name: str) -> bool:
+        return file_name.lower().endswith('.mp4')
+
+    @classmethod
+    def _is_media(cls, file_name: str) -> bool:
+        return cls._is_image(file_name) or cls._is_video(file_name)
+
     def on_search_entry_focus_out(self, widget, event):
         if self.get_mapped():
             widget.grab_focus()
         return False
 
     def on_map(self, widget):
-        """Handles the map signal to set initial visibility of the color selector."""
-        # Set visibility based on the loaded state when the widget becomes visible
         self.custom_color_selector_box.set_visible(not self.matugen_enabled)
 
     def hsl_to_rgb_hex(self, h: float, s: float = 1.0, l: float = 0.5) -> str:
