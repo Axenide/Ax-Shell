@@ -18,6 +18,7 @@ import modules.icons as icons
 from modules.controls import ControlSmall
 from modules.dock import Dock
 from modules.metrics import Battery, MetricsSmall, NetworkApplet
+from modules.systemprofiles import Systemprofiles
 from modules.systemtray import SystemTray
 from modules.weather import Weather
 from widgets.wayland import WaylandWindow as Window
@@ -83,7 +84,6 @@ class Bar(Window):
                     if data.BAR_POSITION == "Bottom":
                         self.margin_var = "-8px -4px -4px -4px"
                     else:
-
                         self.margin_var = "-4px -4px -8px -4px"
 
         self.set_anchor(self.anchor_var)
@@ -114,6 +114,11 @@ class Bar(Window):
                 )
                 for i in range(1, 11)
             ],
+            buttons_factory=(
+                None
+                if data.BAR_HIDE_SPECIAL_WORKSPACE
+                else Workspaces.default_buttons_factory
+            ),
         )
 
         self.workspaces_num = Workspaces(
@@ -130,25 +135,36 @@ class Bar(Window):
                     h_align="center",
                     v_align="center",
                     id=i,
-                    label= CHINESE_NUMERALS[i-1] if data.BAR_WORKSPACE_USE_CHINESE_NUMERALS and 1 <= i <= len(CHINESE_NUMERALS) else str(i)
+                    label=(
+                        CHINESE_NUMERALS[i - 1]
+                        if data.BAR_WORKSPACE_USE_CHINESE_NUMERALS
+                        and 1 <= i <= len(CHINESE_NUMERALS)
+                        else str(i)
+                    ),
                 )
                 for i in range(1, 11)
             ],
+            buttons_factory=(
+                None
+                if data.BAR_HIDE_SPECIAL_WORKSPACE
+                else Workspaces.default_buttons_factory
+            ),
         )
 
         self.ws_container = Box(
             name="workspaces-container",
-            children=self.workspaces if not data.BAR_WORKSPACE_SHOW_NUMBER else self.workspaces_num,
+            children=(
+                self.workspaces
+                if not data.BAR_WORKSPACE_SHOW_NUMBER
+                else self.workspaces_num
+            ),
         )
 
         self.button_tools = Button(
             name="button-bar",
             tooltip_markup=tooltip_tools,
             on_clicked=lambda *_: self.tools_menu(),
-            child=Label(
-                name="button-bar-label",
-                markup=icons.toolbox
-            )
+            child=Label(name="button-bar-label", markup=icons.toolbox),
         )
 
         self.connection = get_hyprland_connection()
@@ -156,11 +172,16 @@ class Bar(Window):
         self.button_tools.connect("leave_notify_event", self.on_button_leave)
 
         self.systray = SystemTray()
+
         self.weather = Weather()
+        self.sysprofiles = Systemprofiles()
+
         self.network = NetworkApplet()
 
         self.lang_label = Label(name="lang-label")
-        self.language = Button(name="language", h_align="center", v_align="center", child=self.lang_label)
+        self.language = Button(
+            name="language", h_align="center", v_align="center", child=self.lang_label
+        )
         self.on_language_switch()
         self.connection.connect("event::activelayout", self.on_language_switch)
 
@@ -174,7 +195,11 @@ class Bar(Window):
 
         self.date_time = DateTime(
             name="date-time",
-            formatters=[time_format_horizontal] if not data.VERTICAL else [time_format_vertical],
+            formatters=(
+                [time_format_horizontal]
+                if not data.VERTICAL
+                else [time_format_vertical]
+            ),
             h_align="center" if not data.VERTICAL else "fill",
             v_align="center",
             h_expand=True,
@@ -184,12 +209,9 @@ class Bar(Window):
 
         self.button_apps = Button(
             name="button-bar",
-            tooltip_markup = tooltip_apps,
+            tooltip_markup=tooltip_apps,
             on_clicked=lambda *_: self.search_apps(),
-            child=Label(
-                name="button-bar-label",
-                markup=icons.apps
-            )
+            child=Label(name="button-bar-label", markup=icons.apps),
         )
         self.button_apps.connect("enter_notify_event", self.on_button_enter)
         self.button_apps.connect("leave_notify_event", self.on_button_leave)
@@ -198,10 +220,7 @@ class Bar(Window):
             name="button-bar",
             tooltip_markup=tooltip_power,
             on_clicked=lambda *_: self.power_menu(),
-            child=Label(
-                name="button-bar-label",
-                markup=icons.shutdown
-            )
+            child=Label(name="button-bar-label", markup=icons.shutdown),
         )
         self.button_power.connect("enter_notify_event", self.on_button_enter)
         self.button_power.connect("leave_notify_event", self.on_button_leave)
@@ -210,10 +229,7 @@ class Bar(Window):
             name="button-bar",
             tooltip_markup=tooltip_overview,
             on_clicked=lambda *_: self.overview(),
-            child=Label(
-                name="button-bar-label",
-                markup=icons.windows
-            )
+            child=Label(name="button-bar-label", markup=icons.windows),
         )
         self.button_overview.connect("enter_notify_event", self.on_button_enter)
         self.button_overview.connect("leave_notify_event", self.on_button_leave)
@@ -221,9 +237,9 @@ class Bar(Window):
         self.control = ControlSmall()
         self.metrics = MetricsSmall()
         self.battery = Battery()
-        
+
         self.apply_component_props()
-        
+
         self.rev_right = [
             self.metrics,
             self.control,
@@ -240,16 +256,17 @@ class Bar(Window):
                 children=self.rev_right if not data.VERTICAL else None,
             ),
         )
-        
+
         self.boxed_revealer_right = Box(
             name="boxed-revealer",
             children=[
                 self.revealer_right,
             ],
         )
-        
+
         self.rev_left = [
             self.weather,
+            self.sysprofiles,
             self.network,
         ]
 
@@ -271,14 +288,14 @@ class Bar(Window):
                 self.revealer_left,
             ],
         )
-        
+
         self.h_start_children = [
             self.button_apps,
             self.ws_container,
             self.button_overview,
             self.boxed_revealer_left,
         ]
-        
+
         self.h_end_children = [
             self.boxed_revealer_right,
             self.battery,
@@ -288,21 +305,22 @@ class Bar(Window):
             self.date_time,
             self.button_power,
         ]
-        
+
         self.v_start_children = [
             self.button_apps,
             self.systray,
             self.control,
+            self.sysprofiles,
             self.network,
             self.button_tools,
         ]
-        
+
         self.v_center_children = [
             self.button_overview,
             self.ws_container,
             self.weather,
         ]
-        
+
         self.v_end_children = [
             self.battery,
             self.metrics,
@@ -310,48 +328,82 @@ class Bar(Window):
             self.date_time,
             self.button_power,
         ]
-        
+
         self.v_all_children = []
         self.v_all_children.extend(self.v_start_children)
         self.v_all_children.extend(self.v_center_children)
         self.v_all_children.extend(self.v_end_children)
 
-        if data.DOCK_ENABLED and data.BAR_POSITION == "Bottom" or data.PANEL_THEME == "Panel" and data.BAR_POSITION in ["Top", "Bottom"]:
-            if not data.VERTICAL: 
+        if (
+            data.DOCK_ENABLED
+            and data.BAR_POSITION == "Bottom"
+            or data.PANEL_THEME == "Panel"
+            and data.BAR_POSITION in ["Top", "Bottom"]
+        ):
+            if not data.VERTICAL:
                 self.dock_instance = Dock(integrated_mode=True)
                 self.integrated_dock_widget = self.dock_instance.wrapper
 
-        
-        is_centered_bar = data.VERTICAL and getattr(data, 'CENTERED_BAR', False)
-        
+        is_centered_bar = data.VERTICAL and getattr(data, "CENTERED_BAR", False)
+
         bar_center_actual_children = None
-        
+
         if self.integrated_dock_widget is not None:
             bar_center_actual_children = self.integrated_dock_widget
         elif data.VERTICAL:
             bar_center_actual_children = Box(
-                orientation=Gtk.Orientation.VERTICAL, 
-                spacing=4, 
-                children=self.v_all_children if is_centered_bar else self.v_center_children
+                orientation=Gtk.Orientation.VERTICAL,
+                spacing=4,
+                children=(
+                    self.v_all_children if is_centered_bar else self.v_center_children
+                ),
             )
 
         self.bar_inner = CenterBox(
             name="bar-inner",
-            orientation=Gtk.Orientation.HORIZONTAL if not data.VERTICAL else Gtk.Orientation.VERTICAL,
+            orientation=(
+                Gtk.Orientation.HORIZONTAL
+                if not data.VERTICAL
+                else Gtk.Orientation.VERTICAL
+            ),
             h_align="fill",
             v_align="fill",
-            start_children=None if is_centered_bar else Box(
-                name="start-container",
-                spacing=4,
-                orientation=Gtk.Orientation.HORIZONTAL if not data.VERTICAL else Gtk.Orientation.VERTICAL,
-                children=self.h_start_children if not data.VERTICAL else self.v_start_children,
+            start_children=(
+                None
+                if is_centered_bar
+                else Box(
+                    name="start-container",
+                    spacing=4,
+                    orientation=(
+                        Gtk.Orientation.HORIZONTAL
+                        if not data.VERTICAL
+                        else Gtk.Orientation.VERTICAL
+                    ),
+                    children=(
+                        self.h_start_children
+                        if not data.VERTICAL
+                        else self.v_start_children
+                    ),
+                )
             ),
             center_children=bar_center_actual_children,
-            end_children=None if is_centered_bar else Box(
-                name="end-container",
-                spacing=4,
-                orientation=Gtk.Orientation.HORIZONTAL if not data.VERTICAL else Gtk.Orientation.VERTICAL,
-                children=self.h_end_children if not data.VERTICAL else self.v_end_children,
+            end_children=(
+                None
+                if is_centered_bar
+                else Box(
+                    name="end-container",
+                    spacing=4,
+                    orientation=(
+                        Gtk.Orientation.HORIZONTAL
+                        if not data.VERTICAL
+                        else Gtk.Orientation.VERTICAL
+                    ),
+                    children=(
+                        self.h_end_children
+                        if not data.VERTICAL
+                        else self.v_end_children
+                    ),
+                )
             ),
         )
 
@@ -381,7 +433,7 @@ class Bar(Window):
         theme_classes = ["pills", "dense", "edge", "edgecenter"]
         for tc in theme_classes:
             self.bar_inner.remove_style_class(tc)
-        
+
         self.style = None
         match current_theme:
             case "Pills":
@@ -397,18 +449,21 @@ class Bar(Window):
                 self.style = "pills"
 
         self.bar_inner.add_style_class(self.style)
-        
-        if self.integrated_dock_widget and hasattr(self.integrated_dock_widget, 'add_style_class'):
 
+        if self.integrated_dock_widget and hasattr(
+            self.integrated_dock_widget, "add_style_class"
+        ):
             for theme_class_to_remove in ["pills", "dense", "edge"]:
                 style_context = self.integrated_dock_widget.get_style_context()
                 if style_context.has_class(theme_class_to_remove):
-                    self.integrated_dock_widget.remove_style_class(theme_class_to_remove)
+                    self.integrated_dock_widget.remove_style_class(
+                        theme_class_to_remove
+                    )
             self.integrated_dock_widget.add_style_class(self.style)
 
         if data.BAR_THEME == "Dense" or data.BAR_THEME == "Edge":
             for child in self.themed_children:
-                if hasattr(child, 'add_style_class'):
+                if hasattr(child, "add_style_class"):
                     child.add_style_class("invert")
 
         match data.BAR_POSITION:
@@ -431,67 +486,77 @@ class Bar(Window):
 
     def apply_component_props(self):
         components = {
-            'button_apps': self.button_apps,
-            'systray': self.systray,
-            'control': self.control,
-            'network': self.network,
-            'button_tools': self.button_tools,
-            'button_overview': self.button_overview,
-            'ws_container': self.ws_container,
-            'weather': self.weather,
-            'battery': self.battery,
-            'metrics': self.metrics,
-            'language': self.language,
-            'date_time': self.date_time,
-            'button_power': self.button_power,
+            "button_apps": self.button_apps,
+            "systray": self.systray,
+            "control": self.control,
+            "network": self.network,
+            "button_tools": self.button_tools,
+            "button_overview": self.button_overview,
+            "ws_container": self.ws_container,
+            "weather": self.weather,
+            "battery": self.battery,
+            "metrics": self.metrics,
+            "language": self.language,
+            "date_time": self.date_time,
+            "button_power": self.button_power,
+            "sysprofiles": self.sysprofiles,
         }
-        
+
         for component_name, widget in components.items():
             if component_name in self.component_visibility:
                 widget.set_visible(self.component_visibility[component_name])
-    
+
     def toggle_component_visibility(self, component_name):
         components = {
-            'button_apps': self.button_apps,
-            'systray': self.systray,
-            'control': self.control,
-            'network': self.network,
-            'button_tools': self.button_tools,
-            'button_overview': self.button_overview,
-            'ws_container': self.ws_container,
-            'weather': self.weather,
-            'battery': self.battery,
-            'metrics': self.metrics,
-            'language': self.language,
-            'date_time': self.date_time,
-            'button_power': self.button_power,
+            "button_apps": self.button_apps,
+            "systray": self.systray,
+            "control": self.control,
+            "network": self.network,
+            "button_tools": self.button_tools,
+            "button_overview": self.button_overview,
+            "ws_container": self.ws_container,
+            "weather": self.weather,
+            "battery": self.battery,
+            "metrics": self.metrics,
+            "language": self.language,
+            "date_time": self.date_time,
+            "button_power": self.button_power,
+            "sysprofiles": self.sysprofiles,
         }
-        
+
         if component_name in components and component_name in self.component_visibility:
-            self.component_visibility[component_name] = not self.component_visibility[component_name]
-            components[component_name].set_visible(self.component_visibility[component_name])
-            
-            config_file = os.path.expanduser(f"~/.config/{data.APP_NAME}/config/config.json")
+            self.component_visibility[component_name] = not self.component_visibility[
+                component_name
+            ]
+            components[component_name].set_visible(
+                self.component_visibility[component_name]
+            )
+
+            config_file = os.path.expanduser(
+                f"~/.config/{data.APP_NAME}/config/config.json"
+            )
             if os.path.exists(config_file):
                 try:
-                    with open(config_file, 'r') as f:
+                    with open(config_file, "r") as f:
                         config = json.load(f)
-                    
-                    config[f'bar_{component_name}_visible'] = self.component_visibility[component_name]
-                    
-                    with open(config_file, 'w') as f:
+
+                    config[f"bar_{component_name}_visible"] = self.component_visibility[
+                        component_name
+                    ]
+
+                    with open(config_file, "w") as f:
                         json.dump(config, f, indent=4)
                 except Exception as e:
                     print(f"Error updating config file: {e}")
-            
+
             return self.component_visibility[component_name]
-        
+
         return None
 
     def on_button_enter(self, widget, event):
         window = widget.get_window()
         if window:
-            window.set_cursor(Gdk.Cursor.new_from_name(widget.get_display(),"hand2"))
+            window.set_cursor(Gdk.Cursor.new_from_name(widget.get_display(), "hand2"))
 
     def on_button_leave(self, widget, event):
         window = widget.get_window()
@@ -502,26 +567,34 @@ class Bar(Window):
         exec_shell_command_async("notify-send 'Botón presionado' '¡Funciona!'")
 
     def search_apps(self):
-        if self.notch: self.notch.open_notch("launcher")
+        if self.notch:
+            self.notch.open_notch("launcher")
 
     def overview(self):
-        if self.notch: self.notch.open_notch("overview")
+        if self.notch:
+            self.notch.open_notch("overview")
 
     def power_menu(self):
-        if self.notch: self.notch.open_notch("power")
+        if self.notch:
+            self.notch.open_notch("power")
 
     def tools_menu(self):
-        if self.notch: self.notch.open_notch("tools")
+        if self.notch:
+            self.notch.open_notch("tools")
 
-    def on_language_switch(self, _=None, event: HyprlandEvent=None):
-        lang_data = event.data[1] if event and event.data and len(event.data) > 1 else Language().get_label()
+    def on_language_switch(self, _=None, event: HyprlandEvent = None):
+        lang_data = (
+            event.data[1]
+            if event and event.data and len(event.data) > 1
+            else Language().get_label()
+        )
         self.language.set_tooltip_text(lang_data)
         if not data.VERTICAL:
             self.lang_label.set_label(lang_data[:3].upper())
         else:
             self.lang_label.add_style_class("icon")
             self.lang_label.set_markup(icons.keyboard)
-            
+
     def toggle_hidden(self):
         self.hidden = not self.hidden
         if self.hidden:

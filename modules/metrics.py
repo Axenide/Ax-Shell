@@ -102,7 +102,14 @@ class MetricsProvider:
             elif output:
                 info = json.loads(output)
                 try:
-                    self.gpu = [int(v["gpu_util"][:-1]) for v in info]
+                    self.gpu = [
+                        (
+                            int(v["gpu_util"].strip("%"))
+                            if v["gpu_util"] is not None
+                            else 0
+                        )
+                        for v in info
+                    ]
                 except (KeyError, ValueError, TypeError) as e:
                     logger.error(f"Failed parsing nvtop JSON: {e}")
                     self.gpu = []

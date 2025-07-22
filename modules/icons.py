@@ -1,10 +1,10 @@
 # Parameters
-font_family: str = 'tabler-icons'
-font_weight: str = 'normal'
+font_family: str = "tabler-icons"
+font_weight: str = "normal"
 
 span: str = f"<span font-family='{font_family}' font-weight='{font_weight}'>"
 
-#Panels
+# Panels
 apps: str = "&#xf1fd;"
 dashboard: str = "&#xea87;"
 chat: str = "&#xf59f;"
@@ -14,7 +14,7 @@ windows: str = "&#xefe6;"
 colorpicker: str = "&#xebe6;"
 media: str = "&#xf00d;"
 
-#Toolbox
+# Toolbox
 
 toolbox: str = "&#xebca;"
 ssfull: str = "&#xec3c;"
@@ -26,7 +26,7 @@ recordings: str = "&#xeafa;"
 ocr: str = "&#xfcc3;"
 gamemode: str = "&#xf026;"
 gamemode_off: str = "&#xf111;"
-close : str = "&#xeb55;"
+close: str = "&#xeb55;"
 
 # Circles
 temp: str = "&#xeb38;"
@@ -88,7 +88,7 @@ bluetooth_off: str = "&#xeceb;"
 night_off: str = "&#xf162;"
 notifications_off: str = "&#xece9;"
 
-notifications_clear: str = "&#xf814;";
+notifications_clear: str = "&#xf814;"
 
 download: str = "&#xea96;"
 upload: str = "&#xeb47;"
@@ -184,12 +184,14 @@ dice_4: str = "&#xf08e;"
 dice_5: str = "&#xf08f;"
 dice_6: str = "&#xf090;"
 
-exceptions: list[str] = ['font_family', 'font_weight', 'span']
+exceptions: list[str] = ["font_family", "font_weight", "span"]
+
 
 def apply_span() -> None:
     global_dict = globals()
     for key in global_dict:
-        if key not in exceptions and not key.startswith('__'):
+        if key not in exceptions and not key.startswith("__"):
             global_dict[key] = f"{span}{global_dict[key]}</span>"
+
 
 apply_span()

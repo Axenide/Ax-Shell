@@ -247,7 +247,7 @@ class Dock(Window):
                     corner.set_visible(False)
             
 
-            if not data.DOCK_ENABLED or data.BAR_POSITION in ["Top", "Bottom"]:
+            if not data.DOCK_ENABLED or (data.BAR_POSITION in ["Top", "Bottom"] and data.PANEL_THEME != "Notch"):
                 self.set_visible(False) 
             
             if self.always_occluded: 
