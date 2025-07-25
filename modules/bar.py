@@ -45,6 +45,20 @@ tooltip_tools = """<b>Toolbox</b>"""
 tooltip_overview = """<b>Overview</b>"""
 
 
+def build_caption(i: int):
+    """Build the label for a given workspace number"""
+    label = data.BAR_WORKSPACE_ICONS.get(str(i)) or data.BAR_WORKSPACE_ICONS.get('default')
+    if label is None:
+        return (
+            CHINESE_NUMERALS[i - 1]
+            if data.BAR_WORKSPACE_USE_CHINESE_NUMERALS
+            and 1 <= i <= len(CHINESE_NUMERALS)
+            else str(i)
+        )
+    else:
+        return label
+
+
 class Bar(Window):
     def __init__(self, **kwargs):
         super().__init__(
@@ -135,12 +149,7 @@ class Bar(Window):
                     h_align="center",
                     v_align="center",
                     id=i,
-                    label=(
-                        CHINESE_NUMERALS[i - 1]
-                        if data.BAR_WORKSPACE_USE_CHINESE_NUMERALS
-                        and 1 <= i <= len(CHINESE_NUMERALS)
-                        else str(i)
-                    ),
+                    label=build_caption(i),
                 )
                 for i in range(1, 11)
             ],
@@ -155,7 +164,7 @@ class Bar(Window):
             name="workspaces-container",
             children=(
                 self.workspaces
-                if not data.BAR_WORKSPACE_SHOW_NUMBER
+                if not (data.BAR_WORKSPACE_SHOW_NUMBER or data.BAR_WORKSPACE_ICONS)
                 else self.workspaces_num
             ),
         )
@@ -603,7 +612,7 @@ class Bar(Window):
             self.bar_inner.remove_style_class("hidden")
 
     def chinese_numbers(self):
-        if data.BAR_WORKSPACE_USE_CHINESE_NUMERALS:
+        if data.BAR_WORKSPACE_USE_CHINESE_NUMERALS or data.BAR_WORKSPACE_ICONS:
             self.workspaces_num.add_style_class("chinese")
         else:
             self.workspaces_num.remove_style_class("chinese")
