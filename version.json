@@ -1,11 +1,7 @@
 {
-	"version": "5.0.0",
-	"pkg_update": false,
+	"version": "5.0.1",
+	"pkg_update": true,
 	"changelog": [
-		"<b>feat:</b> Added Notification ignore",
-		"<b>feat:</b> Added Audio Mixer",
-		"<b>tweak:</b> Make Use of system wide font",
-		"<b>fix:</b> Audio Mixer max characters.",
-		"<b>Note:</b> Hyprfabricated has now been completed (atleast as intented to be) and also bug free so now only bug fixes would rollout if there are any. Have fun using it :>"
+		"<b>tweak:</b> Moved power profile switcher to the start of the bar for better distribution."
 	]
 }

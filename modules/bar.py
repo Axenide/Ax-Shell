@@ -2,12 +2,8 @@ import json
 import os
 
 from fabric.hyprland.service import HyprlandEvent
-from fabric.hyprland.widgets import (
-    Language,
-    WorkspaceButton,
-    Workspaces,
-    get_hyprland_connection,
-)
+from fabric.hyprland.widgets import (Language, WorkspaceButton, Workspaces,
+                                     get_hyprland_connection)
 from fabric.utils.helpers import exec_shell_command_async
 from fabric.widgets.box import Box
 from fabric.widgets.button import Button
@@ -22,6 +18,7 @@ import modules.icons as icons
 from modules.controls import ControlSmall
 from modules.dock import Dock
 from modules.metrics import Battery, MetricsSmall, NetworkApplet
+from modules.systemprofiles import Systemprofiles
 from modules.systemtray import SystemTray
 from modules.weather import Weather
 from modules.systemprofiles import Systemprofiles
@@ -176,7 +173,10 @@ class Bar(Window):
         self.button_tools.connect("leave_notify_event", self.on_button_leave)
 
         self.systray = SystemTray()
+
         self.weather = Weather()
+        self.sysprofiles = Systemprofiles()
+
         self.network = NetworkApplet()
 
         self.sysprofiles = Systemprofiles()
@@ -269,6 +269,7 @@ class Bar(Window):
 
         self.rev_left = [
             self.weather,
+            self.sysprofiles,
             self.network,
         ]
 
@@ -312,6 +313,7 @@ class Bar(Window):
             self.button_apps,
             self.systray,
             self.control,
+            self.sysprofiles,
             self.network,
             self.button_tools,
         ]
@@ -502,6 +504,7 @@ class Bar(Window):
             "date_time": self.date_time,
             "sysprofiles": self.sysprofiles,
             "button_power": self.button_power,
+            "sysprofiles": self.sysprofiles,
         }
 
         for component_name, widget in components.items():
@@ -524,6 +527,7 @@ class Bar(Window):
             "sysprofiles": self.sysprofiles,
             "date_time": self.date_time,
             "button_power": self.button_power,
+            "sysprofiles": self.sysprofiles,
         }
 
         if component_name in components and component_name in self.component_visibility:

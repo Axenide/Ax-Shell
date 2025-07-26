@@ -80,6 +80,7 @@ DEFAULTS = {
     "bar_control_visible": True,
     "bar_network_visible": True,
     "bar_button_tools_visible": True,
+    "bar_sysprofiles_visible": True,
     "bar_button_overview_visible": True,
     "bar_ws_container_visible": True,
     "bar_weather_visible": True,

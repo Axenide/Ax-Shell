@@ -25,6 +25,7 @@ PACKAGES=(
     noto-fonts-emoji
     nvtop
     playerctl
+    power-profiles-daemon
     python-fabric-git
     python-gobject
     python-ijson
@@ -52,8 +53,6 @@ PACKAGES=(
     ttf-jost
     vte3
     otf-nothing-font-git
-
-
 )
 
 # Prevent running as root

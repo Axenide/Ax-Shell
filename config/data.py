@@ -127,8 +127,8 @@ if os.path.exists(CONFIG_FILE):
     )
 else:
     WALLPAPERS_DIR = WALLPAPERS_DIR_DEFAULT
-    BAR_POSITION = "Top"
-    VERTICAL = False
+    BAR_POSITION = "Left"
+    VERTICAL = True
     CENTERED_BAR = False
     DATETIME_12H_FORMAT = False
     DOCK_ENABLED = True

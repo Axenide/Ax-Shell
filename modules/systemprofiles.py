@@ -1,10 +1,11 @@
 import subprocess
+
+from fabric.utils.helpers import exec_shell_command_async
 from fabric.widgets.box import Box
 from fabric.widgets.button import Button
 from fabric.widgets.label import Label
-from fabric.utils.helpers import exec_shell_command_async
-import config.data as data
 
+import config.data as data
 import modules.icons as icons
 
 
@@ -16,36 +17,66 @@ class Systemprofiles(Box):
             spacing=3,
         )
 
-        # Create three buttons for power modes.
-        self.bat_save = Button(
-            name="battery-save",
-            child=Label(name="battery-save-label", markup=icons.power_saving),
-            on_clicked=lambda *_: self.set_power_mode("power-saver"),
-        )
-        self.bat_balanced = Button(
-            name="battery-balanced",
-            child=Label(name="battery-balanced-label", markup=icons.power_balanced),
-            on_clicked=lambda *_: self.set_power_mode("balanced"),
-        )
-        self.bat_perf = Button(
-            name="battery-performance",
-            child=Label(
-                name="battery-performance-label", markup=icons.power_performance
-            ),
-            on_clicked=lambda *_: self.set_power_mode("performance"),
-        )
+        if data.BAR_THEME == "Dense" or data.BAR_THEME == "Edge":
+            self.add_style_class("invert")
 
-        # Attach mouse enter/leave events to buttons as well
+        self.bat_save = None
+        self.bat_balanced = None
+        self.bat_perf = None
+
+        children = []
+
+        try:
+            result = subprocess.run(
+                ["powerprofilesctl", "list"],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                check=True,
+            )
+            available_profiles = result.stdout
+        except (subprocess.CalledProcessError, FileNotFoundError):
+            available_profiles = ""
+
+        if "power-saver" in available_profiles:
+            self.bat_save = Button(
+                name="battery-save",
+                child=Label(name="battery-save-label", markup=icons.power_saving),
+                on_clicked=lambda *_: self.set_power_mode("power-saver"),
+                tooltip_text="Power saving mode",
+            )
+            children.append(self.bat_save)
+
+        if "balanced" in available_profiles:
+            self.bat_balanced = Button(
+                name="battery-balanced",
+                child=Label(name="battery-balanced-label", markup=icons.power_balanced),
+                on_clicked=lambda *_: self.set_power_mode("balanced"),
+                tooltip_text="Balanced mode",
+            )
+            children.append(self.bat_balanced)
+
+        if "performance" in available_profiles:
+            self.bat_perf = Button(
+                name="battery-performance",
+                child=Label(
+                    name="battery-performance-label", markup=icons.power_performance
+                ),
+                on_clicked=lambda *_: self.set_power_mode("performance"),
+                tooltip_text="Performance mode",
+            )
+            children.append(self.bat_perf)
 
         # Group the mode buttons into a container.
-        self.add(
-            Box(
-                name="power-mode-switcher",
-                orientation="h" if not data.VERTICAL else "v",
-                spacing=4,
-                children=[self.bat_save, self.bat_balanced, self.bat_perf],
+        if children:
+            self.add(
+                Box(
+                    name="power-mode-switcher",
+                    orientation="h" if not data.VERTICAL else "v",
+                    spacing=4,
+                    children=children,
+                )
             )
-        )
 
         if data.BAR_COMPONENTS_VISIBILITY.get("sysprofiles", False):
             self.get_current_power_mode()
@@ -85,7 +116,6 @@ class Systemprofiles(Box):
             self.current_mode = "balanced"
 
     def set_power_mode(self, mode):
-        pass
         """
         Switches power mode by running the corresponding auto-cpufreq command.
         mode: one of 'powersave', 'balanced', or 'performance'
@@ -109,15 +139,16 @@ class Systemprofiles(Box):
         Optionally updates button styles to reflect the current mode.
         Adjust the styling method based on your toolkit's capabilities.
         """
-        if self.current_mode == "power-saver":
+        if self.bat_save:
+            self.bat_save.remove_style_class("active")
+        if self.bat_balanced:
+            self.bat_balanced.remove_style_class("active")
+        if self.bat_perf:
+            self.bat_perf.remove_style_class("active")
+
+        if self.current_mode == "power-saver" and self.bat_save:
             self.bat_save.add_style_class("active")
-            self.bat_balanced.remove_style_class("active")
-            self.bat_perf.remove_style_class("active")
-        elif self.current_mode == "balanced":
-            self.bat_save.remove_style_class("active")
+        elif self.current_mode == "balanced" and self.bat_balanced:
             self.bat_balanced.add_style_class("active")
-            self.bat_perf.remove_style_class("active")
-        elif self.current_mode == "performance":
-            self.bat_save.remove_style_class("active")
-            self.bat_balanced.remove_style_class("active")
+        elif self.current_mode == "performance" and self.bat_perf:
             self.bat_perf.add_style_class("active")

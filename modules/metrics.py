@@ -118,7 +118,6 @@ class MetricsProvider:
                         )
                         for v in info
                     ]
-
                 except (KeyError, ValueError, TypeError) as e:
                     logger.error(f"Failed parsing nvtop JSON: {e}")
                     self.gpu = []
