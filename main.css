@@ -32,7 +32,7 @@
 * {
   all: unset;
   color: var(--foreground);
-  font-size: unset;
+  font-size: 12px;
   font-family: unset;
   border-radius: 16px;
 }
@@ -41,6 +41,7 @@
 menu > menuitem > label {
   font-weight: bold;
 }
+
 #applet-stack,
 #calendar,
 #header,

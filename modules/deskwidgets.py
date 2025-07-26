@@ -451,9 +451,7 @@ def create_widgets(config):
 
 
 if data.DESKTOP_WIDGETS:
-
     if config.get("widgets_displaytype_visible", True):
-
         class Deskwidgets(Window):
             def __init__(self, **kwargs):
                 config = load_config()
