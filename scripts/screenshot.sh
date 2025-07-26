@@ -38,7 +38,8 @@ case $1 in
         exit 1
         ;;
 esac
-
+sleep 0.1
+sync
 if [ -f "$full_path" ]; then
     # Copiar al portapapeles si no es mockup
     if [ "$mockup_mode" != "mockup" ]; then
