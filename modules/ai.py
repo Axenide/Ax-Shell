@@ -80,14 +80,18 @@ class AI(Window):
             name="ai-chat-container",
             orientation="v",
             spacing=8,
-            margin_start=8,
+            margin_start=0,  # Set to 0 for flush left
             margin_end=8,
             margin_top=8,
             margin_bottom=8,
         )
+        self.chat_container.set_hexpand(True)
+        self.chat_container.set_halign(Gtk.Align.FILL)
         # Wrap in Gtk.Alignment to constrain width
-        self.chat_alignment = Gtk.Alignment.new(0.5, 0, 0, 0)
-        self.chat_alignment.set_size_request(384, -1)
+        self.chat_alignment = Gtk.Alignment.new(0.0, 0, 0, 0)
+        self.chat_alignment.set_hexpand(True)
+        self.chat_alignment.set_halign(Gtk.Align.START)
+        #self.chat_alignment.set_size_request(384, -1)
         self.chat_alignment.add(self.chat_container)
         self.chat_scroll.add(self.chat_alignment)
         self.main_box.add(self.chat_scroll)
@@ -116,6 +120,7 @@ class AI(Window):
             halign=Gtk.Align.START,
             hexpand=False
         )
+        self.model_button.set_size_request(-1, 40)
         self.model_button.connect("clicked", self._on_model_button_clicked)
         
         # Create a popover for the model options
@@ -165,8 +170,8 @@ class AI(Window):
         self.text_entry.set_hexpand(True)
         self.text_entry.set_halign(Gtk.Align.FILL)
         self.text_entry.set_vexpand(True)
-        self.text_entry.set_margin_top(8)
-        self.text_entry.set_margin_bottom(8)
+        self.text_entry.set_margin_top(0)
+        self.text_entry.set_margin_bottom(0)
         self.text_entry.set_sensitive(True)
         self.text_entry.set_editable(True)
         self.text_entry.set_wrap_mode(Gtk.WrapMode.WORD_CHAR)
@@ -263,7 +268,14 @@ class AI(Window):
             entry.set_text("")
             print(f"Sending message to {self.selected_model}: {self.current_message}")
 
-    # _send_current_message is no longer needed with Gtk.Entry; logic is handled in _on_entry_activate
+    def _send_current_message(self):
+        buffer = self.text_entry.get_buffer()
+        start_iter = buffer.get_start_iter()
+        end_iter = buffer.get_end_iter()
+        message = buffer.get_text(start_iter, end_iter, True).strip()
+        if message:
+            self.add_user_message(message)
+            buffer.set_text("")  # Clear the text field
     
     def _reset_sending_flag(self):
         """Reset the sending message flag"""
@@ -279,9 +291,11 @@ class AI(Window):
             h_align="end",
             margin_top=8,
             margin_bottom=8,
-            margin_start=48,  # Large left margin
-            margin_end=8,    # Small right margin
+            margin_start=8,
+            margin_end=8,
         )
+        message_container.set_hexpand(True)
+        message_container.set_halign(Gtk.Align.END)  # <--- THIS IS CRITICAL
         
         # Create message bubble
         message_bubble = Box(
@@ -291,22 +305,21 @@ class AI(Window):
             margin_top=2,
             margin_bottom=2,
             margin_start=0,
-            margin_end=0,
-            style="background: #222; border-radius: 16px; padding: 10px;"
+            margin_end=0
         )
-        message_bubble.set_hexpand(False)
-        message_bubble.set_halign(Gtk.Align.END)
-        
+        message_bubble.set_hexpand(True)
+        message_bubble.set_halign(Gtk.Align.FILL)
         # Create message label for text
         message_label = Label(
             label=message,
             wrap=True,
-            xalign=1.0,
+            xalign=0.0,
             selectable=True,
             style="color: #fff; font-size: 1em; padding: 2px;"
         )
+        message_label.set_xalign(0.0)
         message_label.set_hexpand(True)
-        message_label.set_halign(Gtk.Align.FILL)
+        message_label.set_halign(Gtk.Align.END)
         message_label.set_line_wrap(True)
         message_label.set_max_width_chars(40)
         message_label.set_ellipsize(Pango.EllipsizeMode.NONE)
@@ -337,8 +350,8 @@ class AI(Window):
             h_align="start",
             margin_top=8,
             margin_bottom=8,
-            margin_start=8,    # Small left margin
-            margin_end=48,    # Large right margin
+            margin_start=8,    # Same margin as user
+            margin_end=8,      # Same margin as user
         )
         # Create message bubble
         message_bubble = Box(
@@ -347,7 +360,7 @@ class AI(Window):
             vexpand=False,
             margin_top=2,
             margin_bottom=2,
-            margin_start=0,
+            margin_start=0,   # No extra margin on bubble
             margin_end=0,
             style="background: #444; border-radius: 16px; padding: 10px;"
         )
@@ -362,7 +375,7 @@ class AI(Window):
             style="color: #fff; font-size: 1em; padding: 2px;"
         )
         message_label.set_hexpand(True)
-        message_label.set_halign(Gtk.Align.FILL)
+        message_label.set_halign(Gtk.Align.END)
         message_label.set_line_wrap(True)
         message_label.set_max_width_chars(40)
         message_label.set_ellipsize(Pango.EllipsizeMode.NONE)

@@ -111,11 +111,20 @@
     font-weight: bold;
 }
   
-  /* AI Message Styling */
+  .user-message-bubble {
+    background-color: var(--cyan);
+    border-radius: 12px;
+    padding: 8px 12px 8px 12px;
+    margin-left: 40px;
+    margin-right: 40px;
+}
+
+/* AI Message Styling */
 .ai-message-bubble {
     background-color: var(--surface-bright);
     border-radius: 12px;
-    padding: 8px 12px;
+    padding: 8px 12px 8px 12px;
+    margin-left: 40px;
     margin-right: 40px;
 }
   
