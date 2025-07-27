@@ -953,6 +953,12 @@ class Notch(Window):
 
     def on_key_press(self, widget, event):
         """Handle key presses at the notch level"""
+        print(f"Notch on_key_press received key: {Gdk.keyval_name(event.keyval)} ({event.keyval})")
+
+        # If the AI panel is visible, allow key events to propagate to it
+        if self.ai.get_visible():
+            print("AI panel is visible, allowing key event to propagate.")
+            return False # Allow propagation
 
         if self._launcher_transitioning:
             keyval = event.keyval
@@ -978,6 +984,7 @@ class Notch(Window):
             and self.dashboard.stack.get_visible_child() == self.dashboard.widgets
         ):
             if self.stack.get_visible_child() == self.launcher:
+                print("Launcher is visible, not opening again.")
                 return False
 
             keyval = event.keyval
@@ -992,9 +999,9 @@ class Notch(Window):
             )
 
             if is_valid_char and keychar:
-                print(f"Notch received keypress: {keychar}")
-
+                print(f"Notch received keypress: {keychar} and is opening launcher.")
                 self.open_launcher_with_text(keychar)
                 return True
 
+        print(f"Notch on_key_press returning False. Current visible child: {self.stack.get_visible_child().get_name()}")
         return False

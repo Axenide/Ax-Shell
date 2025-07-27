@@ -47,15 +47,22 @@
 }
   
 /* AI Text Entry Styling */
-#ai-text-view {
-    background-color: transparent;
+#ai-text-entry {
+    background-color: var(--surface-bright);
     color: var(--foreground);
     font-size: 1em;
-    border: none;
-    outline: none;
+    min-width: 20px;
+    min-height: 40px;
+    border-radius: 8px;
+    padding: 8px;
+}
+
+.ai-text-scroll {
+    min-height: 40px;
+    padding: 0;
 }
   
-#ai-text-view text {
+#ai-text-entry text {
     background-color: transparent;
     color: var(--foreground);
     font-size: 1em;

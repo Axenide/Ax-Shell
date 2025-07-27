@@ -1,3 +1,4 @@
+from pydoc import text
 from fabric.widgets.box import Box
 from fabric.widgets.label import Label
 from fabric.widgets.button import Button
@@ -7,12 +8,16 @@ from fabric.widgets.entry import Entry
 from widgets.wayland import WaylandWindow as Window
 import gi
 import asyncio
-
 gi.require_version("Gtk", "3.0")
-from gi.repository import Gtk, Gdk, GLib
+from gi.repository import Gtk, Gdk, GLib, Pango
 
 # Import AI services
 from .ai_services import ai_manager
+ 
+# Utility to break long unbreakable words for GTK Label wrapping
+import re
+def break_long_words(text, n=20):
+    return re.sub(r'(\S{' + str(n) + r',})', lambda m: '\u200b'.join([m.group(0)[i:i+n] for i in range(0, len(m.group(0)), n)]), text)
 
 class AI(Window):
     def __init__(self, **kwargs):
@@ -22,14 +27,14 @@ class AI(Window):
             size=(400, 600),
             layer="top",
             anchor="top left bottom",
-            margin="0px 0px 0px 0px",
-            keyboard_mode="exclusive",
-            exclusivity="normal",
+            keyboard_mode="on-demand",  # Changed from 'none' to 'on-demand'
+            exclusivity="none",
             visible=False,
             all_visible=False,
             **kwargs,
         )
         self.set_size_request(400, 500)
+        # self.steal_input()  # Removed to allow normal input
         
         # Create revealer for slide animation (recommended for WaylandWindow)
         self.revealer = Revealer(
@@ -44,6 +49,8 @@ class AI(Window):
             spacing=16,
             style="border: 4px solid #000; border-radius: 16px; margin: 0px 16px 16px 0px; padding: 24px; min-width: 320px; min-height: 480px; background: #000000;",
         )
+        self.main_box.set_hexpand(True)
+        self.main_box.set_halign(Gtk.Align.FILL)
 
         # Title label (handwritten style, large)
         self.title_label = Label(
@@ -64,9 +71,9 @@ class AI(Window):
         self.chat_scroll = ScrolledWindow(
             name="ai-chat-scroll",
             vexpand=True,
-            hexpand=True,
             min_content_height=200,
         )
+        self.chat_scroll.set_size_request(384, -1)
         
         # Chat container for messages
         self.chat_container = Box(
@@ -78,8 +85,11 @@ class AI(Window):
             margin_top=8,
             margin_bottom=8,
         )
-        
-        self.chat_scroll.add(self.chat_container)
+        # Wrap in Gtk.Alignment to constrain width
+        self.chat_alignment = Gtk.Alignment.new(0.5, 0, 0, 0)
+        self.chat_alignment.set_size_request(384, -1)
+        self.chat_alignment.add(self.chat_container)
+        self.chat_scroll.add(self.chat_alignment)
         self.main_box.add(self.chat_scroll)
 
         # Spacer to push dropdown to bottom
@@ -91,17 +101,20 @@ class AI(Window):
             orientation="h",
             spacing=8,
             h_align="fill",
-            h_expand=True,
             v_align="fill",
+            hexpand=True,
             style="margin: 8px 0 8px -18px;"  # Reduced left margin from 8px to 4px
         )
+        self.input_container.set_hexpand(True)
+        self.input_container.set_halign(Gtk.Align.FILL)
         
         # AI Model selection (gear button only) - now to the left of text field
         self.model_button = Button(
             name="ai-model-button",
             child=Label(name="ai-model-icon", markup="⚙"),  # Gear icon
             tooltip_text="AI Model Settings",
-            halign="start"
+            halign=Gtk.Align.START,
+            hexpand=False
         )
         self.model_button.connect("clicked", self._on_model_button_clicked)
         
@@ -146,52 +159,34 @@ class AI(Window):
         
         self.input_container.add(self.model_button)
         
-        # Text field (input area) - now multi-line with wrapping
-        self.text_view = Gtk.TextView()
-        self.text_view.set_name("ai-text-view")
-        self.text_view.set_wrap_mode(Gtk.WrapMode.WORD_CHAR)
-        self.text_view.set_hexpand(True)
-        self.text_view.set_halign(Gtk.Align.FILL)
-        self.text_view.set_vexpand(False)
-        self.text_view.set_margin_start(8)
-        self.text_view.set_margin_end(8)
-        self.text_view.set_margin_top(8)
-        self.text_view.set_margin_bottom(8)
-        
-        # Enable text wrapping to go down a line
-        self.text_view.set_wrap_mode(Gtk.WrapMode.WORD_CHAR)
-        
-        # Set GTK properties for proper expansion
-        self.text_view.set_hexpand(True)
-        self.text_view.set_halign(Gtk.Align.FILL)
-        
-        # Enable keyboard shortcuts
-        self.text_view.set_accepts_tab(False)  # Disable tab to prevent focus issues
-        
-        # Connect key press event to handle Enter key
-        self.text_view.connect("key-press-event", self._on_text_key_press)
-        # Also connect to the buffer to catch all text changes
-        self.text_view.get_buffer().connect("insert-text", self._on_text_insert)
-        
-        # Create a scrolled window for the text view with max height
+        # Text field (input area) - multiline, scrollable, wrapped
+        self.text_entry = Gtk.TextView()
+        self.text_entry.set_name("ai-text-entry")
+        self.text_entry.set_hexpand(True)
+        self.text_entry.set_halign(Gtk.Align.FILL)
+        self.text_entry.set_vexpand(True)
+        self.text_entry.set_margin_top(8)
+        self.text_entry.set_margin_bottom(8)
+        self.text_entry.set_sensitive(True)
+        self.text_entry.set_editable(True)
+        self.text_entry.set_wrap_mode(Gtk.WrapMode.WORD_CHAR)
+
+        # Make text entry scrollable
         self.text_scroll = Gtk.ScrolledWindow()
-        self.text_scroll.set_name("ai-text-scroll")
-        self.text_scroll.set_hexpand(True)
-        self.text_scroll.set_halign(Gtk.Align.FILL)
-        self.text_scroll.set_vexpand(False)
-        self.text_scroll.set_size_request(-1, 120)  # Max height of 120px (about 6-8 lines)
         self.text_scroll.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
-        self.text_scroll.add(self.text_view)
-        
-        # Style the text entry container to match app launcher search field
-        self.entry_container = Box(
-            h_align="fill",
-            h_expand=True,
-            v_align="fill",
-            name="ai-entry-container"
-        )
-        self.entry_container.add(self.text_scroll)
-        self.input_container.add(self.entry_container)
+        self.text_scroll.set_hexpand(True)
+        self.text_scroll.set_vexpand(True)
+        self.text_scroll.set_min_content_height(40)
+        self.text_scroll.set_min_content_width(100)
+        self.text_scroll.get_style_context().add_class('ai-text-scroll')
+        self.text_scroll.set_vexpand(False)
+        self.text_scroll.add(self.text_entry)
+
+
+        # Add scrolled window to input_container for full width
+        self.input_container.add(self.text_scroll)
+        # Remove Entry 'activate' signal (not valid for TextView)
+        # To send on Enter, handle key-press-event on TextView if needed
         
         self.main_box.add(self.input_container)
 
@@ -202,14 +197,20 @@ class AI(Window):
     def show_at_position(self, x, y):
         self.move(x, y)
         self.set_visible(True)
+        self.present()  # Bring window to front
+        self.grab_focus()  # Grab window focus
         self.show_all()
         
         # Reveal the content with smooth slide animation
         self.revealer.set_reveal_child(True)
-        self.grab_focus()
-        
-        # Ensure key events are captured
         self.add_events(Gdk.EventMask.KEY_PRESS_MASK)
+        
+        # Focus the text entry after window is mapped
+        GLib.idle_add(self.text_entry.grab_focus)
+        
+        # Connect key press and key release events to the text entry
+        self.text_entry.connect("key-press-event", self._on_text_entry_key_press)
+        self.text_entry.connect("key-release-event", self._on_text_entry_key_release)
 
     def hide_ai_panel(self):
         print("hide_ai_panel() called")
@@ -252,93 +253,17 @@ class AI(Window):
         """Show the AI panel with revealer animation"""
         self.show_at_position(0, 0)
 
-    def _on_text_key_press(self, widget, event):
-        """Handle key press events in the text entry"""
-        # Check for Shift+Enter to insert new line
-        if event.keyval == Gdk.KEY_Return and event.state & Gdk.ModifierType.SHIFT_MASK:
-            # Set flag to allow newline
-            self._shift_pressed = True
-            # Insert a newline at cursor position
-            buffer = self.text_view.get_buffer()
-            buffer.insert_at_cursor("\n")
-            # Clear the flag after a short delay
-            GLib.timeout_add(100, self._clear_shift_flag)
-            return True
-        
-        # Regular Enter to send message
-        elif event.keyval == Gdk.KEY_Return:
-            # Prevent default behavior and send message
-            self._send_current_message()
-            return True
-            
-        # Handle other keyboard shortcuts
-        elif event.state & Gdk.ModifierType.CONTROL_MASK:
-            if event.keyval == Gdk.KEY_a:  # Ctrl+A - Select All
-                self.text_view.emit("select-all")
-                return True
-            elif event.keyval == Gdk.KEY_c:  # Ctrl+C - Copy
-                self.text_view.emit("copy-clipboard")
-                return True
-            elif event.keyval == Gdk.KEY_v:  # Ctrl+V - Paste
-                self.text_view.emit("paste-clipboard")
-                return True
-            elif event.keyval == Gdk.KEY_x:  # Ctrl+X - Cut
-                self.text_view.emit("cut-clipboard")
-                return True
-            elif event.keyval == Gdk.KEY_z:  # Ctrl+Z - Undo
-                self.text_view.emit("undo")
-                return True
-            elif event.keyval == Gdk.KEY_y:  # Ctrl+Y - Redo
-                self.text_view.emit("redo")
-                return True
-        
-        return False
-    
-    def _clear_shift_flag(self):
-        """Clear the shift pressed flag"""
-        if hasattr(self, '_shift_pressed'):
-            delattr(self, '_shift_pressed')
-        return False
-
-    def _on_text_insert(self, buffer, location, text, length):
-        """Handle text insertion to prevent unwanted newlines"""
-        # If this is a newline and we're not in Shift+Enter mode, prevent it
-        if text == '\n' and not hasattr(self, '_shift_pressed'):
-            # Remove the newline
-            buffer.delete(location, buffer.get_iter_at_offset(location.get_offset() + 1))
-            # Trigger message sending
-            self._send_current_message()
-            return True
-        return False
-
-    def _send_current_message(self):
-        """Send the current message to the AI"""
-        # Prevent multiple sends
-        if hasattr(self, '_sending_message') and self._sending_message:
-            return
-        
-        self._sending_message = True
-        
-        # Save the text to variable
-        self.current_message = self.text_view.get_buffer().get_text(
-            self.text_view.get_buffer().get_start_iter(),
-            self.text_view.get_buffer().get_end_iter(),
-            include_hidden_chars=False
-        )
+    def _on_entry_activate(self, entry):
+        print("[DEBUG] Entry activate signal fired")
+        """Send the current message to the AI when Enter is pressed in Entry"""
+        self.current_message = entry.get_text()
         print(f"Message saved: {self.current_message}")
-        
-        # Add message to chat only if there's content
         if self.current_message.strip():
             self.add_user_message(self.current_message)
-            
-            # Clear the text field
-            self.text_view.get_buffer().set_text("")
-            
-            # Here you can add logic to send the message to the selected AI model
+            entry.set_text("")
             print(f"Sending message to {self.selected_model}: {self.current_message}")
-        
-        # Reset sending flag after a short delay
-        GLib.timeout_add(100, self._reset_sending_flag)
+
+    # _send_current_message is no longer needed with Gtk.Entry; logic is handled in _on_entry_activate
     
     def _reset_sending_flag(self):
         """Reset the sending message flag"""
@@ -347,42 +272,45 @@ class AI(Window):
 
     def add_user_message(self, message):
         """Add a user message to the chat area (right side)"""
+        message = break_long_words(message)
         # Create message container
-        message_container = Gtk.Box()
-        message_container.set_orientation(Gtk.Orientation.HORIZONTAL)
-        message_container.set_halign(Gtk.Align.END)  # Right align for user messages
-        message_container.set_margin_top(4)
-        message_container.set_margin_bottom(4)
+        message_container = Box(
+            orientation="h",
+            h_align="end",
+            margin_top=8,
+            margin_bottom=8,
+            margin_start=48,  # Large left margin
+            margin_end=8,    # Small right margin
+        )
         
         # Create message bubble
-        message_bubble = Gtk.Box()
-        message_bubble.set_name("user-message-bubble")
-        message_bubble.get_style_context().add_class("user-message-bubble")
-        message_bubble.set_size_request(300, -1)  # Max width: 300px, height: expand
-        message_bubble.set_vexpand(False)
+        message_bubble = Box(
+            name="user-message-bubble",
+            orientation="h",
+            vexpand=False,
+            margin_top=2,
+            margin_bottom=2,
+            margin_start=0,
+            margin_end=0,
+            style="background: #222; border-radius: 16px; padding: 10px;"
+        )
         message_bubble.set_hexpand(False)
+        message_bubble.set_halign(Gtk.Align.END)
         
-        # Create message text view for better text wrapping
-        message_text = Gtk.TextView()
-        message_text.set_name("user-message-text")
-        message_text.get_style_context().add_class("user-message-text")
-        message_text.set_wrap_mode(Gtk.WrapMode.WORD_CHAR)
-        message_text.set_editable(False)
-        message_text.set_cursor_visible(False)
-        message_text.set_size_request(220, 60)  # Fixed width and height
-        message_text.set_hexpand(False)
-        message_text.set_halign(Gtk.Align.START)
-        message_text.set_vexpand(False)
-        message_text.set_margin_start(6)
-        message_text.set_margin_end(6)
-        message_text.set_margin_top(3)
-        message_text.set_margin_bottom(3)
-        
-        # Set the text content
-        text_buffer = message_text.get_buffer()
-        text_buffer.set_text(message)
-        
-        message_bubble.add(message_text)
+        # Create message label for text
+        message_label = Label(
+            label=message,
+            wrap=True,
+            xalign=1.0,
+            selectable=True,
+            style="color: #fff; font-size: 1em; padding: 2px;"
+        )
+        message_label.set_hexpand(True)
+        message_label.set_halign(Gtk.Align.FILL)
+        message_label.set_line_wrap(True)
+        message_label.set_max_width_chars(40)
+        message_label.set_ellipsize(Pango.EllipsizeMode.NONE)
+        message_bubble.add(message_label)
         message_container.add(message_bubble)
         
         # Add to chat container
@@ -398,57 +326,51 @@ class AI(Window):
         
         # Get AI response
         self.get_ai_response(message)
+
     
     def add_ai_message(self, message):
         """Add an AI message to the chat area (left side)"""
+        message = break_long_words(message)
         # Create message container
-        message_container = Gtk.Box()
-        message_container.set_orientation(Gtk.Orientation.HORIZONTAL)
-        message_container.set_halign(Gtk.Align.START)  # Left align for AI messages
-        message_container.set_margin_top(4)
-        message_container.set_margin_bottom(4)
-        
-        # Create message bubble
-        message_bubble = Gtk.Box()
-        message_bubble.set_name("ai-message-bubble")
-        message_bubble.get_style_context().add_class("ai-message-bubble")
-        message_bubble.set_size_request(300, -1)  # Max width: 300px, height: expand
-        message_bubble.set_vexpand(False)
-        message_bubble.set_hexpand(False)
-        
-        # Create message text view for better text wrapping
-        message_text = Gtk.TextView()
-        message_text.set_name("ai-message-text")
-        message_text.get_style_context().add_class("ai-message-text")
-        message_text.set_wrap_mode(Gtk.WrapMode.WORD_CHAR)
-        message_text.set_editable(False)
-        message_text.set_cursor_visible(False)
-        message_text.set_size_request(220, 60)  # Fixed width and height
-        message_text.set_hexpand(False)
-        message_text.set_halign(Gtk.Align.START)
-        message_text.set_vexpand(False)
-        message_text.set_margin_start(6)
-        message_text.set_margin_end(6)
-        message_text.set_margin_top(3)
-        message_text.set_margin_bottom(3)
-        
-        # Set the text content
-        text_buffer = message_text.get_buffer()
-        text_buffer.set_text(message)
-        
-        message_bubble.add(message_text)
-        message_container.add(message_bubble)
-        
-        # Add to chat container
-        self.chat_container.add(message_container)
-        
-        # Scroll to bottom
-        self.chat_scroll.get_vadjustment().set_value(
-            self.chat_scroll.get_vadjustment().get_upper()
+        message_container = Box(
+            orientation="h",
+            h_align="start",
+            margin_top=8,
+            margin_bottom=8,
+            margin_start=8,    # Small left margin
+            margin_end=48,    # Large right margin
         )
-        
-        # Show the new message
+        # Create message bubble
+        message_bubble = Box(
+            name="ai-message-bubble",
+            orientation="h",
+            vexpand=False,
+            margin_top=2,
+            margin_bottom=2,
+            margin_start=0,
+            margin_end=0,
+            style="background: #444; border-radius: 16px; padding: 10px;"
+        )
+        message_bubble.set_hexpand(False)
+        message_bubble.set_halign(Gtk.Align.START)
+        # Create message label for text
+        message_label = Label(
+            label=message,
+            wrap=True,
+            xalign=0.0,
+            selectable=True,
+            style="color: #fff; font-size: 1em; padding: 2px;"
+        )
+        message_label.set_hexpand(True)
+        message_label.set_halign(Gtk.Align.FILL)
+        message_label.set_line_wrap(True)
+        message_label.set_max_width_chars(40)
+        message_label.set_ellipsize(Pango.EllipsizeMode.NONE)
+        message_bubble.add(message_label)
+        message_container.add(message_bubble)
+        self.chat_container.add(message_container)
         self.chat_container.show_all()
+
     
     def get_ai_response(self, user_message):
         """Get response from the selected AI model"""
@@ -487,37 +409,41 @@ class AI(Window):
         print("Showing typing indicator")
         
         # Create typing indicator container
-        typing_container = Gtk.Box()
-        typing_container.set_orientation(Gtk.Orientation.HORIZONTAL)
-        typing_container.set_halign(Gtk.Align.START)  # Left align for AI messages
-        typing_container.set_margin_top(4)
-        typing_container.set_margin_bottom(4)
+        typing_container = Box(
+            orientation="h",
+            h_align="start",
+            margin_top=4,
+            margin_bottom=4,
+        )
         
         # Create typing bubble
-        typing_bubble = Gtk.Box()
-        typing_bubble.set_name("typing-bubble")
+        typing_bubble = Box(
+            name="typing-bubble",
+            v_expand=False,
+            h_expand=False,
+        )
         typing_bubble.get_style_context().add_class("typing-bubble")
         typing_bubble.set_size_request(80, 40)  # Small size for typing indicator
-        typing_bubble.set_vexpand(False)
-        typing_bubble.set_hexpand(False)
         
         # Create dots container
-        dots_container = Gtk.Box()
-        dots_container.set_orientation(Gtk.Orientation.HORIZONTAL)
-        dots_container.set_spacing(4)
-        dots_container.set_margin_start(12)
-        dots_container.set_margin_end(12)
-        dots_container.set_margin_top(8)
-        dots_container.set_margin_bottom(8)
+        dots_container = Box(
+            orientation="h",
+            spacing=4,
+            margin_start=12,
+            margin_end=12,
+            margin_top=8,
+            margin_bottom=8,
+        )
         
         # Create three animated dots
         self.typing_dots = []
         for i in range(3):
-            dot = Gtk.Label()
-            dot.set_name(f"typing-dot-{i}")
+            dot = Label(
+                name=f"typing-dot-{i}",
+                text="●",
+            )
             dot.get_style_context().add_class("typing-dot")
             dot.get_style_context().add_class("typing-dot-inactive")
-            dot.set_text("●")
             dots_container.add(dot)
             self.typing_dots.append(dot)
             print(f"Created dot {i}")
@@ -594,7 +520,18 @@ class AI(Window):
             print("Escape key pressed (do_key_press_event) - closing AI panel")
             self.hide_ai_panel()
             return True
-        return super().do_key_press_event(event) 
+        return Gtk.Window.do_key_press_event(self, event)
+
+    def _on_text_entry_key_press(self, widget, event):
+        if event.keyval == Gdk.KEY_Return and not (event.state & Gdk.ModifierType.SHIFT_MASK):
+            self._send_current_message()
+            return True
+        return False
+
+    def _on_text_entry_key_release(self, widget, event):
+        """Handle key release events on the text entry."""
+        print(f"Text entry key release: {Gdk.keyval_name(event.keyval)} ({event.keyval})")
+        return False  # Return False to allow other handlers to process the event
 
     def _update_model_button_styles(self):
         """Update the styles of all model buttons to reflect the selected model."""
