@@ -4,8 +4,7 @@ import os
 import uuid
 from datetime import datetime, timedelta
 
-from fabric.notifications.service import (Notification, NotificationAction,
-                                          Notifications)
+from fabric.notifications.service import Notification, NotificationAction, Notifications
 from fabric.widgets.box import Box
 from fabric.widgets.button import Button
 from fabric.widgets.centerbox import CenterBox
@@ -24,6 +23,18 @@ from widgets.wayland import WaylandWindow as Window
 PERSISTENT_DIR = f"/tmp/{data.APP_NAME}/notifications"
 PERSISTENT_HISTORY_FILE = os.path.join(PERSISTENT_DIR, "notification_history.json")
 
+
+# Get configurable app lists from settings
+def get_limited_apps_history():
+    config = data.load_config()
+    return config.get("limited_apps_history", ["Spotify"])
+
+
+def get_history_ignored_apps():
+    config = data.load_config()
+    return config.get("history_ignored_apps", ["Hyprshot"])
+
+
 def cache_notification_pixbuf(notification_box):
     """
     Saves a scaled pixbuf (48x48) in the cache directory and returns the cache file path.
@@ -31,12 +42,20 @@ def cache_notification_pixbuf(notification_box):
     notification = notification_box.notification
     if notification.image_pixbuf:
         os.makedirs(PERSISTENT_DIR, exist_ok=True)
-        cache_file = os.path.join(PERSISTENT_DIR, f"notification_{notification_box.uuid}.png")
-        logger.debug(f"Caching image for notification {notification.id} to: {cache_file}")
+        cache_file = os.path.join(
+            PERSISTENT_DIR, f"notification_{notification_box.uuid}.png"
+        )
+        logger.debug(
+            f"Caching image for notification {notification.id} to: {cache_file}"
+        )
         try:
-            scaled = notification.image_pixbuf.scale_simple(48, 48, GdkPixbuf.InterpType.BILINEAR)
+            scaled = notification.image_pixbuf.scale_simple(
+                48, 48, GdkPixbuf.InterpType.BILINEAR
+            )
             scaled.savev(cache_file, "png", [], [])
-            logger.info(f"Successfully cached image for notification {notification.id} to: {cache_file}")
+            logger.info(
+                f"Successfully cached image for notification {notification.id} to: {cache_file}"
+            )
             return cache_file
         except Exception as e:
             logger.error(f"Error caching image for notification {notification.id}: {e}")
@@ -45,35 +64,59 @@ def cache_notification_pixbuf(notification_box):
         logger.debug(f"Notification {notification.id} has no image_pixbuf to cache.")
         return None
 
+
 def load_scaled_pixbuf(notification_box, width, height):
     """
     Loads and scales a pixbuf for a notification_box, prioritizing cached images.
     """
     notification = notification_box.notification
-    if not hasattr(notification_box, 'notification') or notification is None:
-        logger.error("load_scaled_pixbuf: notification_box.notification is None or not set!")
+    if not hasattr(notification_box, "notification") or notification is None:
+        logger.error(
+            "load_scaled_pixbuf: notification_box.notification is None or not set!"
+        )
         return None
 
     pixbuf = None
-    if hasattr(notification_box, "cached_image_path") and notification_box.cached_image_path and os.path.exists(notification_box.cached_image_path):
+    if (
+        hasattr(notification_box, "cached_image_path")
+        and notification_box.cached_image_path
+        and os.path.exists(notification_box.cached_image_path)
+    ):
         try:
-            logger.debug(f"Attempting to load cached image from: {notification_box.cached_image_path} for notification {notification.id}")
+            logger.debug(
+                f"Attempting to load cached image from: {notification_box.cached_image_path} for notification {notification.id}"
+            )
             pixbuf = GdkPixbuf.Pixbuf.new_from_file(notification_box.cached_image_path)
             if pixbuf:
-                pixbuf = pixbuf.scale_simple(width, height, GdkPixbuf.InterpType.BILINEAR)
-                logger.info(f"Successfully loaded cached image from: {notification_box.cached_image_path} for notification {notification.id}")
+                pixbuf = pixbuf.scale_simple(
+                    width, height, GdkPixbuf.InterpType.BILINEAR
+                )
+                logger.info(
+                    f"Successfully loaded cached image from: {notification_box.cached_image_path} for notification {notification.id}"
+                )
             return pixbuf
         except Exception as e:
-            logger.error(f"Error loading cached image from {notification_box.cached_image_path} for notification {notification.id}: {e}")
-            logger.warning(f"Falling back to notification.image_pixbuf for notification {notification.id}")
+            logger.error(
+                f"Error loading cached image from {notification_box.cached_image_path} for notification {notification.id}: {e}"
+            )
+            logger.warning(
+                f"Falling back to notification.image_pixbuf for notification {notification.id}"
+            )
 
     if notification.image_pixbuf:
-        logger.debug(f"Loading image directly from notification.image_pixbuf for notification {notification.id}")
-        pixbuf = notification.image_pixbuf.scale_simple(width, height, GdkPixbuf.InterpType.BILINEAR)
+        logger.debug(
+            f"Loading image directly from notification.image_pixbuf for notification {notification.id}"
+        )
+        pixbuf = notification.image_pixbuf.scale_simple(
+            width, height, GdkPixbuf.InterpType.BILINEAR
+        )
         return pixbuf
 
-    logger.debug(f"No image_pixbuf or cached image found, trying app icon for notification {notification.id}")
+    logger.debug(
+        f"No image_pixbuf or cached image found, trying app icon for notification {notification.id}"
+    )
     return get_app_icon_pixbuf(notification.app_icon, width, height)
+
 
 def get_app_icon_pixbuf(icon_path, width, height):
     """
@@ -93,28 +136,45 @@ def get_app_icon_pixbuf(icon_path, width, height):
         logger.error(f"Failed to load or scale icon: {e}")
         return None
 
+
 class ActionButton(Button):
-    def __init__(self, action: NotificationAction, index: int, total: int, notification_box):
+    def __init__(
+        self, action: NotificationAction, index: int, total: int, notification_box
+    ):
         super().__init__(
             name="action-button",
             h_expand=True,
             on_clicked=self.on_clicked,
-            child=Label(name="button-label", h_expand=True, h_align="fill", ellipsization="end", max_chars_width=1, label=action.label),
+            child=Label(
+                name="button-label",
+                h_expand=True,
+                h_align="fill",
+                ellipsization="end",
+                max_chars_width=1,
+                label=action.label,
+            ),
         )
         self.action = action
         self.notification_box = notification_box
         style_class = (
-            "start-action" if index == 0
-            else "end-action" if index == total - 1
+            "start-action"
+            if index == 0
+            else "end-action"
+            if index == total - 1
             else "middle-action"
         )
         self.add_style_class(style_class)
-        self.connect("enter-notify-event", lambda *_: notification_box.hover_button(self))
-        self.connect("leave-notify-event", lambda *_: notification_box.unhover_button(self))
+        self.connect(
+            "enter-notify-event", lambda *_: notification_box.hover_button(self)
+        )
+        self.connect(
+            "leave-notify-event", lambda *_: notification_box.unhover_button(self)
+        )
 
     def on_clicked(self, *_):
         self.action.invoke()
         self.action.parent.close("dismissed-by-user")
+
 
 class NotificationBox(Box):
     def __init__(self, notification: Notification, timeout_ms=5000, **kwargs):
@@ -131,8 +191,7 @@ class NotificationBox(Box):
         if timeout_ms == 0:
             self.timeout_ms = 0
         else:
-
-            live_timeout = getattr(self.notification, 'timeout', -1)
+            live_timeout = getattr(self.notification, "timeout", -1)
             self.timeout_ms = live_timeout if live_timeout != -1 else timeout_ms
         self._timeout_id = None
         self._container = None
@@ -145,9 +204,13 @@ class NotificationBox(Box):
             cache_path = cache_notification_pixbuf(self)
             if cache_path:
                 self.cached_image_path = cache_path
-                logger.debug(f"NotificationBox {self.uuid}: Cached image path set to: {self.cached_image_path}")
+                logger.debug(
+                    f"NotificationBox {self.uuid}: Cached image path set to: {self.cached_image_path}"
+                )
             else:
-                logger.warning(f"NotificationBox {self.uuid}: Caching failed, cached_image_path not set.")
+                logger.warning(
+                    f"NotificationBox {self.uuid}: Caching failed, cached_image_path not set."
+                )
         else:
             logger.debug(f"NotificationBox {self.uuid}: No image to cache.")
 
@@ -162,7 +225,9 @@ class NotificationBox(Box):
 
         self._destroyed = False
         self._is_history = False
-        logger.debug(f"NotificationBox {self.uuid} created for notification {notification.id}")
+        logger.debug(
+            f"NotificationBox {self.uuid} created for notification {notification.id}"
+        )
 
     def set_is_history(self, is_history):
         self._is_history = is_history
@@ -180,17 +245,16 @@ class NotificationBox(Box):
                 name="notification-icon",
                 image_file=notification.app_icon[7:],
                 size=24,
-            ) if "file://" in notification.app_icon else
-            Image(
+            )
+            if "file://" in notification.app_icon
+            else Image(
                 name="notification-icon",
                 icon_name="dialog-information-symbolic" or notification.app_icon,
                 icon_size=24,
             )
         )
         self.app_name_label_header = Label(
-            notification.app_name,
-            name="notification-app-name",
-            h_align="start"
+            notification.app_name, name="notification-app-name", h_align="start"
         )
         self.header_close_button = self.create_close_button()
 
@@ -202,10 +266,10 @@ class NotificationBox(Box):
                     children=[
                         self.app_icon_image,
                         self.app_name_label_header,
-                    ]
+                    ],
                 )
             ],
-            end_children=[self.header_close_button]
+            end_children=[self.header_close_button],
         )
 
     def create_content(self):
@@ -230,13 +294,19 @@ class NotificationBox(Box):
             max_chars_width=16,
             ellipsization="end",
         )
-        self.notification_body_label = Label(
-            markup=notification.body,
-            h_align="start",
-            max_chars_width=34,
-            ellipsization="end",
-        ) if notification.body else Box()
-        self.notification_body_label.set_single_line_mode(True) if notification.body else None
+        self.notification_body_label = (
+            Label(
+                markup=notification.body,
+                h_align="start",
+                max_chars_width=34,
+                ellipsization="end",
+            )
+            if notification.body
+            else Box()
+        )
+        self.notification_body_label.set_single_line_mode(
+            True
+        ) if notification.body else None
         self.notification_text_box = Box(
             name="notification-text",
             orientation="v",
@@ -249,7 +319,13 @@ class NotificationBox(Box):
                     orientation="h",
                     children=[
                         self.notification_summary_label,
-                        Box(name="notif-sep", h_expand=False, v_expand=False, h_align="center", v_align="center"),
+                        Box(
+                            name="notif-sep",
+                            h_expand=False,
+                            v_expand=False,
+                            h_align="center",
+                            v_align="center",
+                        ),
                         self.notification_app_name_label_content,
                     ],
                 ),
@@ -293,8 +369,12 @@ class NotificationBox(Box):
             child=Label(name="notif-close-label", markup=icons.cancel),
             on_clicked=lambda *_: self.notification.close("dismissed-by-user"),
         )
-        self.close_button.connect("enter-notify-event", lambda *_: self.hover_button(self.close_button))
-        self.close_button.connect("leave-notify-event", lambda *_: self.unhover_button(self.close_button))
+        self.close_button.connect(
+            "enter-notify-event", lambda *_: self.hover_button(self.close_button)
+        )
+        self.close_button.connect(
+            "leave-notify-event", lambda *_: self.unhover_button(self.close_button)
+        )
         return self.close_button
 
     def on_hover_enter(self, *args):
@@ -317,21 +397,34 @@ class NotificationBox(Box):
     def close_notification(self):
         if not self._destroyed:
             try:
-                logger.debug(f"Notification {self.notification.id} timeout expired, closing notification.")
+                logger.debug(
+                    f"Notification {self.notification.id} timeout expired, closing notification."
+                )
                 self.notification.close("expired")
                 self.stop_timeout()
             except Exception as e:
-                logger.error(f"Error in close_notification for notification {self.notification.id}: {e}")
+                logger.error(
+                    f"Error in close_notification for notification {self.notification.id}: {e}"
+                )
         return False
 
     def destroy(self, from_history_delete=False):
-        logger.debug(f"NotificationBox destroy called for notification: {self.notification.id}, from_history_delete: {from_history_delete}, is_history: {self._is_history}")
-        if hasattr(self, "cached_image_path") and self.cached_image_path and os.path.exists(self.cached_image_path) and (not self._is_history or from_history_delete):
+        logger.debug(
+            f"NotificationBox destroy called for notification: {self.notification.id}, from_history_delete: {from_history_delete}, is_history: {self._is_history}"
+        )
+        if (
+            hasattr(self, "cached_image_path")
+            and self.cached_image_path
+            and os.path.exists(self.cached_image_path)
+            and (not self._is_history or from_history_delete)
+        ):
             try:
                 os.remove(self.cached_image_path)
                 logger.info(f"Deleted cached image: {self.cached_image_path}")
             except Exception as e:
-                logger.error(f"Error deleting cached image {self.cached_image_path}: {e}")
+                logger.error(
+                    f"Error deleting cached image {self.cached_image_path}: {e}"
+                )
         self._destroyed = True
         self.stop_timeout()
         super().destroy()
@@ -344,8 +437,11 @@ class NotificationBox(Box):
         if self._container:
             self._container.resume_all_timeouts()
 
+
 class HistoricalNotification(object):
-    def __init__(self, id, app_icon, summary, body, app_name, timestamp, cached_image_path=None):
+    def __init__(
+        self, id, app_icon, summary, body, app_name, timestamp, cached_image_path=None
+    ):
         self.id = id
         self.app_icon = app_icon
         self.summary = summary
@@ -357,14 +453,11 @@ class HistoricalNotification(object):
         self.actions = []
         self.cached_scaled_pixbuf = None
 
+
 class NotificationHistory(Box):
     def __init__(self, **kwargs):
-        super().__init__(
-            name="notification-history",
-            orientation="v",
-            **kwargs
-        )
-        
+        super().__init__(name="notification-history", orientation="v", **kwargs)
+
         self.containers = []
         self.header_label = Label(
             name="nhh",
@@ -428,7 +521,10 @@ class NotificationHistory(Box):
             propagate_width=False,
             propagate_height=False,
         )
-        self.scrolled_window_viewport_box = Box(orientation="v", children=[self.notifications_list, self.no_notifications_box])
+        self.scrolled_window_viewport_box = Box(
+            orientation="v",
+            children=[self.notifications_list, self.no_notifications_box],
+        )
         self.scrolled_window.add_with_viewport(self.scrolled_window_viewport_box)
         self.persistent_notifications = []
         self.add(self.history_header)
@@ -437,13 +533,11 @@ class NotificationHistory(Box):
         self._cleanup_orphan_cached_images()
         self.schedule_midnight_update()
 
-        self.LIMITED_APPS_HISTORY = ["Spotify"]
-
     def get_ordinal(self, n):
         if 11 <= (n % 100) <= 13:
-            return 'th'
+            return "th"
         else:
-            return {1: 'st', 2: 'nd', 3: 'rd'}.get(n % 10, 'th')
+            return {1: "st", 2: "nd", 3: "rd"}.get(n % 10, "th")
 
     def get_date_header(self, dt):
         now = datetime.now()
@@ -456,9 +550,9 @@ class NotificationHistory(Box):
         else:
             original_locale = locale.getlocale(locale.LC_TIME)
             try:
-                locale.setlocale(locale.LC_TIME, ('en_US', 'UTF-8'))
+                locale.setlocale(locale.LC_TIME, ("en_US", "UTF-8"))
             except locale.Error:
-                locale.setlocale(locale.LC_TIME, 'C')
+                locale.setlocale(locale.LC_TIME, "C")
             try:
                 day = dt.day
                 ordinal = self.get_ordinal(day)
@@ -473,7 +567,9 @@ class NotificationHistory(Box):
 
     def schedule_midnight_update(self):
         now = datetime.now()
-        next_midnight = datetime.combine(now.date() + timedelta(days=1), datetime.min.time())
+        next_midnight = datetime.combine(
+            now.date() + timedelta(days=1), datetime.min.time()
+        )
         delta_seconds = (next_midnight - now).total_seconds()
         GLib.timeout_add_seconds(int(delta_seconds), self.on_midnight)
 
@@ -492,7 +588,7 @@ class NotificationHistory(Box):
                     h_align="center",
                     h_expand=True,
                 )
-            ]
+            ],
         )
 
     def rebuild_with_separators(self):
@@ -505,7 +601,9 @@ class NotificationHistory(Box):
 
         current_date_header = None
         last_date_header = None
-        for container in sorted(self.containers, key=lambda x: x.arrival_time, reverse=True):
+        for container in sorted(
+            self.containers, key=lambda x: x.arrival_time, reverse=True
+        ):
             arrival_time = container.arrival_time
             date_header = self.get_date_header(arrival_time)
             if date_header != current_date_header:
@@ -525,12 +623,18 @@ class NotificationHistory(Box):
 
     def on_do_not_disturb_changed(self, switch, pspec):
         self.do_not_disturb_enabled = switch.get_active()
-        logger.info(f"Do Not Disturb mode {'enabled' if self.do_not_disturb_enabled else 'disabled'}")
+        logger.info(
+            f"Do Not Disturb mode {'enabled' if self.do_not_disturb_enabled else 'disabled'}"
+        )
 
     def clear_history(self, *args):
         for child in self.notifications_list.get_children()[:]:
             container = child
-            notif_box = container.notification_box if hasattr(container, "notification_box") else None
+            notif_box = (
+                container.notification_box
+                if hasattr(container, "notification_box")
+                else None
+            )
             if notif_box:
                 notif_box.destroy(from_history_delete=True)
             self.notifications_list.remove(child)
@@ -572,7 +676,7 @@ class NotificationHistory(Box):
             notif_box.destroy(from_history_delete=True)
 
         target_note_id_str = str(note_id)
-        
+
         new_persistent_notifications = []
         removed_from_list = False
         for note_in_list in self.persistent_notifications:
@@ -582,12 +686,16 @@ class NotificationHistory(Box):
 
                 continue
             new_persistent_notifications.append(note_in_list)
-        
+
         if removed_from_list:
             self.persistent_notifications = new_persistent_notifications
-            logger.info(f"Notification with ID {target_note_id_str} was marked for removal from persistent_notifications list.")
+            logger.info(
+                f"Notification with ID {target_note_id_str} was marked for removal from persistent_notifications list."
+            )
         else:
-            logger.warning(f"Notification with ID {target_note_id_str} was NOT found in persistent_notifications list. The list remains unchanged.")
+            logger.warning(
+                f"Notification with ID {target_note_id_str} was NOT found in persistent_notifications list. The list remains unchanged."
+            )
 
         self._save_persistent_history()
         container.destroy()
@@ -638,49 +746,59 @@ class NotificationHistory(Box):
             name="notification-image",
             orientation="v",
             children=[
-                CustomImage(
-                    pixbuf=load_scaled_pixbuf(hist_box, 48, 48)
-                ),
+                CustomImage(pixbuf=load_scaled_pixbuf(hist_box, 48, 48)),
                 Box(v_expand=True),
-            ]
+            ],
         )
         self.hist_notif_summary_label = Label(
             name="notification-summary",
             markup=hist_notif.summary,
             h_align="start",
-
             ellipsization="end",
-
         )
 
         self.hist_notif_app_name_label = Label(
             name="notification-app-name",
             markup=f"{hist_notif.app_name}",
             h_align="start",
-
             ellipsization="end",
-
         )
 
-        self.hist_notif_body_label = Label(
-            name="notification-body",
-            markup=hist_notif.body,
-            h_align="start",
-
-            ellipsization="end",
-            line_wrap="word-char",
-
-        ) if hist_notif.body else Box()
-        self.hist_notif_body_label.set_single_line_mode(True) if hist_notif.body else None
+        self.hist_notif_body_label = (
+            Label(
+                name="notification-body",
+                markup=hist_notif.body,
+                h_align="start",
+                ellipsization="end",
+                line_wrap="word-char",
+            )
+            if hist_notif.body
+            else Box()
+        )
+        self.hist_notif_body_label.set_single_line_mode(
+            True
+        ) if hist_notif.body else None
 
         self.hist_notif_summary_box = Box(
             name="notification-summary-box",
             orientation="h",
             children=[
                 self.hist_notif_summary_label,
-                Box(name="notif-sep", h_expand=False, v_expand=False, h_align="center", v_align="center"),
+                Box(
+                    name="notif-sep",
+                    h_expand=False,
+                    v_expand=False,
+                    h_align="center",
+                    v_align="center",
+                ),
                 self.hist_notif_app_name_label,
-                Box(name="notif-sep", h_expand=False, v_expand=False, h_align="center", v_align="center"),
+                Box(
+                    name="notif-sep",
+                    h_expand=False,
+                    v_expand=False,
+                    h_align="center",
+                    v_align="center",
+                ),
                 self.hist_time_label,
             ],
         )
@@ -697,7 +815,9 @@ class NotificationHistory(Box):
         self.hist_notif_close_button = Button(
             name="notif-close-button",
             child=Label(name="notif-close-label", markup=icons.cancel),
-            on_clicked=lambda *_: self.delete_historical_notification(hist_notif.id, container),
+            on_clicked=lambda *_: self.delete_historical_notification(
+                hist_notif.id, container
+            ),
         )
         self.hist_notif_close_button_box = Box(
             orientation="v",
@@ -722,21 +842,40 @@ class NotificationHistory(Box):
 
     def add_notification(self, notification_box):
         app_name = notification_box.notification.app_name
-        if app_name in self.LIMITED_APPS_HISTORY:
+        if app_name in get_history_ignored_apps():
+            logger.info(
+                f"Ignoring notification from {app_name} as it is in the ignored list."
+            )
+            notification_box.destroy(from_history_delete=True)
+            return
+
+        if app_name in get_limited_apps_history():
             self.clear_history_for_app(app_name)
 
         if len(self.containers) >= 50:
             oldest_container = self.containers.pop()
-            if hasattr(oldest_container, "notification_box") and hasattr(oldest_container.notification_box, "cached_image_path") and oldest_container.notification_box.cached_image_path and os.path.exists(oldest_container.notification_box.cached_image_path):
+            if (
+                hasattr(oldest_container, "notification_box")
+                and hasattr(oldest_container.notification_box, "cached_image_path")
+                and oldest_container.notification_box.cached_image_path
+                and os.path.exists(oldest_container.notification_box.cached_image_path)
+            ):
                 try:
                     os.remove(oldest_container.notification_box.cached_image_path)
-                    logger.info(f"Deleted cached image of oldest notification due to history limit: {oldest_container.notification_box.cached_image_path}")
+                    logger.info(
+                        f"Deleted cached image of oldest notification due to history limit: {oldest_container.notification_box.cached_image_path}"
+                    )
                 except Exception as e:
-                    logger.error(f"Error deleting cached image of oldest notification: {e}")
+                    logger.error(
+                        f"Error deleting cached image of oldest notification: {e}"
+                    )
             oldest_container.destroy()
 
         def on_container_destroy(container):
-            if hasattr(container, "_timestamp_timer_id") and container._timestamp_timer_id:
+            if (
+                hasattr(container, "_timestamp_timer_id")
+                and container._timestamp_timer_id
+            ):
                 GLib.source_remove(container._timestamp_timer_id)
             if hasattr(container, "notification_box"):
                 notif_box = container.notification_box
@@ -752,18 +891,21 @@ class NotificationHistory(Box):
             h_expand=True,
         )
         container.arrival_time = datetime.now()
+
         def compute_time_label(arrival_time):
             return arrival_time.strftime("%H:%M")
-        self.current_time_label = Label(name="notification-timestamp", markup=compute_time_label(container.arrival_time))
+
+        self.current_time_label = Label(
+            name="notification-timestamp",
+            markup=compute_time_label(container.arrival_time),
+        )
         self.current_notif_image_box = Box(
             name="notification-image",
             orientation="v",
             children=[
-                CustomImage(
-                    pixbuf=load_scaled_pixbuf(notification_box, 48, 48)
-                ),
+                CustomImage(pixbuf=load_scaled_pixbuf(notification_box, 48, 48)),
                 Box(v_expand=True, v_align="fill"),
-            ]
+            ],
         )
         self.current_notif_summary_label = Label(
             name="notification-summary",
@@ -777,22 +919,40 @@ class NotificationHistory(Box):
             h_align="start",
             ellipsization="end",
         )
-        self.current_notif_body_label = Label(
-            name="notification-body",
-            markup=notification_box.notification.body,
-            h_align="start",
-            ellipsization="end",
-            line_wrap="word-char",
-        ) if notification_box.notification.body else Box()
-        self.current_notif_body_label.set_single_line_mode(True) if notification_box.notification.body else None
+        self.current_notif_body_label = (
+            Label(
+                name="notification-body",
+                markup=notification_box.notification.body,
+                h_align="start",
+                ellipsization="end",
+                line_wrap="word-char",
+            )
+            if notification_box.notification.body
+            else Box()
+        )
+        self.current_notif_body_label.set_single_line_mode(
+            True
+        ) if notification_box.notification.body else None
         self.current_notif_summary_box = Box(
             name="notification-summary-box",
             orientation="h",
             children=[
                 self.current_notif_summary_label,
-                Box(name="notif-sep", h_expand=False, v_expand=False, h_align="center", v_align="center"),
+                Box(
+                    name="notif-sep",
+                    h_expand=False,
+                    v_expand=False,
+                    h_align="center",
+                    v_align="center",
+                ),
                 self.current_notif_app_name_label,
-                Box(name="notif-sep", h_expand=False, v_expand=False, h_align="center", v_align="center"),
+                Box(
+                    name="notif-sep",
+                    h_expand=False,
+                    v_expand=False,
+                    h_align="center",
+                    v_align="center",
+                ),
                 self.current_time_label,
             ],
         )
@@ -836,8 +996,7 @@ class NotificationHistory(Box):
         )
         hist_box.add(content_box)
         content_box.get_children()[2].get_children()[0].connect(
-            "clicked",
-            lambda *_: on_container_destroy(container)
+            "clicked", lambda *_: on_container_destroy(container)
         )
         container.add(hist_box)
         self.containers.insert(0, container)
@@ -853,7 +1012,7 @@ class NotificationHistory(Box):
             "body": notification_box.notification.body,
             "app_name": notification_box.notification.app_name,
             "timestamp": arrival_time.isoformat(),
-            "cached_image_path": notification_box.cached_image_path
+            "cached_image_path": notification_box.cached_image_path,
         }
         self.persistent_notifications.insert(0, note)
         self.persistent_notifications = self.persistent_notifications[:50]
@@ -865,28 +1024,40 @@ class NotificationHistory(Box):
             logger.debug("Cache directory does not exist, skipping cleanup.")
             return
 
-        cached_files = [f for f in os.listdir(PERSISTENT_DIR) if f.startswith("notification_") and f.endswith(".png")]
+        cached_files = [
+            f
+            for f in os.listdir(PERSISTENT_DIR)
+            if f.startswith("notification_") and f.endswith(".png")
+        ]
         if not cached_files:
             logger.debug("No cached image files found, skipping cleanup.")
             return
 
-        history_uuids = {note.get("id") for note in self.persistent_notifications if note.get("id")}
+        history_uuids = {
+            note.get("id") for note in self.persistent_notifications if note.get("id")
+        }
         deleted_count = 0
         for cached_file in cached_files:
             try:
-                uuid_from_filename = cached_file[len("notification_"):-len(".png")]
+                uuid_from_filename = cached_file[len("notification_") : -len(".png")]
                 if uuid_from_filename not in history_uuids:
                     cache_file_path = os.path.join(PERSISTENT_DIR, cached_file)
                     os.remove(cache_file_path)
                     logger.info(f"Deleted orphan cached image: {cache_file_path}")
                     deleted_count += 1
                 else:
-                    logger.debug(f"Cached image {cached_file} found in history, keeping it.")
+                    logger.debug(
+                        f"Cached image {cached_file} found in history, keeping it."
+                    )
             except Exception as e:
-                logger.error(f"Error processing cached file {cached_file} during cleanup: {e}")
+                logger.error(
+                    f"Error processing cached file {cached_file} during cleanup: {e}"
+                )
 
         if deleted_count > 0:
-            logger.info(f"Orphan cached image cleanup finished. Deleted {deleted_count} images.")
+            logger.info(
+                f"Orphan cached image cleanup finished. Deleted {deleted_count} images."
+            )
         else:
             logger.info("Orphan cached image cleanup finished. No orphan images found.")
 
@@ -900,34 +1071,50 @@ class NotificationHistory(Box):
         containers_to_remove = []
         persistent_notes_to_remove_ids = set()
         for container in list(self.containers):
-            if hasattr(container, "notification_box") and container.notification_box.notification.app_name == app_name:
+            if (
+                hasattr(container, "notification_box")
+                and container.notification_box.notification.app_name == app_name
+            ):
                 containers_to_remove.append(container)
                 persistent_notes_to_remove_ids.add(container.notification_box.uuid)
 
         for container in containers_to_remove:
-            if hasattr(container, "notification_box") and hasattr(container.notification_box, "cached_image_path") and container.notification_box.cached_image_path and os.path.exists(container.notification_box.cached_image_path):
+            if (
+                hasattr(container, "notification_box")
+                and hasattr(container.notification_box, "cached_image_path")
+                and container.notification_box.cached_image_path
+                and os.path.exists(container.notification_box.cached_image_path)
+            ):
                 try:
                     os.remove(container.notification_box.cached_image_path)
-                    logger.info(f"Deleted cached image of replaced history notification: {container.notification_box.cached_image_path}")
+                    logger.info(
+                        f"Deleted cached image of replaced history notification: {container.notification_box.cached_image_path}"
+                    )
                 except Exception as e:
-                    logger.error(f"Error deleting cached image of replaced history notification: {e}")
+                    logger.error(
+                        f"Error deleting cached image of replaced history notification: {e}"
+                    )
             self.containers.remove(container)
             self.notifications_list.remove(container)
             container.notification_box.destroy(from_history_delete=True)
             container.destroy()
 
         self.persistent_notifications = [
-            note for note in self.persistent_notifications
+            note
+            for note in self.persistent_notifications
             if note.get("id") not in persistent_notes_to_remove_ids
         ]
         self._save_persistent_history()
         self.rebuild_with_separators()
         self.update_no_notifications_label_visibility()
 
-class NotificationContainer(Box):
-    LIMITED_APPS = ["Spotify"]
 
-    def __init__(self, notification_history_instance: NotificationHistory, revealer_transition_type: str = "slide-down"):
+class NotificationContainer(Box):
+    def __init__(
+        self,
+        notification_history_instance: NotificationHistory,
+        revealer_transition_type: str = "slide-down",
+    ):
         super().__init__(name="notification-container-main", orientation="v", spacing=4)
         self.notification_history = notification_history_instance
 
@@ -943,15 +1130,13 @@ class NotificationContainer(Box):
             visible=True,
         )
         self.navigation = Box(
-            name="notification-navigation",
-            spacing=4,
-            h_align="center"
+            name="notification-navigation", spacing=4, h_align="center"
         )
         self.stack_box = Box(
             name="notification-stack-box",
             h_align="center",
             h_expand=False,
-            children=[self.stack]
+            children=[self.stack],
         )
         self.prev_button = Button(
             name="nav-button",
@@ -971,33 +1156,35 @@ class NotificationContainer(Box):
             on_clicked=self.show_next,
         )
         for button in [self.prev_button, self.close_all_button, self.next_button]:
-            button.connect("enter-notify-event", lambda *_: self.pause_and_reset_all_timeouts())
+            button.connect(
+                "enter-notify-event", lambda *_: self.pause_and_reset_all_timeouts()
+            )
             button.connect("leave-notify-event", lambda *_: self.resume_all_timeouts())
         self.navigation.add(self.prev_button)
         self.navigation.add(self.close_all_button)
         self.navigation.add(self.next_button)
 
         self.navigation_revealer = Revealer(
-            transition_type="slide-down", 
+            transition_type="slide-down",
             transition_duration=200,
             child=self.navigation,
-            reveal_child=False, 
+            reveal_child=False,
         )
 
         self.notification_box_container = Box(
-            name="notification-box-internal-container", 
+            name="notification-box-internal-container",
             orientation="v",
-            children=[self.stack_box, self.navigation_revealer]
+            children=[self.stack_box, self.navigation_revealer],
         )
-        
+
         self.main_revealer = Revealer(
             name="notification-main-revealer",
             transition_type=revealer_transition_type,
-            transition_duration=250, 
+            transition_duration=250,
             child_revealed=False,
             child=self.notification_box_container,
         )
-        
+
         self.add(self.main_revealer)
 
         self.notifications = []
@@ -1008,7 +1195,9 @@ class NotificationContainer(Box):
     def on_new_notification(self, fabric_notif, id):
         notification_history_instance = self.notification_history
         if notification_history_instance.do_not_disturb_enabled:
-            logger.info("Do Not Disturb mode enabled: adding notification directly to history.")
+            logger.info(
+                "Do Not Disturb mode enabled: adding notification directly to history."
+            )
             notification = fabric_notif.get_notification_from_id(id)
             new_box = NotificationBox(notification)
             if notification.image_pixbuf:
@@ -1022,7 +1211,7 @@ class NotificationContainer(Box):
         notification.connect("closed", self.on_notification_closed)
 
         app_name = notification.app_name
-        if app_name in self.LIMITED_APPS:
+        if app_name in get_limited_apps_history():
             notification_history_instance.clear_history_for_app(app_name)
 
             existing_notification_index = -1
@@ -1032,13 +1221,15 @@ class NotificationContainer(Box):
                     break
 
             if existing_notification_index != -1:
-                old_notification_box = self.notifications.pop(existing_notification_index)
+                old_notification_box = self.notifications.pop(
+                    existing_notification_index
+                )
                 self.stack.remove(old_notification_box)
-                old_notification_box.destroy() 
+                old_notification_box.destroy()
 
                 self.stack.add_named(new_box, str(id))
                 self.notifications.append(new_box)
-                self.current_index = len(self.notifications) - 1 
+                self.current_index = len(self.notifications) - 1
                 self.stack.set_visible_child(new_box)
             else:
                 while len(self.notifications) >= 5:
@@ -1067,7 +1258,7 @@ class NotificationContainer(Box):
 
         for notification_box in self.notifications:
             notification_box.start_timeout()
-        self.main_revealer.show_all() 
+        self.main_revealer.show_all()
         self.main_revealer.set_reveal_child(True)
         self.update_navigation_buttons()
 
@@ -1106,47 +1297,55 @@ class NotificationContainer(Box):
                 return
             i, notif_box = notif_to_remove
             reason_str = str(reason)
-            
+
             notification_history_instance = self.notification_history
 
             if reason_str == "NotificationCloseReason.DISMISSED_BY_USER":
-                logger.info(f"Cleaning up resources for dismissed notification {notification.id}")
+                logger.info(
+                    f"Cleaning up resources for dismissed notification {notification.id}"
+                )
                 notif_box.destroy()
-            elif (reason_str == "NotificationCloseReason.EXPIRED" or
-                  reason_str == "NotificationCloseReason.CLOSED" or
-                  reason_str == "NotificationCloseReason.UNDEFINED"):
-                logger.info(f"Adding notification {notification.id} to history (reason: {reason_str})")
+            elif (
+                reason_str == "NotificationCloseReason.EXPIRED"
+                or reason_str == "NotificationCloseReason.CLOSED"
+                or reason_str == "NotificationCloseReason.UNDEFINED"
+            ):
+                logger.info(
+                    f"Adding notification {notification.id} to history (reason: {reason_str})"
+                )
                 notif_box.set_is_history(True)
                 notification_history_instance.add_notification(notif_box)
                 notif_box.stop_timeout()
             else:
-                logger.warning(f"Unknown close reason: {reason_str} for notification {notification.id}. Defaulting to destroy.")
+                logger.warning(
+                    f"Unknown close reason: {reason_str} for notification {notification.id}. Defaulting to destroy."
+                )
                 notif_box.destroy()
 
-            if len(self.notifications) == 1: 
+            if len(self.notifications) == 1:
                 self._is_destroying = True
-                self.main_revealer.set_reveal_child(False) 
+                self.main_revealer.set_reveal_child(False)
                 GLib.timeout_add(
-                    self.main_revealer.get_transition_duration(), 
-                    self._destroy_container
+                    self.main_revealer.get_transition_duration(),
+                    self._destroy_container,
                 )
-                return 
-            
+                return
+
             new_index = i
             if i == self.current_index:
                 new_index = max(0, i - 1)
             elif i < self.current_index:
                 new_index = self.current_index - 1
-            
+
             if notif_box.get_parent() == self.stack:
                 self.stack.remove(notif_box)
-            self.notifications.pop(i) 
-            
+            self.notifications.pop(i)
+
             if new_index >= len(self.notifications) and len(self.notifications) > 0:
                 new_index = len(self.notifications) - 1
 
             self.current_index = new_index
-            
+
             if len(self.notifications) > 0:
                 self.stack.set_visible_child(self.notifications[self.current_index])
 
@@ -1158,15 +1357,15 @@ class NotificationContainer(Box):
         try:
             self.notifications.clear()
             self._destroyed_notifications.clear()
-            for child in self.stack.get_children(): 
-                self.stack.remove(child) 
-                child.destroy() 
+            for child in self.stack.get_children():
+                self.stack.remove(child)
+                child.destroy()
             self.current_index = 0
         except Exception as e:
             logger.error(f"Error cleaning up the container: {e}")
         finally:
             self._is_destroying = False
-            return False 
+            return False
 
     def pause_and_reset_all_timeouts(self):
         if self._is_destroying:
@@ -1193,12 +1392,17 @@ class NotificationContainer(Box):
         for notification_box in notifications_to_close:
             notification_box.notification.close("dismissed-by-user")
 
+
 class NotificationPopup(Window):
     def __init__(self, **kwargs):
         y_pos = data.NOTIF_POS.lower()
         x_pos = "right"
 
-        if data.BAR_POSITION in ["Top", "Bottom"] and data.PANEL_POSITION == "End" or x_pos == data.BAR_POSITION.lower():
+        if (
+            data.BAR_POSITION in ["Top", "Bottom"]
+            and data.PANEL_POSITION == "End"
+            or x_pos == data.BAR_POSITION.lower()
+        ):
             x_pos = "left"
 
         super().__init__(
@@ -1213,17 +1417,21 @@ class NotificationPopup(Window):
 
         self.widgets = kwargs.get("widgets", None)
 
-        self.notification_history = self.widgets.notification_history if self.widgets else NotificationHistory()
+        self.notification_history = (
+            self.widgets.notification_history if self.widgets else NotificationHistory()
+        )
         self.notification_container = NotificationContainer(
             notification_history_instance=self.notification_history,
-            revealer_transition_type="slide-down" if y_pos == "top" else "slide-up"
+            revealer_transition_type="slide-down" if y_pos == "top" else "slide-up",
         )
 
         self.show_box = Box()
         self.show_box.set_size_request(1, 1)
 
-        self.add(Box(
-            name="notification-popup-box",
-            orientation="v",
-            children=[self.notification_container, self.show_box]
-        ))
+        self.add(
+            Box(
+                name="notification-popup-box",
+                orientation="v",
+                children=[self.notification_container, self.show_box],
+            )
+        )

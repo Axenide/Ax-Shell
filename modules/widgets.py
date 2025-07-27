@@ -1,6 +1,6 @@
 import gi
 
-gi.require_version('Gtk', '3.0')
+gi.require_version("Gtk", "3.0")
 from fabric.widgets.box import Box
 from fabric.widgets.label import Label
 from fabric.widgets.stack import Stack
@@ -29,9 +29,15 @@ class Widgets(Box):
         )
 
         vertical_layout = False
-
-        if data.PANEL_THEME == "Panel" and (data.BAR_POSITION in ["Left", "Right"] or data.PANEL_POSITION in ["Start", "End"]):
+        if data.PANEL_THEME == "Panel" and (
+            data.BAR_POSITION in ["Left", "Right"]
+            or data.PANEL_POSITION in ["Start", "End"]
+        ):
             vertical_layout = True
+
+        calendar_view_mode = "week" if vertical_layout else "month"
+
+        self.calendar = Calendar(view_mode=calendar_view_mode)
 
         self.notch = kwargs["notch"]
 
@@ -57,8 +63,6 @@ class Widgets(Box):
 
         self.controls = ControlSliders()
 
-        self.calendar = Calendar()
-
         self.player = Player()
 
         self.metrics = Metrics()
@@ -75,7 +79,7 @@ class Widgets(Box):
                 self.notification_history,
                 self.network_connections,
                 self.bluetooth,
-            ]
+            ],
         )
 
         self.applet_stack_box = Box(
@@ -85,27 +89,29 @@ class Widgets(Box):
             h_align="fill",
             children=[
                 self.applet_stack,
-            ]
+            ],
         )
 
-        self.children_1 = [
-            Box(
-                name="container-sub-1",
-                h_expand=True,
-                v_expand=True,
-                spacing=8,
-                children=[
-                    Calendar(),
-
-                    self.applet_stack_box,
-                ]
-            ),
-            self.metrics,
-        ] if not vertical_layout else [
-            self.applet_stack_box,
-            self.player,
-
-        ]
+        if not vertical_layout:
+            self.children_1 = [
+                Box(
+                    name="container-sub-1",
+                    h_expand=True,
+                    v_expand=True,
+                    spacing=8,
+                    children=[
+                        self.calendar,
+                        self.applet_stack_box,
+                    ],
+                ),
+                self.metrics,
+            ]
+        else:
+            self.children_1 = [
+                self.applet_stack_box,
+                self.calendar,  # Weekly view when vertical
+                self.player,
+            ]
 
         self.container_1 = Box(
             name="container-1",
@@ -126,15 +132,18 @@ class Widgets(Box):
                 self.buttons,
                 self.controls,
                 self.container_1,
-            ]
+            ],
         )
 
-        self.children_3 = [
-            self.player,
-            self.container_2,
-        ] if not vertical_layout else [
-            self.container_2,
-        ]
+        if not vertical_layout:
+            self.children_3 = [
+                self.player,
+                self.container_2,
+            ]
+        else:  # vertical_layout
+            self.children_3 = [
+                self.container_2,
+            ]
 
         self.container_3 = Box(
             name="container-3",

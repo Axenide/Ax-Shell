@@ -139,6 +139,7 @@ class Notch(Window):
         self._prevent_occlusion = False
         self._occlusion_timer_id = None
 
+
         self.icon_resolver = IconResolver()
         self._all_apps = get_desktop_applications()
         self.app_identifiers = self._build_app_identifiers_map()
@@ -152,6 +153,7 @@ class Notch(Window):
 
         self.btdevices.set_visible(False)
         self.nwconnections.set_visible(False)
+
 
         self.launcher = AppLauncher(notch=self)
         self.overview = Overview()
@@ -169,6 +171,7 @@ class Notch(Window):
 
         self.window_icon = Image(
             name="notch-window-icon", icon_name="application-x-executable", icon_size=20
+            name="notch-window-icon", icon_name="application-x-executable", icon_size=20
         )
 
         self.active_window = ActiveWindow(
@@ -180,6 +183,7 @@ class Notch(Window):
             ),
         )
 
+
         self.active_window_box = CenterBox(
             name="active-window-box",
             h_expand=True,
@@ -187,8 +191,13 @@ class Notch(Window):
             start_children=self.window_icon,
             center_children=self.active_window,
             end_children=None,
+            end_children=None,
         )
 
+        self.active_window_box.connect(
+            "button-press-event",
+            lambda widget, event: (self.open_notch("dashboard"), False)[1],
+        )
         self.active_window_box.connect(
             "button-press-event",
             lambda widget, event: (self.open_notch("dashboard"), False)[1],
@@ -206,12 +215,25 @@ class Notch(Window):
         self.active_window.connect(
             "notify::label", lambda *_: self.restore_label_properties()
         )
+        self.active_window.connect(
+            "notify::label", lambda *_: self.restore_label_properties()
+        )
 
         self.player_small = PlayerSmall()
         self.user_label = Label(
             name="compact-user", label=f"{data.USERNAME}@{data.HOSTNAME}"
         )
+        self.user_label = Label(
+            name="compact-user", label=f"{data.USERNAME}@{data.HOSTNAME}"
+        )
 
+        self.player_small.mpris_manager.connect(
+            "player-appeared",
+            lambda *_: self.compact_stack.set_visible_child(self.player_small),
+        )
+        self.player_small.mpris_manager.connect(
+            "player-vanished", self.on_player_vanished
+        )
         self.player_small.mpris_manager.connect(
             "player-appeared",
             lambda *_: self.compact_stack.set_visible_child(self.player_small),
@@ -231,6 +253,7 @@ class Notch(Window):
                 self.active_window_box,
                 self.player_small,
             ],
+            ],
         )
         self.compact_stack.set_visible_child(self.active_window_box)
 
@@ -241,8 +264,15 @@ class Notch(Window):
             Gdk.EventMask.SCROLL_MASK
             | Gdk.EventMask.BUTTON_PRESS_MASK
             | Gdk.EventMask.SMOOTH_SCROLL_MASK
+            Gdk.EventMask.SCROLL_MASK
+            | Gdk.EventMask.BUTTON_PRESS_MASK
+            | Gdk.EventMask.SMOOTH_SCROLL_MASK
         )
         self.compact.connect("scroll-event", self._on_compact_scroll)
+        self.compact.connect(
+            "button-press-event",
+            lambda widget, event: (self.open_notch("dashboard"), False)[1],
+        )
         self.compact.connect(
             "button-press-event",
             lambda widget, event: (self.open_notch("dashboard"), False)[1],
@@ -255,6 +285,10 @@ class Notch(Window):
             name="notch-content",
             v_expand=True,
             h_expand=True,
+            style_classes=["invert"]
+            if (not data.VERTICAL and data.BAR_THEME in ["Dense", "Edge"])
+            and data.BAR_POSITION not in ["Bottom"]
+            else [],
             style_classes=["invert"]
             if (not data.VERTICAL and data.BAR_THEME in ["Dense", "Edge"])
             and data.BAR_POSITION not in ["Bottom"]
@@ -272,6 +306,7 @@ class Notch(Window):
                 self.tmux,
                 self.cliphist,
             ],
+            ],
         )
 
         if data.PANEL_THEME == "Panel":
@@ -280,6 +315,9 @@ class Notch(Window):
             self.stack.add_style_class(data.BAR_POSITION.lower())
             self.stack.add_style_class(data.PANEL_POSITION.lower())
 
+        if is_panel_vertical or (
+            data.PANEL_POSITION in ["Start", "End"] and data.PANEL_THEME == "Panel"
+        ):
         if is_panel_vertical or (
             data.PANEL_POSITION in ["Start", "End"] and data.PANEL_THEME == "Panel"
         ):
@@ -307,6 +345,7 @@ class Notch(Window):
                 MyCorner("top-right"),
                 Box(),
             ],
+            ],
         )
 
         self.corner_right = Box(
@@ -316,6 +355,7 @@ class Notch(Window):
             children=[
                 MyCorner("top-left"),
                 Box(),
+            ],
             ],
         )
 
@@ -331,6 +371,7 @@ class Notch(Window):
 
         self.notch_box.add_style_class(data.PANEL_THEME.lower())
 
+
         self.notch_revealer = Revealer(
             name="notch-revealer",
             transition_type=revealer_transition_type,
@@ -342,6 +383,12 @@ class Notch(Window):
         self.notch_hover_area_event_box = Gtk.EventBox()
         self.notch_hover_area_event_box.add(self.notch_revealer)
         if data.PANEL_THEME == "Notch":
+            self.notch_hover_area_event_box.connect(
+                "enter-notify-event", self.on_notch_hover_area_enter
+            )
+            self.notch_hover_area_event_box.connect(
+                "leave-notify-event", self.on_notch_hover_area_leave
+            )
             self.notch_hover_area_event_box.connect(
                 "enter-notify-event", self.on_notch_hover_area_enter
             )
@@ -536,6 +583,7 @@ class Notch(Window):
             "pins": self.dashboard.pins,
             "kanban": self.dashboard.kanban,
             "wallpapers": self.dashboard.wallpapers,
+            "mixer": self.dashboard.mixer,
         }
         if widget_name in dashboard_sections_map:
             section_widget_instance = dashboard_sections_map[widget_name]

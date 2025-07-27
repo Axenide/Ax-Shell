@@ -25,6 +25,7 @@ PACKAGES=(
   noto-fonts-emoji
   nvtop
   playerctl
+  power-profiles-daemon
   python-fabric-git
   python-gobject
   python-ijson
