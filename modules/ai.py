@@ -10,7 +10,6 @@ import asyncio
 
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk, GLib
-from fabric.widgets.stack import Stack
 
 # Import AI services
 from .ai_services import ai_manager
@@ -225,19 +224,6 @@ class AI(Window):
         self.set_visible(False)
         self.hide()
         return False
-
-
-
-        # Initialize variable to store the text
-        self.current_message = ""
-        self.selected_model = "Chat GPT"  # Default model
-
-        # Close window on Escape key press
-        self.add_events(Gdk.EventMask.KEY_PRESS_MASK)
-        self.connect("key-press-event", self._on_key_press)
-        
-        # Also connect to the main window for key events
-        self.connect("key-press-event", self._on_key_press)
 
     def _on_model_button_clicked(self, button):
         """Handle gear button click - manually show popover"""
