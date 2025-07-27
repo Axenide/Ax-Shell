@@ -88,4 +88,6 @@ DEFAULTS = {
         'disk': True,
         'gpu': True,
     },
+    'prefix_ai': "SUPER SHIFT",
+    'suffix_ai': "A",
 }

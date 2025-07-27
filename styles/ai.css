@@ -1,0 +1,221 @@
+
+/* AI Panel Main Styling */
+#ai-panel {
+  background-color: var(--surface-bright);
+  border-radius: 0 16px 16px 0;
+  padding: 16px;
+  margin: 0px 0px 0px 0px;
+  min-width: 400px;
+  min-height: 800px;
+}
+
+/* AI Dropdown Styling */
+.ai-dropdown {
+    background-color: var(--foreground);
+}
+  
+.ai-dropdown popup * {
+    color: var(--foreground);
+    background-color: var(--background);
+}
+  
+.ai-dropdown popup menuitem {
+    color: var(--foreground);
+    background-color: var(--background);
+}
+  
+.ai-dropdown popup menuitem:hover {
+    background-color: var(--red);
+}
+  
+/* AI Chat Styling */
+#ai-chat-scroll {
+    background-color: transparent;
+    border-radius: 8px;
+}
+
+#ai-chat-container {
+    background-color: transparent;
+}
+  
+#user-message-bubble {
+    background-color: var(--cyan);
+    border-radius: 12px;
+    padding: 8px 12px;
+    margin-left: 40px;
+  
+}
+  
+/* AI Text Entry Styling */
+#ai-text-view {
+    background-color: transparent;
+    color: var(--foreground);
+    font-size: 1em;
+    border: none;
+    outline: none;
+}
+  
+#ai-text-view text {
+    background-color: transparent;
+    color: var(--foreground);
+    font-size: 1em;
+    border: none;
+    outline: none;
+}
+  
+  /* AI Gear Button Styling */
+#ai-model-button {
+    background-color: var(--surface-bright);
+    color: var(--foreground);
+    min-width: 20px;
+    min-height: 40px;
+    border-radius: 8px;
+    padding: 8px;
+}
+  
+#ai-model-icon {
+    color: var(--foreground);
+    font-size: 2em;
+    font-weight: bold;
+}
+  
+  /* User Message Styling */
+.user-message-bubble {
+    background-color: var(--cyan);
+    border-radius: 12px;
+    padding: 8px 12px;
+    margin-left: 40px;
+}
+  
+.user-message-text {
+    color: var(--background);
+    font-size: 1.1em;
+    background-color: transparent;
+    border: none;
+    outline: none;
+}
+  
+.user-message-text text {
+    background-color: transparent;
+    border: none;
+    outline: none;
+    color: var(--background);
+    font-size: 1.1em;
+    font-weight: bold;
+}
+  
+  /* AI Message Styling */
+.ai-message-bubble {
+    background-color: var(--surface-bright);
+    border-radius: 12px;
+    padding: 8px 12px;
+    margin-right: 40px;
+}
+  
+.ai-message-text {
+    color: var(--foreground);
+    font-size: 1.1em;
+    background-color: transparent;
+    border: none;
+    outline: none;
+}
+  
+.ai-message-text text {
+    background-color: transparent;
+    color: var(--foreground);
+    font-size: 1.1em;
+    border: none;
+    outline: none;
+}
+  
+  /* Typing Indicator Styling */
+.typing-bubble {
+    background-color: var(--surface-bright);
+    border-radius: 12px;
+    padding: 8px 12px;
+    margin-right: 40px;
+}
+
+/* AI Model Options Box Styling */
+#ai-model-options-box {
+    background-color: var(--surface);
+    border: 1px solid var(--outline);
+    border-radius: 8px;
+    padding: 8px;
+}
+
+/* AI Model Option Button Styling */
+#ai-model-option-button {
+    background-color: var(--surface-bright);
+    font-size: 0.9em;
+    color: var(--cyan);
+    border: none;
+    outline: none;
+    box-shadow: none;
+}
+
+.ai-model-button-selected {
+    border: none;
+    outline: none;
+    border-radius: 4px;
+    padding: 6px 12px;
+    background-color: var(--cyan);
+    font-size: 1.1em;
+    font-weight: bold;
+    color: #000000;
+}
+
+#ai-model-option-button.ai-model-button-selected {
+    border: none;
+    outline: none;
+    border-radius: 4px;
+    padding: 6px 12px;
+    background-color: var(--cyan);
+    font-size: 0.9em;
+    color: #000000;
+}
+
+.ai-model-button-selected label {
+    color: #000000;
+}
+
+#ai-model-option-button.ai-model-button-selected label {
+    color: #000000;
+}
+
+.ai-model-button-unselected {
+    border: none;
+    border-radius: 4px;
+    padding: 6px 12px;
+    background-color: var(--surface);
+    font-size: 0.9em;
+    color: var(--foreground);
+}
+
+/* AI Entry Container Styling */
+#ai-entry-container {
+    background-color: var(--surface-bright);
+    border-radius: 8px;
+    padding: 12px 16px;
+}
+  
+.typing-dot {
+    color: var(--outline);
+    font-size: 1.2em;
+    background-color: transparent;
+    border: none;
+    outline: none;
+    transition: color 0.2s ease-in-out;
+}
+  
+.typing-dot-active {
+    color: var(--foreground);
+    font-size: 1.2em;
+    font-weight: bold;
+}
+  
+.typing-dot-inactive {
+    color: var(--outline);
+    font-size: 1.2em;
+    opacity: 0.5;
+}

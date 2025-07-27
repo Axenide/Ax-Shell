@@ -56,11 +56,13 @@ class HyprConfGUI(Window):
         self.key_bindings_tab_content = self.create_key_bindings_tab()
         self.appearance_tab_content = self.create_appearance_tab()
         self.system_tab_content = self.create_system_tab()
+        self.ai_tab_content = self.create_ai_tab()
         self.about_tab_content = self.create_about_tab()
 
         self.tab_stack.add_titled(self.key_bindings_tab_content, "key_bindings", "Key Bindings")
         self.tab_stack.add_titled(self.appearance_tab_content, "appearance", "Appearance")
         self.tab_stack.add_titled(self.system_tab_content, "system", "System")
+        self.tab_stack.add_titled(self.ai_tab_content, "ai", "AI")
         self.tab_stack.add_titled(self.about_tab_content, "about", "About")
 
         tab_switcher = Gtk.StackSwitcher()
@@ -129,6 +131,7 @@ class HyprConfGUI(Window):
             ("Toggle Caffeine", 'prefix_caffeine', 'suffix_caffeine'),
             ("Reload CSS", 'prefix_css', 'suffix_css'),
             ("Restart with inspector", 'prefix_restart_inspector', 'suffix_restart_inspector'),
+            ("AI", 'prefix_ai', 'suffix_ai'),
         ]
 
         for i, (label_text, prefix_key, suffix_key) in enumerate(bindings):
@@ -568,6 +571,131 @@ class HyprConfGUI(Window):
         self.disk_entries.show_all()
 
 
+    def create_ai_tab(self):
+        scrolled_window = ScrolledWindow(
+            h_scrollbar_policy="never", 
+            v_scrollbar_policy="automatic",
+            h_expand=True,
+            v_expand=True,
+            propagate_width=False,
+            propagate_height=False
+        )
+
+        main_vbox = Box(orientation="v", spacing=15, style="margin: 20px;")
+        scrolled_window.add(main_vbox)
+
+        # Title
+        title_label = Label(markup="<b>AI API Keys</b>", h_align="start", style="font-size: 1.2em; margin-bottom: 10px;")
+        main_vbox.add(title_label)
+
+        # Description
+        desc_label = Label(
+            label="Enter your API keys for the AI models you want to use. Leave empty if you don't have a key for a specific model.",
+            h_align="start",
+            style="margin-bottom: 20px; color: #888;"
+        )
+        main_vbox.add(desc_label)
+
+        # API Keys Grid
+        api_grid = Gtk.Grid()
+        api_grid.set_column_spacing(15)
+        api_grid.set_row_spacing(10)
+        api_grid.set_margin_start(5)
+        api_grid.set_margin_end(5)
+
+        # Headers
+        model_label = Label(markup="<b>AI Service</b>", h_align="start")
+        key_label = Label(markup="<b>API Key</b>", h_align="start")
+        model_select_label = Label(markup="<b>Model</b>", h_align="start")
+        api_grid.attach(model_label, 0, 0, 1, 1)
+        api_grid.attach(key_label, 1, 0, 1, 1)
+        api_grid.attach(model_select_label, 2, 0, 1, 1)
+
+        # Import data module to get current API keys and models
+        from .data import (
+            AI_OPENAI_API_KEY, AI_GEMINI_API_KEY, AI_CLAUDE_API_KEY, 
+            AI_GROK_API_KEY, AI_DEEPSEEK_API_KEY,
+            AI_OPENAI_KEY, AI_GEMINI_KEY, AI_CLAUDE_KEY, 
+            AI_GROK_KEY, AI_DEEPSEEK_KEY,
+            AI_OPENAI_MODEL, AI_GEMINI_MODEL, AI_CLAUDE_MODEL,
+            AI_GROK_MODEL, AI_DEEPSEEK_MODEL
+        )
+
+        # AI Models and their API key entries
+        self.ai_entries = []
+        self.ai_model_combos = {}
+        
+        # Get the actual model values from the imported constants
+        # These are the actual model names like "gpt-3.5-turbo", "gemini-1.5-pro", etc.
+        from .data import (
+            AI_OPENAI_MODEL as OPENAI_MODEL_VALUE,
+            AI_GEMINI_MODEL as GEMINI_MODEL_VALUE,
+            AI_CLAUDE_MODEL as CLAUDE_MODEL_VALUE,
+            AI_GROK_MODEL as GROK_MODEL_VALUE,
+            AI_DEEPSEEK_MODEL as DEEPSEEK_MODEL_VALUE
+        )
+        
+        # Create a mapping of model keys to their current values
+        model_values = {
+            AI_OPENAI_MODEL: OPENAI_MODEL_VALUE,
+            AI_GEMINI_MODEL: GEMINI_MODEL_VALUE,
+            AI_CLAUDE_MODEL: CLAUDE_MODEL_VALUE,
+            AI_GROK_MODEL: GROK_MODEL_VALUE,
+            AI_DEEPSEEK_MODEL: DEEPSEEK_MODEL_VALUE,
+        }
+        
+        # Define available models for each service
+        ai_services = [
+            ("Chat GPT (OpenAI)", AI_OPENAI_KEY, AI_OPENAI_API_KEY, AI_OPENAI_MODEL, [
+                "gpt-3.5-turbo", "gpt-3.5-turbo-16k", "gpt-4", "gpt-4-turbo", "gpt-4o", "gpt-4o-mini"
+            ]),
+            ("Gemini (Google)", AI_GEMINI_KEY, AI_GEMINI_API_KEY, AI_GEMINI_MODEL, [
+                "gemini-2.5-flash", "gemini-2.5-pro", "gemini-2.0-flash", "gemini-2.0-flash-exp",
+                "gemini-1.5-pro", "gemini-1.5-flash", "gemini-1.5-pro-latest", "gemini-1.5-flash-latest",
+                "gemini-1.0-pro", "gemini-1.0-pro-vision"
+            ]),
+            ("Claude (Anthropic)", AI_CLAUDE_KEY, AI_CLAUDE_API_KEY, AI_CLAUDE_MODEL, [
+                "claude-3-sonnet-20240229", "claude-3-opus-20240229", "claude-3-haiku-20240307",
+                "claude-3-5-sonnet-20241022", "claude-3-5-haiku-20241022"
+            ]),
+            ("Grok (xAI)", AI_GROK_KEY, AI_GROK_API_KEY, AI_GROK_MODEL, [
+                "grok-beta", "grok-2"
+            ]),
+            ("Deepseek", AI_DEEPSEEK_KEY, AI_DEEPSEEK_API_KEY, AI_DEEPSEEK_MODEL, [
+                "deepseek-chat", "deepseek-coder", "deepseek-llm-7b-chat"
+            ]),
+        ]
+
+        for i, (service_name, key_name, current_key, model_key, available_models) in enumerate(ai_services):
+            row = i + 1
+            model_label = Label(label=service_name, h_align="start")
+            key_entry = Entry(text=current_key, tooltip_text=f"Enter your {service_name} API key")
+            key_entry.set_visibility(False)  # Hide the API key for security
+            
+            # Create model selection combo box
+            model_combo = Gtk.ComboBoxText()
+            for model in available_models:
+                model_combo.append_text(model)
+            
+            # Set current model
+            current_model = model_values[model_key]
+            model_combo.set_active(available_models.index(current_model) if current_model in available_models else 0)
+            
+            api_grid.attach(model_label, 0, row, 1, 1)
+            api_grid.attach(key_entry, 1, row, 1, 1)
+            api_grid.attach(model_combo, 2, row, 1, 1)
+            
+            self.ai_entries.append((key_name, key_entry))
+            self.ai_model_combos[model_key] = model_combo
+
+        main_vbox.add(api_grid)
+        
+        # Add some spacing
+        main_vbox.add(Box(v_expand=True))
+        
+        return scrolled_window
+
+
     def create_about_tab(self):
         vbox = Box(orientation="v", spacing=18, style="margin: 30px;")
         vbox.add(Label(markup=f"<b>{APP_NAME_CAP}</b>", h_align="start", style="font-size: 1.5em; margin-bottom: 8px;"))
@@ -660,6 +788,14 @@ class HyprConfGUI(Window):
             child.get_children()[0].get_text() for child in self.disk_entries.get_children() if isinstance(child, Gtk.Box) and child.get_children() and isinstance(child.get_children()[0], Entry)
         ]
 
+        # Save AI API keys and model selections
+        for key_name, key_entry in self.ai_entries:
+            current_bind_vars_snapshot[key_name] = key_entry.get_text()
+        
+        # Save AI model selections
+        for model_key, model_combo in self.ai_model_combos.items():
+            selected_model = model_combo.get_active_text()
+            current_bind_vars_snapshot[model_key] = selected_model
 
         selected_icon_path = self.selected_face_icon
         replace_lock = self.lock_switch and self.lock_switch.get_active()
