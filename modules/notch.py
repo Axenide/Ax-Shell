@@ -171,7 +171,6 @@ class Notch(Window):
 
         self.window_icon = Image(
             name="notch-window-icon", icon_name="application-x-executable", icon_size=20
-            name="notch-window-icon", icon_name="application-x-executable", icon_size=20
         )
 
         self.active_window = ActiveWindow(
@@ -253,7 +252,6 @@ class Notch(Window):
                 self.active_window_box,
                 self.player_small,
             ],
-            ],
         )
         self.compact_stack.set_visible_child(self.active_window_box)
 
@@ -261,9 +259,6 @@ class Notch(Window):
         self.compact.set_visible(True)
         self.compact.add(self.compact_stack)
         self.compact.add_events(
-            Gdk.EventMask.SCROLL_MASK
-            | Gdk.EventMask.BUTTON_PRESS_MASK
-            | Gdk.EventMask.SMOOTH_SCROLL_MASK
             Gdk.EventMask.SCROLL_MASK
             | Gdk.EventMask.BUTTON_PRESS_MASK
             | Gdk.EventMask.SMOOTH_SCROLL_MASK
@@ -306,7 +301,6 @@ class Notch(Window):
                 self.tmux,
                 self.cliphist,
             ],
-            ],
         )
 
         if data.PANEL_THEME == "Panel":
@@ -315,9 +309,6 @@ class Notch(Window):
             self.stack.add_style_class(data.BAR_POSITION.lower())
             self.stack.add_style_class(data.PANEL_POSITION.lower())
 
-        if is_panel_vertical or (
-            data.PANEL_POSITION in ["Start", "End"] and data.PANEL_THEME == "Panel"
-        ):
         if is_panel_vertical or (
             data.PANEL_POSITION in ["Start", "End"] and data.PANEL_THEME == "Panel"
         ):
@@ -345,7 +336,6 @@ class Notch(Window):
                 MyCorner("top-right"),
                 Box(),
             ],
-            ],
         )
 
         self.corner_right = Box(
@@ -355,7 +345,6 @@ class Notch(Window):
             children=[
                 MyCorner("top-left"),
                 Box(),
-            ],
             ],
         )
 
