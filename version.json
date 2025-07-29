@@ -1,7 +1,7 @@
 {
-	"version": "5.0.1",
+	"version": "5.0.2",
 	"pkg_update": true,
 	"changelog": [
-		"<b>tweak:</b> Moved power profile switcher to the start of the bar for better distribution."
+		"<b>fix:</b> Implemented latest Fabric WM/Compositor specific widgets."
 	]
 }
