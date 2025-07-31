@@ -84,9 +84,13 @@ class SystemTray(Gtk.Box):
                             self.pixel_size,
                             Gtk.IconLookupFlags.FORCE_SIZE,
                         )
-                    except:
-                        logger.warning("Failed to load icon from default theme")
-                        pixbuf = None
+                    except Exception as e:
+                        logger.warning(f"Failed to load icon from default theme {e}")
+                        pixbuf = Gtk.IconTheme.get_default().load_icon(
+                            "image-missing",
+                            self.pixel_size,
+                            Gtk.IconLookupFlags.FORCE_SIZE,
+                        )
         except GLib.Error:
             # Fallback to 'image-missing' icon
             pixbuf = Gtk.IconTheme.get_default().load_icon(
