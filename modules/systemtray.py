@@ -3,6 +3,7 @@ import gi
 gi.require_version("Gray", "0.1")
 from gi.repository import Gray, Gtk, Gdk, GdkPixbuf, GLib
 
+from loguru import logger
 import config.data as data
 
 
@@ -76,11 +77,16 @@ class SystemTray(Gtk.Box):
                             Gtk.IconLookupFlags.FORCE_SIZE,
                         )
                 else:
-                    pixbuf = Gtk.IconTheme.get_default().load_icon(
-                        icon_name,
-                        self.pixel_size,
-                        Gtk.IconLookupFlags.FORCE_SIZE,
-                    )
+                    try:
+                        # Load icon from default theme
+                        pixbuf = Gtk.IconTheme.get_default().load_icon(
+                            icon_name,
+                            self.pixel_size,
+                            Gtk.IconLookupFlags.FORCE_SIZE,
+                        )
+                    except:
+                        logger.warning("Failed to load icon from default theme")
+                        pixbuf = None
         except GLib.Error:
             # Fallback to 'image-missing' icon
             pixbuf = Gtk.IconTheme.get_default().load_icon(

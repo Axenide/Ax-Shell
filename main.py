@@ -3,6 +3,7 @@ import setproctitle
 from fabric import Application
 from fabric.utils import exec_shell_command_async, get_relative_path
 import gi
+from loguru import logger
 
 gi.require_version("GLib", "2.0")
 from gi.repository import GLib
@@ -27,6 +28,19 @@ from modules.updater import run_updater
 
 fonts_updated_file = f"{CACHE_DIR}/fonts_updated"
 hyprconf = get_relative_path("config.json")
+
+for log in [
+    "fabric.hyprland.widgets",
+    "fabric.audio.service",
+    "fabric.core.widgets.wm",
+    "fabric.bluetooth.service",
+    "services.network",
+    "widgets.wayland",
+    "modules.cavalcade",
+    "modules.notifications",
+    "modules.overview",
+]:
+    logger.disable(log)
 
 
 if __name__ == "__main__":
