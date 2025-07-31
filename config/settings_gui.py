@@ -242,18 +242,10 @@ class HyprConfGUI(Window):
         )
         browse_btn_container.add(face_btn)
         top_grid.attach(browse_btn_container, 3, 1, 1, 1)
-        self.face_status_label = Label(label="", h_align="start")
-        top_grid.attach(self.face_status_label, 2, 2, 2, 1)
-
-        separator1 = Box(
-            style="min-height: 1px; background-color: alpha(@fg_color, 0.2); margin: 5px 0px;",
-            h_expand=True,
-        )
-        vbox.add(separator1)
 
         # START NEW SECTION FOR DATETIME FORMAT
         datetime_format_header = Label(
-            markup="<b>Date & Time Format</b>", h_align="start"
+            markup="<b>Date &amp; Time Format</b>", h_align="start"
         )
         vbox.add(datetime_format_header)
 
