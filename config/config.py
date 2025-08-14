@@ -22,7 +22,7 @@ import shutil
 
 from fabric import Application
 
-if __name__ == "__main__" and (__package__ is None or __package__ == ''):
+if __name__ == "__main__" and not __package__:
     from config.data import APP_NAME, APP_NAME_CAP
     from config.settings_gui import HyprConfGUI
     from config.settings_utils import load_bind_vars
