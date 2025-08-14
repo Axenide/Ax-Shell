@@ -1322,15 +1322,6 @@ class NotificationContainer(Box):
                 )
                 notif_box.destroy()
 
-            if len(self.notifications) == 1:
-                self._is_destroying = True
-                self.main_revealer.set_reveal_child(False)
-                GLib.timeout_add(
-                    self.main_revealer.get_transition_duration(),
-                    self._destroy_container,
-                )
-                return
-
             new_index = i
             if i == self.current_index:
                 new_index = max(0, i - 1)
@@ -1345,8 +1336,13 @@ class NotificationContainer(Box):
                 new_index = len(self.notifications) - 1
 
             self.current_index = new_index
-
-            if len(self.notifications) > 0:
+            
+            if not self.notifications:
+                self._is_destroying = True
+                self.main_revealer.set_reveal_child(False)
+                self._destroy_container()
+                return
+            else:
                 self.stack.set_visible_child(self.notifications[self.current_index])
 
             self.update_navigation_buttons()
