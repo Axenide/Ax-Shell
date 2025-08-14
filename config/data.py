@@ -16,6 +16,20 @@ PANEL_POSITION_DEFAULT = "Center"
 NOTIF_POS_KEY = "notif_pos"
 NOTIF_POS_DEFAULT = "Top"
 
+# AI API Keys
+AI_OPENAI_KEY = "ai_openai_key"
+AI_GEMINI_KEY = "ai_gemini_key"
+AI_CLAUDE_KEY = "ai_claude_key"
+AI_GROK_KEY = "ai_grok_key"
+AI_DEEPSEEK_KEY = "ai_deepseek_key"
+
+# AI Model Selections
+AI_OPENAI_MODEL = "ai_openai_model"
+AI_GEMINI_MODEL = "ai_gemini_model"
+AI_CLAUDE_MODEL = "ai_claude_model"
+AI_GROK_MODEL = "ai_grok_model"
+AI_DEEPSEEK_MODEL = "ai_deepseek_model"
+
 CACHE_DIR = str(GLib.get_user_cache_dir()) + f"/{APP_NAME}"
 
 USERNAME = os.getlogin()
@@ -106,6 +120,20 @@ if os.path.exists(CONFIG_FILE):
     METRICS_SMALL_VISIBLE = config.get(
         "metrics_small_visible", {"cpu": True, "ram": True, "disk": True, "gpu": True}
     )
+    
+    # AI API Keys
+    AI_OPENAI_API_KEY = config.get(AI_OPENAI_KEY, "")
+    AI_GEMINI_API_KEY = config.get(AI_GEMINI_KEY, "")
+    AI_CLAUDE_API_KEY = config.get(AI_CLAUDE_KEY, "")
+    AI_GROK_API_KEY = config.get(AI_GROK_KEY, "")
+    AI_DEEPSEEK_API_KEY = config.get(AI_DEEPSEEK_KEY, "")
+    
+    # AI Model Selections (with backward compatibility for old format)
+    AI_OPENAI_MODEL = config.get(AI_OPENAI_MODEL, config.get("gpt-3.5-turbo", "gpt-3.5-turbo"))
+    AI_GEMINI_MODEL = config.get(AI_GEMINI_MODEL, config.get("gemini-1.5-pro", "gemini-1.5-pro"))
+    AI_CLAUDE_MODEL = config.get(AI_CLAUDE_MODEL, config.get("claude-3-sonnet-20240229", "claude-3-sonnet-20240229"))
+    AI_GROK_MODEL = config.get(AI_GROK_MODEL, config.get("grok-beta", "grok-beta"))
+    AI_DEEPSEEK_MODEL = config.get(AI_DEEPSEEK_MODEL, config.get("deepseek-chat", "deepseek-chat"))
 else:
     WALLPAPERS_DIR = WALLPAPERS_DIR_DEFAULT
     BAR_POSITION = "Left"
@@ -125,6 +153,7 @@ else:
 
     PANEL_POSITION = PANEL_POSITION_DEFAULT
     NOTIF_POS = NOTIF_POS_DEFAULT
+
 
     BAR_COMPONENTS_VISIBILITY = {
         "button_apps": True,
