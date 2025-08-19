@@ -81,6 +81,11 @@ class Dashboard(Box):
         ):
             GLib.idle_add(self._setup_switcher_icons)
 
+        # Close on right click if the event isn't handled
+        self.connect(
+            "button-release-event",
+            lambda widget, event: (event.button == 3 and self.notch.close_notch()),
+        )
         self.show_all()
 
     def _setup_switcher_icons(self):
