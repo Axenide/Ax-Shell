@@ -83,29 +83,28 @@ if os.path.exists(CONFIG_FILE):
     NOTIF_POS = config.get(NOTIF_POS_KEY, NOTIF_POS_DEFAULT)
 
     BAR_COMPONENTS_VISIBILITY = {
-        "button_apps": config.get("bar_button_apps_visible", True),
-        "systray": config.get("bar_systray_visible", True),
-        "control": config.get("bar_control_visible", True),
-        "network": config.get("bar_network_visible", True),
-        "button_tools": config.get("bar_button_tools_visible", True),
-        "sysprofiles": config.get("bar_sysprofiles_visible", True),
-        "button_overview": config.get("bar_button_overview_visible", True),
-        "ws_container": config.get("bar_ws_container_visible", True),
-        "weather": config.get("bar_weather_visible", True),
-        "battery": config.get("bar_battery_visible", True),
-        "metrics": config.get("bar_metrics_visible", True),
-        "language": config.get("bar_language_visible", True),
-        "date_time": config.get("bar_date_time_visible", True),
-        "button_power": config.get("bar_button_power_visible", True),
+        'button_apps': config.get('bar_button_apps_visible', True),
+        'systray': config.get('bar_systray_visible', True),
+        'control': config.get('bar_control_visible', True),
+        'network': config.get('bar_network_visible', True),
+        'button_tools': config.get('bar_button_tools_visible', True),
+        'button_overview': config.get('bar_button_overview_visible', True),
+        'ws_container': config.get('bar_ws_container_visible', True),
+        'weather': config.get('bar_weather_visible', True),
+        'battery': config.get('bar_battery_visible', True),
+        'metrics': config.get('bar_metrics_visible', True),
+        'temperatures': config.get('bar_temperatures_visible', False),
+        'sysprofiles': config.get("bar_sysprofiles_visible", True),
+        'language': config.get('bar_language_visible', True),
+        'date_time': config.get('bar_date_time_visible', True),
+        'button_power': config.get('bar_button_power_visible', True),
     }
+    
+    BAR_METRICS_DISKS = config.get('bar_metrics_disks', ["/"])
+    METRICS_VISIBLE = config.get('metrics_visible', {'cpu': True, 'ram': True, 'disk': True, 'gpu': True})
+    METRICS_SMALL_VISIBLE = config.get('metrics_small_visible', {'cpu': True, 'ram': True, 'disk': True, 'gpu': True})
+    TEMPERATURE_POLL_INTERVAL = config.get('temperature_poll_interval', 1)
 
-    BAR_METRICS_DISKS = config.get("bar_metrics_disks", ["/"])
-    METRICS_VISIBLE = config.get(
-        "metrics_visible", {"cpu": True, "ram": True, "disk": True, "gpu": True}
-    )
-    METRICS_SMALL_VISIBLE = config.get(
-        "metrics_small_visible", {"cpu": True, "ram": True, "disk": True, "gpu": True}
-    )
 else:
     WALLPAPERS_DIR = WALLPAPERS_DIR_DEFAULT
     BAR_POSITION = "Left"
@@ -126,21 +125,23 @@ else:
     PANEL_POSITION = PANEL_POSITION_DEFAULT
     NOTIF_POS = NOTIF_POS_DEFAULT
 
+    # Merged default BAR_COMPONENTS_VISIBILITY dictionary
     BAR_COMPONENTS_VISIBILITY = {
-        "button_apps": True,
-        "systray": True,
-        "control": True,
-        "network": True,
-        "button_tools": True,
-        "button_overview": True,
-        "ws_container": True,
-        "weather": True,
-        "battery": True,
-        "metrics": True,
-        "language": True,
-        "date_time": True,
-        "button_power": True,
-        "sysprofiles": True,
+        'button_apps': True,
+        'systray': True,
+        'control': True,
+        'network': True,
+        'button_tools': True,
+        'button_overview': True,
+        'ws_container': True,
+        'weather': True,
+        'battery': True,
+        'metrics': True,
+        'temperatures': False,
+        'sysprofiles': True,
+        'language': True,
+        'date_time': True,
+        'button_power': True,
     }
 
     BAR_METRICS_DISKS = ["/"]
