@@ -43,34 +43,17 @@ def ensure_matugen_config():
     with the expected settings.
     """
     expected_config = {
-        "config": {
-            "reload_apps": True,
-            "wallpaper": {
-                "command": "swww",
-                "arguments": [
-                    "img",
-                    "-t",
-                    "fade",
-                    "--transition-duration",
-                    "0.5",
-                    "--transition-step",
-                    "255",
-                    "--transition-fps",
-                    "60",
-                    "-f",
-                    "Nearest",
-                ],
-                "set": True,
-            },
-            "custom_colors": {
-                "red": {"color": "#FF0000", "blend": True},
-                "green": {"color": "#00FF00", "blend": True},
-                "yellow": {"color": "#FFFF00", "blend": True},
-                "blue": {"color": "#0000FF", "blend": True},
-                "magenta": {"color": "#FF00FF", "blend": True},
-                "cyan": {"color": "#00FFFF", "blend": True},
-                "white": {"color": "#FFFFFF", "blend": True},
-            },
+        'config': {
+            'reload_apps': True,
+            'custom_colors': {
+                'red': {'color': "#FF0000", 'blend': True},
+                'green': {'color': "#00FF00", 'blend': True},
+                'yellow': {'color': "#FFFF00", 'blend': True},
+                'blue': {'color': "#0000FF", 'blend': True},
+                'magenta': {'color': "#FF00FF", 'blend': True},
+                'cyan': {'color': "#00FFFF", 'blend': True},
+                'white': {'color': "#FFFFFF", 'blend': True}
+            }
         },
         "templates": {
             "hyprland": {
@@ -95,14 +78,13 @@ def ensure_matugen_config():
                 existing_config = toml.load(f)
             shutil.copyfile(config_path, config_path + ".bak")
         except toml.TomlDecodeError:
-            print(
-                f"Warning: Could not decode TOML from {config_path}. A new default config will be created."
-            )
-            existing_config = {}  # Resetear si está corrupto
+            print(f"Warning: Could not decode TOML from {config_path}. A new default config will be created.")
+            existing_config = {} # Reset if corrupt
         except Exception as e:
             print(f"Error reading or backing up {config_path}: {e}")
-            # existing_config podría estar parcialmente cargado o vacío.
-            # Continuar para intentar fusionar con defaults.
+            # existing_config could be partially loaded or empty.
+            # Continue to try merging with defaults.
+
 
     # Usamos una copia de existing_config para deep_update si no queremos modificarlo directamente
     # o asegurarse que deep_update no lo haga si no es deseado.
@@ -114,17 +96,21 @@ def ensure_matugen_config():
         existing_config, expected_config
     )  # existing_config se modifica in-place
 
+
     try:
         with open(config_path, "w") as f:
             toml.dump(merged_config, f)
     except Exception as e:
         print(f"Error writing matugen config to {config_path}: {e}")
 
+      
+    #generate the stuff only if any of these doesnt exist
     current_wall = os.path.expanduser("~/.current.wall")
     hypr_colors = os.path.expanduser(
         f"~/.config/{APP_NAME_CAP}/config/hypr/colors.conf"
     )
     css_colors = os.path.expanduser(f"~/.config/{APP_NAME_CAP}/styles/colors.css")
+
 
     if (
         not os.path.exists(current_wall)
@@ -141,10 +127,12 @@ def ensure_matugen_config():
             )
             if os.path.exists(example_wallpaper_path):
                 try:
+
                     # Si ya existe (posiblemente un enlace roto o archivo regular), eliminar y re-enlazar
                     if os.path.lexists(
                         current_wall
                     ):  # lexists para no seguir el enlace si es uno
+
                         os.remove(current_wall)
                     os.symlink(example_wallpaper_path, current_wall)
                     image_path = example_wallpaper_path
@@ -158,6 +146,7 @@ def ensure_matugen_config():
             )
 
         if image_path and os.path.exists(image_path):
+
             print(f"Generating color theme from wallpaper: {image_path}")
             try:
                 matugen_cmd = f"matugen image '{image_path}'"
@@ -175,7 +164,6 @@ def ensure_matugen_config():
             print(
                 f"Warning: Wallpaper at {image_path} not found. Cannot generate matugen theme."
             )
-
 
 def load_bind_vars():
     """
