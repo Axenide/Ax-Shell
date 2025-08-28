@@ -2,7 +2,6 @@ import json
 import os
 import shutil
 import subprocess
-import threading
 import time
 from pathlib import Path
 
@@ -1074,7 +1073,7 @@ class HyprConfGUI(Window):
             self.selected_face_icon = None
             self.face_status_label.label = ""
 
-        def _apply_and_reload_task_thread():
+        def _apply_and_reload_task_thread(user_data):
             nonlocal current_bind_vars_snapshot
 
             from . import settings_utils
@@ -1202,9 +1201,7 @@ class HyprConfGUI(Window):
                 f"{end_time:.4f}: Background task finished (Total: {end_time - start_time:.4f}s)."
             )
 
-        thread = threading.Thread(target=_apply_and_reload_task_thread)
-        thread.daemon = True
-        thread.start()
+        GLib.Thread.new("apply-reload-task", _apply_and_reload_task_thread, None)
         print("Configuration apply/reload task started in background.")
 
     def _update_face_image_widget(self, icon_path):

@@ -247,7 +247,9 @@ class Dock(Window):
                     corner.set_visible(False)
             
 
-            if not data.DOCK_ENABLED or (data.BAR_POSITION in ["Top", "Bottom"] and data.PANEL_THEME != "Notch"):
+            # Hide normal dock when it should be embedded in the bar OR when dock is disabled
+            should_be_embedded = (data.BAR_POSITION == "Bottom") or (data.PANEL_THEME == "Panel" and data.BAR_POSITION in ["Top", "Bottom"])
+            if should_be_embedded or not data.DOCK_ENABLED:
                 self.set_visible(False) 
             
             if self.always_occluded: 

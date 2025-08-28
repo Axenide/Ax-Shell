@@ -163,6 +163,21 @@ class AppLauncher(Box):
         self.viewport.children = []
         self.selected_index = -1
 
+        def extract_command_name(command_line):
+            """Extract base command name from command line, removing paths and arguments"""
+            if not command_line:
+                return ""
+            # Remove common shell wrappers
+            if command_line.startswith("/bin/sh -c"):
+                # Handle wrapped commands like "/bin/sh -c "\$SHELL -i -c scrcpy""
+                return ""
+            # Split by spaces and take first part (the command)
+            cmd = command_line.split()[0] if command_line.split() else ""
+            # Extract just the command name from full paths
+            if "/" in cmd:
+                cmd = cmd.split("/")[-1]
+            return cmd
+
         filtered_apps_iter = iter(
             sorted(
                 [
@@ -173,6 +188,9 @@ class AppLauncher(Box):
                         (app.display_name or "")
                         + (" " + app.name + " ")
                         + (app.generic_name or "")
+                        + (" " + (app.command_line or "") + " ")
+                        + (" " + (app.executable or "") + " ")
+                        + (" " + extract_command_name(app.command_line) + " ")
                     ).casefold()
                 ],
                 key=lambda app: (app.display_name or "").casefold(),

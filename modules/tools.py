@@ -1,6 +1,5 @@
 import os
 import subprocess
-import threading
 
 from fabric.utils.helpers import exec_shell_command_async, get_relative_path
 from fabric.widgets.box import Box
@@ -326,25 +325,29 @@ class Toolbox(Box):
         self.close_menu()
 
     def pomodoro_check(self):
-        def check():
-            try:
-                result = subprocess.run("pgrep -f pomodoro.sh", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                running = result.returncode == 0
-            except Exception:
-                running = False
-
-            def update_ui():
-                if running:
-                    self.btn_pomodoro.get_child().set_markup(icons.timer_on)
-                    self.btn_pomodoro.add_style_class("pomodoro")
-                else:
-                    self.btn_pomodoro.get_child().set_markup(icons.timer_off)
-                    self.btn_pomodoro.remove_style_class("pomodoro")
-                return False
-            GLib.idle_add(update_ui)
-            return False
-        GLib.idle_add(lambda: threading.Thread(target=check).start())
+        """Check pomodoro status using proper background threading"""
+        GLib.Thread.new("pomodoro-check", self._pomodoro_check_thread, None)
         return True
+    
+    def _pomodoro_check_thread(self, user_data):
+        """Background thread to check pomodoro status"""
+        try:
+            result = subprocess.run("pgrep -f pomodoro.sh", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            running = result.returncode == 0
+        except Exception:
+            running = False
+
+        GLib.idle_add(self._update_pomodoro_ui, running)
+    
+    def _update_pomodoro_ui(self, running):
+        """Update pomodoro UI from main thread"""
+        if running:
+            self.btn_pomodoro.get_child().set_markup(icons.timer_on)
+            self.btn_pomodoro.add_style_class("pomodoro")
+        else:
+            self.btn_pomodoro.get_child().set_markup(icons.timer_off)
+            self.btn_pomodoro.remove_style_class("pomodoro")
+        return False
 
     def ocr(self, *args):
         exec_shell_command_async(f"bash {OCR_SCRIPT} s")
@@ -356,23 +359,27 @@ class Toolbox(Box):
         self.close_menu()
 
     def gamemode_check(self):
-        def check():
-            try:
-                result = subprocess.run(f"bash {GAMEMODE_SCRIPT} check", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                enabled = result.stdout == b't\n'
-            except Exception:
-                enabled = False
-
-            def update_ui():
-                if enabled:
-                    self.btn_gamemode.get_child().set_markup(icons.gamemode_off)
-                else:
-                    self.btn_gamemode.get_child().set_markup(icons.gamemode)
-                return False
-            GLib.idle_add(update_ui)
-            return False
-        GLib.idle_add(lambda: threading.Thread(target=check).start())
+        """Check gamemode status using proper background threading"""
+        GLib.Thread.new("gamemode-check", self._gamemode_check_thread, None)
         return True
+    
+    def _gamemode_check_thread(self, user_data):
+        """Background thread to check gamemode status"""
+        try:
+            result = subprocess.run(f"bash {GAMEMODE_SCRIPT} check", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            enabled = result.stdout == b't\n'
+        except Exception:
+            enabled = False
+
+        GLib.idle_add(self._update_gamemode_ui, enabled)
+    
+    def _update_gamemode_ui(self, enabled):
+        """Update gamemode UI from main thread"""
+        if enabled:
+            self.btn_gamemode.get_child().set_markup(icons.gamemode_off)
+        else:
+            self.btn_gamemode.get_child().set_markup(icons.gamemode)
+        return False
 
     def colorpicker(self, button, event):
         if event.type == Gdk.EventType.BUTTON_PRESS:
@@ -403,25 +410,29 @@ class Toolbox(Box):
         return False
 
     def update_screenrecord_state(self):
-        def check():
-            try:
-                result = subprocess.run("pgrep -f gpu-screen-recorder", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                running = result.returncode == 0
-            except Exception:
-                running = False
-
-            def update_ui():
-                if running:
-                    self.btn_screenrecord.get_child().set_markup(icons.stop)
-                    self.btn_screenrecord.add_style_class("recording")
-                else:
-                    self.btn_screenrecord.get_child().set_markup(icons.screenrecord)
-                    self.btn_screenrecord.remove_style_class("recording")
-                return False
-            GLib.idle_add(update_ui)
-            return False
-        GLib.idle_add(lambda: threading.Thread(target=check).start())
+        """Check screen recording status using proper background threading"""
+        GLib.Thread.new("screenrecord-check", self._screenrecord_check_thread, None)
         return True
+    
+    def _screenrecord_check_thread(self, user_data):
+        """Background thread to check screen recording status"""
+        try:
+            result = subprocess.run("pgrep -f gpu-screen-recorder", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            running = result.returncode == 0
+        except Exception:
+            running = False
+
+        GLib.idle_add(self._update_screenrecord_ui, running)
+    
+    def _update_screenrecord_ui(self, running):
+        """Update screen recording UI from main thread"""
+        if running:
+            self.btn_screenrecord.get_child().set_markup(icons.stop)
+            self.btn_screenrecord.add_style_class("recording")
+        else:
+            self.btn_screenrecord.get_child().set_markup(icons.screenrecord)
+            self.btn_screenrecord.remove_style_class("recording")
+        return False
 
     def open_screenshots_folder(self, *args):
         screenshots_dir = os.path.join(os.environ.get('XDG_PICTURES_DIR', 

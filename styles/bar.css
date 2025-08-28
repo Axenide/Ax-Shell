@@ -88,8 +88,9 @@ menu > menuitem > label,
 }
 
 #language {
+  min-height: 36px;
   background-color: var(--shadow);
-  padding: 8px;
+  padding: 0 8px;
 }
 
 #language.invert {

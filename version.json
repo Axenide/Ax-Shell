@@ -1,7 +1,7 @@
 {
-	"version": "0.0.28", 
-  "pkg_update": true,
+	"version": "0.0.35", 
+  "pkg_update": false,
 	"changelog": [
-    "<b>fix:</b> Implemented latest Fabric WM/Compositor specific widgets."
+    "<b>fix:</b> Calendar showing wrong weekday on some devices"
   ]
 }

@@ -1,6 +1,6 @@
 #!/usr/bin/env sh
 
-sleep 0.25
+sleep 0.5
 
 if [ -z "$XDG_PICTURES_DIR" ]; then
     XDG_PICTURES_DIR="$HOME/Pictures"

@@ -15,9 +15,7 @@ from gi.repository import GLib
 # Importar settings_constants para DEFAULTS
 from . import settings_constants
 from .data import (  # CONFIG_DIR, HOME_DIR no se usan aquí directamente
-    APP_NAME,
-    APP_NAME_CAP,
-)
+    APP_NAME, APP_NAME_CAP)
 
 # Global variable to store binding variables, managed by this module
 bind_vars = {}  # Se inicializa vacío, load_bind_vars lo poblará
@@ -233,7 +231,7 @@ def generate_hyprconf() -> str:
 
     return f"""exec-once = uwsm-app $(python {home}/.config/{APP_NAME_CAP}/main.py)
 exec = pgrep -x "hypridle" > /dev/null || uwsm app -- hypridle
-exec = uwsm app -- swww-daemon
+exec-once = uwsm app -- swww-daemon
 exec-once =  wl-paste --type text --watch cliphist store
 exec-once =  wl-paste --type image --watch cliphist store
 
@@ -284,7 +282,7 @@ cursor {{
 decoration {{
     blur {{
         enabled = yes
-        size = 5
+        size = 1
         passes = 3
         new_optimizations = yes
         contrast = 1
