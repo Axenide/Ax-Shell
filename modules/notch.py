@@ -1,4 +1,4 @@
-from fabric.hyprland.widgets import ActiveWindow
+from fabric.hyprland.widgets import HyprlandActiveWindow as ActiveWindow
 from fabric.utils.helpers import FormattedString, get_desktop_applications
 from fabric.widgets.box import Box
 from fabric.widgets.centerbox import CenterBox

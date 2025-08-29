@@ -309,31 +309,45 @@ class NightModeButton(Button):
           - If running, kill it and mark as 'Disabled'.
           - If not running, start it and mark as 'Enabled'.
         """
+        GLib.Thread.new("hyprsunset-toggle", self._toggle_hyprsunset_thread, None)
+    
+    def _toggle_hyprsunset_thread(self, user_data):
+        """Background thread to check and toggle hyprsunset without blocking UI."""
         try:
             subprocess.check_output(["pgrep", "hyprsunset"])
             exec_shell_command_async("pkill hyprsunset")
-            self.night_mode_status.set_label("Disabled")
-            for widget in self.widgets:
-                widget.add_style_class("disabled")
+            GLib.idle_add(self.night_mode_status.set_label, "Disabled")
+            GLib.idle_add(self._add_disabled_style)
         except subprocess.CalledProcessError:
             exec_shell_command_async("hyprsunset -t 3500")
-            self.night_mode_status.set_label("Enabled")
-            for widget in self.widgets:
-                widget.remove_style_class("disabled")
+            GLib.idle_add(self.night_mode_status.set_label, "Enabled")
+            GLib.idle_add(self._remove_disabled_style)
+    
+    def _add_disabled_style(self):
+        """Helper to add disabled style to all widgets."""
+        for widget in self.widgets:
+            widget.add_style_class("disabled")
+    
+    def _remove_disabled_style(self):
+        """Helper to remove disabled style from all widgets."""
+        for widget in self.widgets:
+            widget.remove_style_class("disabled")
 
     def check_hyprsunset(self, *args):
         """
         Update the button state based on whether hyprsunset is running.
         """
+        GLib.Thread.new("hyprsunset-check", self._check_hyprsunset_thread, None)
+    
+    def _check_hyprsunset_thread(self, user_data):
+        """Background thread to check hyprsunset status without blocking UI."""
         try:
             subprocess.check_output(["pgrep", "hyprsunset"])
-            self.night_mode_status.set_label("Enabled")
-            for widget in self.widgets:
-                widget.remove_style_class("disabled")
+            GLib.idle_add(self.night_mode_status.set_label, "Enabled")
+            GLib.idle_add(self._remove_disabled_style)
         except subprocess.CalledProcessError:
-            self.night_mode_status.set_label("Disabled")
-            for widget in self.widgets:
-                widget.add_style_class("disabled")
+            GLib.idle_add(self.night_mode_status.set_label, "Disabled")
+            GLib.idle_add(self._add_disabled_style)
 
 class CaffeineButton(Button):
     def __init__(self):

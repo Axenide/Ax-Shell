@@ -108,10 +108,11 @@ class ClipHistory(Box):
         self.search_entry.set_text("")
         self.search_entry.grab_focus()
 
-        GLib.idle_add(self._load_clipboard_items_thread)
+        # Use GLib.Thread for proper async execution
+        GLib.Thread.new("cliphist-loader", self._load_clipboard_items_thread, None)
 
-    def _load_clipboard_items_thread(self):
-        """Worker for loading clipboard items, now runs in main loop via idle_add"""
+    def _load_clipboard_items_thread(self, user_data):
+        """Background thread worker for loading clipboard items"""
         try:
             result = subprocess.run(
                 ["cliphist", "list"], 
@@ -126,16 +127,21 @@ class ClipHistory(Box):
                 if not line or "<meta http-equiv" in line:
                     continue
                 new_items.append(line)
-            self._update_items(new_items)
+            # Update UI from main thread
+            GLib.idle_add(self._update_items, new_items)
         except subprocess.CalledProcessError as e:
             print(f"Error loading clipboard history: {e}", file=sys.stderr)
         except Exception as e:
             print(f"Unexpected error: {e}", file=sys.stderr)
         finally:
-            self._loading = False
-            if self._pending_updates:
-                self._pending_updates = False
-                GLib.idle_add(self._load_clipboard_items_thread)
+            GLib.idle_add(self._loading_finished)
+    
+    def _loading_finished(self):
+        """Handle loading completion on main thread"""
+        self._loading = False
+        if self._pending_updates:
+            self._pending_updates = False
+            GLib.Thread.new("cliphist-loader", self._load_clipboard_items_thread, None)
         return False
 
     def _update_items(self, new_items):

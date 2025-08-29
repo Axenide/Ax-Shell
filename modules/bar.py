@@ -2,8 +2,9 @@ import json
 import os
 
 from fabric.hyprland.service import HyprlandEvent
-from fabric.hyprland.widgets import (Language, WorkspaceButton, Workspaces,
-                                     get_hyprland_connection)
+from fabric.hyprland.widgets import HyprlandLanguage as Language
+from fabric.hyprland.widgets import HyprlandWorkspaces as Workspaces
+from fabric.hyprland.widgets import WorkspaceButton, get_hyprland_connection
 from fabric.utils.helpers import exec_shell_command_async
 from fabric.widgets.box import Box
 from fabric.widgets.button import Button
@@ -334,12 +335,13 @@ class Bar(Window):
         self.v_all_children.extend(self.v_center_children)
         self.v_all_children.extend(self.v_end_children)
 
-        if (
-            data.DOCK_ENABLED
-            and data.BAR_POSITION == "Bottom"
-            or data.PANEL_THEME == "Panel"
-            and data.BAR_POSITION in ["Top", "Bottom"]
-        ):
+        # Create embedded dock when bar is in center position (regardless of DOCK_ENABLED setting)
+        should_embed_dock = (
+            data.BAR_POSITION == "Bottom"
+            or (data.PANEL_THEME == "Panel" and data.BAR_POSITION in ["Top", "Bottom"])
+        )
+        
+        if should_embed_dock:
             if not data.VERTICAL:
                 self.dock_instance = Dock(integrated_mode=True)
                 self.integrated_dock_widget = self.dock_instance.wrapper

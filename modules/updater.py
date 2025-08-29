@@ -4,7 +4,6 @@ import shutil
 import socket
 import subprocess
 import sys
-import threading
 import time
 from pathlib import Path
 
@@ -536,13 +535,14 @@ def launch_update_window(latest_version, changelog, pkg_update, is_standalone_mo
 
 def check_for_updates():
     """
-    Public function for module: starts the update check in a background thread.
-    This will run with force=False by default.
+    Entry point when called from the main application.
+    Initiates an update check in a background thread without force.
     """
-    # _initiate_update_check_flow's 'force' parameter defaults to False,
-    # so passing args=(False,) correctly sets is_standalone_mode=False and force=False.
-    thread = threading.Thread(target=_initiate_update_check_flow, args=(False,), daemon=True)
-    thread.start()
+    # Create wrapper function for GLib.Thread compatibility
+    def _update_check_wrapper(user_data):
+        _initiate_update_check_flow(False, False)
+    
+    GLib.Thread.new("update-check", _update_check_wrapper, None)
 
 
 def run_updater(force=False): # Modified to accept force argument
@@ -555,9 +555,11 @@ def run_updater(force=False): # Modified to accept force argument
     global _QUIT_GTK_IF_NO_WINDOW_STANDALONE
     _QUIT_GTK_IF_NO_WINDOW_STANDALONE = True
 
-    # Pass the force argument to the target function
-    update_check_thread = threading.Thread(target=_initiate_update_check_flow, args=(True, force), daemon=True)
-    update_check_thread.start()
+    # Create wrapper function for GLib.Thread compatibility  
+    def _standalone_update_wrapper(user_data):
+        _initiate_update_check_flow(True, force)
+    
+    GLib.Thread.new("standalone-update-check", _standalone_update_wrapper, None)
 
     Gtk.main()
 

@@ -1,7 +1,7 @@
 {
-	"version": "0.0.27", 
-  "pkg_update": true,
+	"version": "0.0.35", 
+  "pkg_update": false,
 	"changelog": [
-    "<b>tweak:</b> Moved power profile switcher to the start of the bar for better distribution."
+    "<b>fix:</b> Calendar showing wrong weekday on some devices"
   ]
 }
