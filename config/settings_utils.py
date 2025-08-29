@@ -269,6 +269,7 @@ bind = {bind_vars.get("prefix_power", "SUPER")}, {bind_vars.get("suffix_power", 
 bind = {bind_vars.get("prefix_caffeine", "SUPER SHIFT")}, {bind_vars.get("suffix_caffeine", "M")}, exec, $fabricSend 'notch.dashboard.widgets.buttons.caffeine_button.toggle_inhibit(external=True)' # Toggle Caffeine
 bind = {bind_vars.get("prefix_css", "SUPER SHIFT")}, {bind_vars.get("suffix_css", "B")}, exec, $fabricSend 'app.set_css()' # Reload CSS
 bind = {bind_vars.get("prefix_restart_inspector", "SUPER CTRL ALT")}, {bind_vars.get("suffix_restart_inspector", "B")}, exec, killall {APP_NAME}; uwsm-app $(GTK_DEBUG=interactive python {home}/.config/{APP_NAME_CAP}/main.py) # Restart with inspector
+bind = {bind_vars.get('prefix_ai', 'SUPER SHIFT')}, {bind_vars.get('suffix_ai', 'A')}, exec, $fabricSend 'notch.open_notch("ai")' # AI Panel
 
 # Wallpapers directory: {bind_vars.get("wallpapers_dir", "~/.config/Ax-Shell/assets/wallpapers_example")}
 
