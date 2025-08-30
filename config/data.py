@@ -75,6 +75,7 @@ if os.path.exists(CONFIG_FILE):
         "bar_workspace_use_chinese_numerals", False
     )
     BAR_HIDE_SPECIAL_WORKSPACE = config.get("bar_hide_special_workspace", True)
+    BAR_WORKSPACE_ICONS = config.get("bar_workspace_icons", {})
     BAR_THEME = config.get("bar_theme", "Pills")
     DOCK_THEME = config.get("dock_theme", "Pills")
     PANEL_THEME = config.get("panel_theme", "Pills")
