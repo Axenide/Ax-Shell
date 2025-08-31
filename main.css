@@ -22,6 +22,7 @@
 @import url("./styles/wallpapers.css");
 @import url("./styles/systemprofiles.css");
 @import url("./styles/workspaces.css");
+@import url("./styles/ai.css");
 
 * {
   all: unset;
@@ -114,7 +115,7 @@
 }
 
 #later-button:active {
-  background-color: var(--surface-bright);
+  background-color: var(--primary);
 }
 
 #toggle-updater-button {
@@ -129,3 +130,4 @@
   background-color: var(--outline);
   border-radius: 8px;
 }
+

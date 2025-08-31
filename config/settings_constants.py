@@ -102,4 +102,6 @@ DEFAULTS = {
     },
     "limited_apps_history": ["Spotify"],
     "history_ignored_apps": ["Hyprshot"],
+    'prefix_ai': "SUPER SHIFT",
+    'suffix_ai': "A",
 }
