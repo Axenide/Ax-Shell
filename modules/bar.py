@@ -2,8 +2,8 @@ import json
 import os
 
 from fabric.hyprland.service import HyprlandEvent
-from fabric.hyprland.widgets import HyprlandLanguage as Language
-from fabric.hyprland.widgets import HyprlandWorkspaces as Workspaces
+from fabric.hyprland.widgets import Language
+from fabric.hyprland.widgets import Workspaces
 from fabric.hyprland.widgets import WorkspaceButton, get_hyprland_connection
 from fabric.utils.helpers import exec_shell_command_async
 from fabric.widgets.box import Box
