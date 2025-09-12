@@ -2,6 +2,7 @@ import gi
 
 gi.require_version("Gray", "0.1")
 import logging
+import os
 
 from fabric.widgets.box import Box
 from gi.repository import Gdk, GdkPixbuf, GLib, Gray, Gtk
@@ -47,6 +48,18 @@ class SystemTray(Box):
                 return pm.as_pixbuf(self.pixel_size, GdkPixbuf.InterpType.HYPER)
 
             name = item.get_icon_name()
+            # If IconName is a file path, prioritize loading directly from the file
+            if name and os.path.exists(name):
+                try:
+                    return GdkPixbuf.Pixbuf.new_from_file_at_scale(
+                        name, self.pixel_size, self.pixel_size, True
+                    )
+                except Exception as e:
+                    # The file path exists but loading fails, falling back to theme search
+                    logger.debug(
+                        f"Load icon from file failed: {e}; fallback to theme for '{name}'"
+                    )
+
             theme = Gtk.IconTheme.new()
             path = item.get_icon_theme_path()
             if path:
