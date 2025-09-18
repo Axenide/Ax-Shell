@@ -64,6 +64,8 @@ DEFAULTS = {
     "dock_enabled": True,
     "dock_icon_size": 28,
     "dock_always_occluded": False,
+    "bar_workspace_start": 1,
+    "bar_workspace_end": 8,
     "bar_workspace_show_number": False,
     "bar_workspace_use_chinese_numerals": False,
     "bar_hide_special_workspace": True,  # Toggle (Hide/Show) special workspace
