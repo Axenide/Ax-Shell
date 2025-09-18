@@ -110,4 +110,5 @@ BAR_COMPONENTS_VISIBILITY = {
 BAR_METRICS_DISKS = config.get("bar_metrics_disks", DEFAULTS["bar_metrics_disks"])
 METRICS_VISIBLE = config.get("metrics_visible", DEFAULTS["metrics_visible"])
 METRICS_SMALL_VISIBLE = config.get("metrics_small_visible", DEFAULTS["metrics_small_visible"])
+TEMPERATURE_POLL_INTERVAL = config.get('temperature_poll_interval', 1)
 SELECTED_MONITORS = config.get("selected_monitors", DEFAULTS["selected_monitors"])
