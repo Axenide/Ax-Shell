@@ -66,7 +66,12 @@
   background-color: var(--green);
 }
 
-#wifi-connect-button.connected label {
+#wifi-connect-button.disconnected {
+  background-color: var(--red);
+}
+
+#wifi-connect-button.connected label,
+#wifi-connect-button.disconnected label {
   color: var(--shadow);
 }
 

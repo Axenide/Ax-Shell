@@ -27,7 +27,7 @@ class WifiAccessPointSlot(CenterBox):
 
         self.is_active = False
         active_ap_details = ap_data.get("active-ap")
-        if active_ap_details and hasattr(active_ap_details, 'get_bssid') and active_ap_details.get_bssid() == ap_data.get("bssid"):
+        if active_ap_details and hasattr(active_ap_details, 'get_ssid') and NM.utils_ssid_to_utf8(active_ap_details.get_ssid().get_data()) == ap_data.get("ssid"):
             self.is_active = True
         
         self.ap_icon = Image(icon_name=icon_name, size=24)
@@ -54,6 +54,11 @@ class WifiAccessPointSlot(CenterBox):
             self.connect_button.set_label("Connecting...")
             self.connect_button.set_sensitive(False)
             self.network_service.connect_wifi_bssid(self.ap_data["bssid"])
+        if self.is_active:
+            self.connect_button.set_style_classes(["disconnected"])
+            self.connect_button.set_label("Disconnecting...")
+            self.connect_button.set_sensitive(False)
+            self.network_service.disconnect_wifi_device(self.wifi_service.get_device_name())
 
 
 class NetworkConnections(Box):
@@ -66,6 +71,7 @@ class NetworkConnections(Box):
         )
         self.widgets = kwargs.get("widgets")
         self.network_client = NetworkClient()
+        self.ssid_list = set()
 
         self.status_label = Label(label="Initializing Wi-Fi...", h_expand=True, h_align="center")
 
@@ -163,11 +169,12 @@ class NetworkConnections(Box):
         if self.network_client.wifi_device and self.network_client.wifi_device.enabled:
             self.status_label.set_label("Scanning for Wi-Fi networks...")
             self.status_label.set_visible(True)
-            self._clear_ap_list() 
-            self.network_client.wifi_device.scan() 
-        return False 
+            self._clear_ap_list()
+            self.network_client.wifi_device.scan()
+        return False
 
     def _clear_ap_list(self):
+        self.ssid_list.clear()
         for child in self.ap_list_box.get_children():
             child.destroy()
 
@@ -186,9 +193,11 @@ class NetworkConnections(Box):
             self.status_label.set_label("No Wi-Fi networks found.")
             self.status_label.set_visible(True)
         else:
-            self.status_label.set_visible(False) 
+            self.status_label.set_visible(False)
             sorted_aps = sorted(access_points, key=lambda x: x.get("strength", 0), reverse=True)
             for ap_data in sorted_aps:
-                slot = WifiAccessPointSlot(ap_data, self.network_client, self.network_client.wifi_device)
-                self.ap_list_box.add(slot)
+                if ap_data.get("ssid", "Unknown SSID") not in self.ssid_list:
+                    slot = WifiAccessPointSlot(ap_data, self.network_client, self.network_client.wifi_device)
+                    self.ap_list_box.add(slot)
+                    self.ssid_list.add(ap_data.get("ssid", "Unknown SSID"))
         self.ap_list_box.show_all()

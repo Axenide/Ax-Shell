@@ -76,6 +76,9 @@ class Wifi(Service):
     # def set_active_ap(self, ap):
     #     self._device.access
 
+    def get_device_name(self):
+        return self._device.get_iface()
+
     def scan(self):
         self._device.request_scan_async(
             None,
@@ -294,13 +297,14 @@ class NetworkClient(Service):
                 x
                 for x in devices
                 if x.get_device_type() == device_type
-                and x.get_active_connection() is not None
             ),
             None,
         )
 
     def _get_primary_device(self) -> Literal["wifi", "wired"] | None:
         if not self._client:
+            return None
+        elif self._client.check_connectivity() != 4:
             return None
         return (
             "wifi"
@@ -316,6 +320,12 @@ class NetworkClient(Service):
         # We are using nmcli here, idk im lazy
         exec_shell_command_async(
             f"nmcli device wifi connect {bssid}", lambda *args: print(args)
+        )
+
+    def disconnect_wifi_device(self, device):
+        # if you are lazy, then im also lazy
+        exec_shell_command_async(
+            f"nmcli device disconnect {device}", lambda *args: print(args)
         )
 
     @Property(str, "readable")
