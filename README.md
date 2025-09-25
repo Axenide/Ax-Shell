@@ -59,51 +59,12 @@ curl -fsSL https://raw.githubusercontent.com/Axenide/Ax-Shell/main/install.sh | 
 
 ### Manual Installation
 1. Install dependencies:
-    - [Fabric](https://github.com/Fabric-Development/fabric)
-    - [fabric-cli](https://github.com/Fabric-Development/fabric-cli)
-    - [Gray](https://github.com/Fabric-Development/gray)
-    - [Matugen](https://github.com/InioX/matugen)
-    - `brightnessctl`
-    - `cava`
-    - `cliphist`
-    - `gnome-bluetooth-3.0`
-    - `gobject-introspection`
-    - `gpu-screen-recorder`
-    - `grimblast`
-    - `hypridle`
-    - `hyprlock`
-    - `hyprpicker`
-    - `hyprshot`
-    - `hyprsunset`
-    - `imagemagick`
-    - `libnotify`
-    - `noto-fonts-emoji`
-    - `nvtop`
-    - `playerctl`
-    - `swappy`
-    - `swww`
-    - `tesseract`
-    - `tmux`
-    - `upower`
-    - `uwsm`
-    - `vte3`
-    - `webp-pixbuf-loader`
-    - `wl-clipboard`
-    - `wlinhibit`
-    - Python dependencies:
-        - PyGObject
-        - ijson
-        - numpy
-        - pillow
-        - psutil
-        - pywayland
-        - requests
-        - setproctitle
-        - toml
-        - watchdog
-    - Fonts (automated on first run):
-        - Zed Sans
-        - Tabler Icons
+    - Arch packages:
+      - `sudo pacman -S brightnessctl cava cliphist gnome-bluetooth-3.0 gobject-introspection hypridle hyprland hyprlock hyprpicker hyprshot hyprsunset imagemagick kitty libnotify noto-fonts-emoji nvtop playerctl python python-gobject python-ijson python-numpy python-pillow python-psutil python-pywayland python-requests python-setproctitle python-toml python-watchdog swappy swww tesseract tesseract-data-eng tmux upower uwsm vte3 webp-pixbuf-loader wl-clipboard`
+    - AUR packages:
+      - `yay -S fabric-cli-git gpu-screen-recorder gray-git grimblast-git matugen-bin python-fabric-git wlinhibit`
+       or
+      - `paru -S fabric-cli-git gpu-screen-recorder gray-git grimblast-git matugen-bin python-fabric-git wlinhibit`
 
 2. Download and run Ax-Shell:
     ```bash
