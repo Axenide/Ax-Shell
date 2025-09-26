@@ -41,12 +41,21 @@ class Cava:
     RESTARTING = 2
     CLOSING = 3
 
-    def __init__(self, mainapp):
+    def data_handler(self, *a, **kw):
+        """Call all registered handlers with the provided arguments."""
+        for h in self._handlers:
+            h(*a, **kw)
+
+    def register_handler(self, handler):
+        self._handlers.append(handler)
+
+    def __init__(self):
         self.bars = bars
         self.path = "/tmp/cava.fifo"
 
         self.cava_config_file = CAVA_CONFIG
-        self.data_handler = mainapp.draw.update
+        self._handlers = []
+        self._started = False
         self.command = ["cava", "-p", self.cava_config_file]
         self.state = self.NONE
         self.process = None
@@ -127,8 +136,11 @@ class Cava:
 
     def start(self):
         """Launch cava"""
+        if self._started:
+            return
         self._start_io_reader()
         self._run_process()
+        self._started = True
 
     def restart(self):
         """Restart cava process"""
@@ -309,13 +321,25 @@ class Spectrum:
         blue = int(color[5:7], 16) / 255
         self.color = Gdk.RGBA(red=red, green=green, blue=blue, alpha=1.0)
 
+
+_instances = {}
+
+
+def getCava() -> Cava:
+    if "cava" not in _instances:
+        _instances["cava"] = Cava()
+    return _instances["cava"]
+
+
 class SpectrumRender:
     def __init__(self, mode=None, **kwargs):
         super().__init__(**kwargs)
         self.mode = mode
 
         self.draw = Spectrum()
-        self.cava = Cava(self)
+        self.cava = getCava()
+        self.cava.register_handler(self.draw.update)
+
         self.cava.start()
 
     def get_spectrum_box(self):
