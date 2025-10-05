@@ -8,6 +8,15 @@
 
 #workspaces-container {
   background-color: var(--shadow);
+  padding: 0;
+  border-radius: 16px;
+}
+
+#workspace-rail {
+    background-color: var(--primary);
+    border-radius: 16px;
+    transition: transform 0.5s cubic-bezier(0.15, 1, 0.3, 1), min-width 0.5s cubic-bezier(0.15, 1, 0.3, 1);
+    min-height: 34px;
 }
 
 #workspaces-container.invert {
@@ -38,13 +47,13 @@
 #workspaces > button.active {
   min-width: 48px;
   min-height: 8px;
-  background-color: var(--primary);
+  background-color: transparent;
 }
 
 #workspaces > button.active.vertical {
   min-width: 8px;
   min-height: 48px;
-  background-color: var(--primary);
+  background-color: transparent;
 }
 
 #workspaces > button.empty {
@@ -77,7 +86,7 @@
 }
 
 #workspaces-num > button.active {
-  background-color: var(--primary);
+  background-color: transparent;
   border-radius: 8px;
 }
 
