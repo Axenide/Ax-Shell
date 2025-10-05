@@ -95,13 +95,12 @@ if __name__ == "__main__":
     for monitor in monitors:
         monitor_id = monitor['id']
         
-        # Create corners only for the first monitor (shared across all)
-        if monitor_id == 0:
-            corners = Corners()
-            # Set corners visibility based on config
-            corners_visible = config.get("corners_visible", True)
-            corners.set_visible(corners_visible)
-            app_components.append(corners)
+        # Create corners for this monitor
+        corners = Corners(monitor_id=monitor_id)
+        # Set corners visibility based on config
+        corners_visible = config.get("corners_visible", True)
+        corners.set_visible(corners_visible)
+        app_components.append(corners)
         
         # Create monitor-specific components
         if multi_monitor_enabled:
@@ -129,7 +128,7 @@ if __name__ == "__main__":
                 'bar': bar,
                 'notch': notch,
                 'dock': dock,
-                'corners': corners if monitor_id == 0 else None
+                'corners': corners
             })
         
         # Add components to app list
