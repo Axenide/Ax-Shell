@@ -31,6 +31,7 @@ from .data import (
 from .settings_utils import backup_and_replace, bind_vars, start_config
 
 
+
 class HyprConfGUI(Window):
     def __init__(self, show_lock_checkbox: bool, show_idle_checkbox: bool, **kwargs):
         super().__init__(
@@ -580,6 +581,7 @@ class HyprConfGUI(Window):
             "weather": "Weather Widget",
             "battery": "Battery Indicator",
             "metrics": "System Metrics",
+            'temperatures': "System Temps",
             "language": "Language Indicator",
             "date_time": "Date & Time",
             "button_power": "Power Button",
