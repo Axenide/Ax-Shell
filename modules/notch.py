@@ -515,26 +515,16 @@ class Notch(Window):
                     print(f"DEBUG: Real focused monitor from Hyprland: {real_focused_monitor_id}")
             
             focused_monitor_id = self.monitor_manager.get_focused_monitor_id()
-            
-            if focused_monitor_id != self.monitor_id:
-                # Close this notch and open on focused monitor
-                if hasattr(self, '_debug_monitor_focus') and self._debug_monitor_focus:
-                    print(f"DEBUG: Redirecting from monitor {self.monitor_id} to focused monitor {focused_monitor_id}")
-                
-                self.close_notch()
-                focused_notch = self.monitor_manager.get_instance(focused_monitor_id, 'notch')
-                if focused_notch and hasattr(focused_notch, 'open_notch'):
-                    # Recursively call open_notch on the correct monitor instance
-                    focused_notch._open_notch_internal(widget_name)
-                return
-            
+            focused_notch = self.monitor_manager.get_instance(focused_monitor_id, 'notch')
+
             # Close notches on other monitors
-            self.monitor_manager.close_all_notches_except(self.monitor_id)
-            self.monitor_manager.set_notch_state(self.monitor_id, True, widget_name)
-        
-        # Call internal open_notch implementation
-        self._open_notch_internal(widget_name)
-    
+            self.monitor_manager.close_all_notches_except(focused_monitor_id)
+
+            if focused_notch and hasattr(focused_notch, 'open_notch'):
+                # Open notch on focused monitor
+                focused_notch._open_notch_internal(widget_name)
+                self.monitor_manager.set_notch_state(focused_monitor_id, True, widget_name)
+
     def _get_real_focused_monitor_id(self):
         """Get the real focused monitor ID directly from Hyprland."""
         # Use thread to avoid blocking UI
