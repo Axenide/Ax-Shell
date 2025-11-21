@@ -1,3 +1,4 @@
+# Edited by hackingzipper4-pixel on 2025-11-22 for Ax-Shell setup
 import os
 import sys
 from pathlib import Path
