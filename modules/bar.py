@@ -12,7 +12,8 @@ from fabric.widgets.centerbox import CenterBox
 from fabric.widgets.datetime import DateTime
 from fabric.widgets.label import Label
 from fabric.widgets.revealer import Revealer
-from gi.repository import Gdk, GLib, Gtk
+from gi.repository import Gdk, Gtk, GLib
+import logging
 
 import config.data as data
 import modules.icons as icons
@@ -23,6 +24,8 @@ from modules.systemprofiles import Systemprofiles
 from modules.systemtray import SystemTray
 from modules.weather import Weather
 from widgets.wayland import WaylandWindow as Window
+
+logger = logging.getLogger(__name__)
 
 CHINESE_NUMERALS = ["一", "二", "三", "四", "五", "六", "七", "八", "九", "〇"]
 
@@ -45,11 +48,59 @@ tooltip_power = """<b>Power Menu</b>"""
 tooltip_tools = """<b>Toolbox</b>"""
 tooltip_overview = """<b>Overview</b>"""
 
+def build_caption(i: int, start_workspace: int):
+    """Build the label for a given workspace number"""
+    label = data.BAR_WORKSPACE_ICONS.get(str(i)) or data.BAR_WORKSPACE_ICONS.get(
+        "default"
+    )
+    if label is None:
+        return (
+            CHINESE_NUMERALS[(i - start_workspace)]
+            if data.BAR_WORKSPACE_USE_CHINESE_NUMERALS
+            and 0 <= (i - start_workspace) < len(CHINESE_NUMERALS)
+            else (str(i) if data.BAR_WORKSPACE_SHOW_NUMBER else "")
+        )
+    else:
+        return label
+
+
+class FancyWorkspaces(Workspaces):
+    def __init__(self, workspace_range: list, workspace_change_hook=None):
+        start_workspace = workspace_range[0] if workspace_range is not None else 1
+        super().__init__(
+            name="workspaces-num",
+            invert_scroll=True,
+            empty_scroll=True,
+            v_align="fill",
+            orientation="h" if not data.VERTICAL else "v",
+            spacing=0 if not data.BAR_WORKSPACE_USE_CHINESE_NUMERALS else 4,
+            buttons=[
+                WorkspaceButton(
+                    h_expand=False,
+                    v_expand=False,
+                    h_align="center",
+                    v_align="center",
+                    id=i,
+                    label=build_caption(i, start_workspace),
+                )
+                for i in workspace_range
+            ],
+            buttons_factory=(
+                None
+                if data.BAR_HIDE_SPECIAL_WORKSPACE
+                else Workspaces.default_buttons_factory
+            ),
+        )
+        self._workspace_change_hook = workspace_change_hook
+
+    def on_monitor(self, _, event: HyprlandEvent):
+        self._workspace_change_hook(int(event.data[1]))
+        return super().on_monitor(_, event)
+
 
 class Bar(Window):
     def __init__(self, monitor_id: int = 0, **kwargs):
         self.monitor_id = monitor_id
-        
         super().__init__(
             name="bar",
             layer="top",
@@ -59,6 +110,7 @@ class Bar(Window):
             monitor=monitor_id,
         )
 
+        self._animation_queue: None | tuple = None
         self.anchor_var = ""
         self.margin_var = ""
 
@@ -101,74 +153,28 @@ class Bar(Window):
 
         # Calculate workspace range based on monitor_id
         # Monitor 0: workspaces 1-10, Monitor 1: workspaces 11-20, etc.
-        start_workspace = self.monitor_id * 10 + 1
-        end_workspace = start_workspace + 10
-        workspace_range = range(start_workspace, end_workspace)
+        start_workspace = data.BAR_WORKSPACE_START
+        end_workspace = data.BAR_WORKSPACE_END
+        workspace_range = range(start_workspace, end_workspace + 1)
 
-        self.workspaces = Workspaces(
-            name="workspaces",
-            invert_scroll=True,
-            empty_scroll=True,
-            v_align="fill",
-            orientation="h" if not data.VERTICAL else "v",
-            spacing=8,
-            buttons=[
-                WorkspaceButton(
-                    h_expand=False,
-                    v_expand=False,
-                    h_align="center",
-                    v_align="center",
-                    id=i,
-                    label=None,
-                    style_classes=["vertical"] if data.VERTICAL else None,
-                )
-                for i in workspace_range
-            ],
-            buttons_factory=(
-                None
-                if data.BAR_HIDE_SPECIAL_WORKSPACE
-                else Workspaces.default_buttons_factory
-            ),
+        self.workspaces_labeled = FancyWorkspaces(
+            workspace_change_hook=self.update_rail,
+            workspace_range=list(workspace_range),
         )
 
-        self.workspaces_num = Workspaces(
-            name="workspaces-num",
-            invert_scroll=True,
-            empty_scroll=True,
-            v_align="fill",
-            orientation="h" if not data.VERTICAL else "v",
-            spacing=0 if not data.BAR_WORKSPACE_USE_CHINESE_NUMERALS else 4,
-            buttons=[
-                WorkspaceButton(
-                    h_expand=False,
-                    v_expand=False,
-                    h_align="center",
-                    v_align="center",
-                    id=i,
-                    label=(
-                        CHINESE_NUMERALS[(i - start_workspace)]
-                        if data.BAR_WORKSPACE_USE_CHINESE_NUMERALS
-                        and 0 <= (i - start_workspace) < len(CHINESE_NUMERALS)
-                        else str(i)
-                    ),
-                )
-                for i in workspace_range
-            ],
-            buttons_factory=(
-                None
-                if data.BAR_HIDE_SPECIAL_WORKSPACE
-                else Workspaces.default_buttons_factory
-            ),
+        self.ws_rail = Box(name="workspace-rail", h_align="start", v_align="center")
+        self.current_rail_pos = 0
+        self.current_rail_size = 0
+        self.is_animating_rail = False
+        self.ws_rail_provider = Gtk.CssProvider()
+        self.ws_rail.get_style_context().add_provider(
+            self.ws_rail_provider, Gtk.STYLE_PROVIDER_PRIORITY_USER
         )
 
-        self.ws_container = Box(
-            name="workspaces-container",
-            children=(
-                self.workspaces
-                if not data.BAR_WORKSPACE_SHOW_NUMBER
-                else self.workspaces_num
-            ),
-        )
+        self.ws_container = Gtk.Grid()
+        self.ws_container.attach(self.ws_rail, 0, 0, 1, 1)
+        self.ws_container.attach(self.workspaces_labeled, 0, 0, 1, 1)
+        self.ws_container.set_name("workspaces-container")
 
         self.button_tools = Button(
             name="button-bar",
@@ -180,6 +186,7 @@ class Bar(Window):
         self.connection = get_hyprland_connection()
         self.button_tools.connect("enter_notify_event", self.on_button_enter)
         self.button_tools.connect("leave_notify_event", self.on_button_leave)
+        self.connection.connect("event::workspace", self._on_workspace_changed)
 
         self.systray = SystemTray()
 
@@ -493,7 +500,193 @@ class Bar(Window):
             self.bar_inner.add_style_class("vertical")
 
         self.systray._update_visibility()
-        self.chinese_numbers()
+        self.setup_workspaces()
+
+    def setup_workspaces(self):
+        """Set up workspace rail and initialize with current workspace"""
+        logger.info("Setting up workspaces")
+        try:
+            active_workspace = json.loads(
+                self.connection.send_command("j/activeworkspace").reply.decode()
+            )["id"]
+            self.update_rail(active_workspace, initial_setup=True)
+        except Exception as e:
+            logger.error(f"Error initializing workspace rail: {e}")
+
+    def _on_workspace_changed(self, _, event):
+        """Handle workspace change events directly"""
+        if event is not None and isinstance(event, HyprlandEvent) and event.data:
+            try:
+                workspace_id = int(event.data[0])
+                logger.info(f"Workspace changed to: {workspace_id}")
+                self.update_rail(workspace_id)
+            except (ValueError, IndexError) as e:
+                logger.error(f"Error processing workspace event: {e}")
+        else:
+            logger.warning(f"Invalid workspace event received: {event}")
+
+    def update_rail(self, workspace_id, initial_setup=False):
+        """Update the workspace rail position based on the workspace button"""
+        logger.info(f"Updating rail for workspace {workspace_id}")
+        workspaces = self.children_workspaces
+        active_workspace = next(
+            (
+                b
+                for b in workspaces
+                if isinstance(b, WorkspaceButton) and b.id == workspace_id
+            ),
+        )
+
+        if not active_workspace:
+            logger.warning(f"No button found for workspace {workspace_id}")
+            return
+
+        if initial_setup:
+            active_workspace.connect(
+                "size-allocate",
+                lambda: self._update_rail_with_animation(active_workspace),
+            )
+        else:
+            if self.is_animating_rail:
+                self._animation_queue = (
+                    self._update_rail_with_animation,
+                    active_workspace,
+                )
+            else:
+                self.is_animating_rail = True
+                GLib.idle_add(self._update_rail_with_animation, active_workspace)
+
+    def _update_rail_with_animation(self, active_button):
+        """Position the rail at the active workspace button with a stretch animation."""
+        target_allocation = active_button.get_allocation()
+
+        if target_allocation.width == 0 or target_allocation.height == 0:
+            logger.info("Button allocation not ready, retrying...")
+            self.is_animating_rail = False
+            self._trigger_pending_animations()
+            return False
+
+        diameter = 24
+        if data.VERTICAL:
+            pos_prop, size_prop = "margin-top", "min-height"
+            target_pos = (
+                target_allocation.y + (target_allocation.height / 2) - (diameter / 2)
+            )
+        else:
+            pos_prop, size_prop = "margin-left", "min-width"
+            target_pos = (
+                1 + target_allocation.x + (target_allocation.width / 2) - (diameter / 2)
+            )
+
+        if target_pos == self.current_rail_pos:
+            self._trigger_pending_animations()
+            return False
+
+        distance = target_pos - self.current_rail_pos
+        stretched_size = self.current_rail_size + abs(distance)
+        stretch_pos = target_pos if distance < 0 else self.current_rail_pos
+
+        stretch_duration = 0.1
+        shrink_duration = 0.15
+
+        reduced_diameter = max(2, int(diameter - abs(distance / 10.0)))
+
+        if data.VERTICAL:
+            other_size_prop, other_size_val = "min-width", reduced_diameter
+        else:
+            other_size_prop, other_size_val = "min-height", reduced_diameter
+
+        stretch_css = f"""
+        #workspace-rail {{
+            transition-property: {pos_prop}, {size_prop};
+            transition-duration: {stretch_duration}s;
+            transition-timing-function: ease-out;
+            {pos_prop}: {stretch_pos}px;
+            {size_prop}: {stretched_size}px;
+            {other_size_prop}: {other_size_val}px;
+        }}
+        """
+        self.ws_rail_provider.load_from_data(stretch_css.encode())
+
+        GLib.timeout_add(
+            int(stretch_duration * 1000),
+            self._shrink_rail,
+            target_pos,
+            diameter,
+            shrink_duration,
+        )
+        return False
+
+    def _shrink_rail(self, target_pos, target_size, duration):
+        """Shrink the rail to its final size and position."""
+        if data.VERTICAL:
+            pos_prop = "margin-top"
+            size_props = "min-height, min-width"
+        else:
+            pos_prop = "margin-left"
+            size_props = "min-width, min-height"
+
+        shrink_css = f"""
+        #workspace-rail {{
+            transition-property: {pos_prop}, {size_props};
+            transition-duration: {duration}s;
+            transition-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1);
+            {pos_prop}: {target_pos}px;
+            min-width: {target_size}px;
+            min-height: {target_size}px;
+        }}
+        """
+        self.ws_rail_provider.load_from_data(shrink_css.encode())
+
+        GLib.timeout_add(
+            int(duration * 1000),
+            self._finalize_rail_animation,
+            target_pos,
+            target_size,
+        )
+        return False
+
+    def _trigger_pending_animations(self):
+        if self._animation_queue:
+            GLib.idle_add(*self._animation_queue)
+            self._animation_queue = None
+            return True
+        else:
+            self.animation_queue = None
+            self.is_animating_rail = False
+        return False
+
+    def _finalize_rail_animation(self, final_pos, final_size):
+        """Finalize animation and update state."""
+        self.current_rail_pos = final_pos
+        self.current_rail_size = final_size
+        if not self._trigger_pending_animations():
+            logger.info(
+                f"Rail animation finished at pos={self.current_rail_pos}, size={self.current_rail_size}"
+            )
+        return False
+
+    @property
+    def children_workspaces(self):
+        workspaces_widget = None
+        for child in self.ws_container.get_children():
+            if isinstance(child, Workspaces):
+                workspaces_widget = child
+                break
+
+        if workspaces_widget:
+            try:
+                # The structure is Workspaces -> internal Box -> Buttons
+                internal_box = workspaces_widget.get_children()[0]
+                return internal_box.get_children()
+            except (IndexError, AttributeError):
+                logger.error(
+                    "Failed to get workspace buttons due to unexpected widget structure."
+                )
+                return []
+
+        logger.warning("Could not find the Workspaces widget in the container.")
+        return []
 
     def apply_component_props(self):
         components = {
@@ -615,13 +808,14 @@ class Bar(Window):
             self.bar_inner.add_style_class("hidden")
         else:
             self.bar_inner.remove_style_class("hidden")
-            # Ensure notch is above bar when bar is shown
-            if self.notch:
-                # Focus the notch window to bring it to front
-                GLib.idle_add(lambda: exec_shell_command_async("hyprctl dispatch focuswindow class:notch") if self.notch else None)
 
-    def chinese_numbers(self):
-        if data.BAR_WORKSPACE_USE_CHINESE_NUMERALS:
-            self.workspaces_num.add_style_class("chinese")
-        else:
-            self.workspaces_num.remove_style_class("chinese")
+        # Ensure notch is above bar when bar is shown
+        if self.notch:
+            # Focus the notch window to bring it to front
+            GLib.idle_add(
+                lambda: exec_shell_command_async(
+                    "hyprctl dispatch focuswindow class:notch"
+                )
+                if self.notch
+                else None
+            )
