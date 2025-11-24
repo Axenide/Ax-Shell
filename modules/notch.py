@@ -6,6 +6,7 @@ from fabric.widgets.image import Image
 from fabric.widgets.label import Label
 from fabric.widgets.revealer import Revealer
 from fabric.widgets.stack import Stack
+from fabric.audio.service import Audio
 from gi.repository import Gdk, GLib, Gtk, Pango
 
 import config.data as data
@@ -139,6 +140,11 @@ class Notch(Window):
             monitor=monitor_id,
         )
 
+        # Audio display variables
+        self.VOLUME_DISPLAY_DURATION = 2000
+        self._current_display_timeout_id = None
+        self._suppress_first_audio_display = True
+
         self._typed_chars_buffer = ""
         self._launcher_transitioning = False
         self._launcher_transition_timeout = None
@@ -170,6 +176,78 @@ class Notch(Window):
         self.power = PowerMenu(notch=self)
         self.tmux = TmuxManager(notch=self)
         self.cliphist = ClipHistory(notch=self)
+
+        # Audio service initialization
+        self.audio = Audio()
+
+        # Volume display widgets
+        self.volume_icon = Image(
+            name="volume-display-icon",
+            icon_name="audio-volume-high-symbolic",
+            icon_size=16
+        )
+        self.volume_icon.set_valign(Gtk.Align.CENTER)
+        
+        self.volume_label = Label(
+            name="volume-display-label",
+            label="..."
+        )
+        self.volume_label.set_valign(Gtk.Align.CENTER)
+        
+        self.volume_bar = Gtk.ProgressBar(
+            name="volume-display-bar"
+        )
+        self.volume_bar.set_fraction(1.0)
+        self.volume_bar.set_show_text(False)
+        self.volume_bar.set_hexpand(False)
+        self.volume_bar.set_valign(Gtk.Align.CENTER)
+   
+        self.volume_box = Box(
+            name="volume-display-box",
+            orientation="h",
+            spacing=8,
+            h_align="center",
+            v_align="center",
+            children=[
+                self.volume_icon,
+                self.volume_bar,
+                self.volume_label
+            ]
+        )
+        
+        # Microphone display widgets
+        self.mic_icon = Image(
+            name="mic-display-icon", 
+            icon_name="microphone-sensitivity-high-symbolic",
+            icon_size=16
+        )
+        self.mic_icon.set_valign(Gtk.Align.CENTER)
+        
+        self.mic_label = Label(
+            name="mic-display-label",
+            label="..."
+        )
+        self.mic_label.set_valign(Gtk.Align.CENTER)
+        
+        self.mic_bar = Gtk.ProgressBar(
+            name="mic-display-bar"
+        )
+        self.mic_bar.set_fraction(1.0)
+        self.mic_bar.set_show_text(False)
+        self.mic_bar.set_valign(Gtk.Align.CENTER)
+        
+        self.mic_box = Box(
+            name="mic-display-box",
+            orientation="h",
+            spacing=8,
+            h_align="center",
+            v_align="center",
+            children=[
+                self.mic_icon,
+                self.mic_bar,
+                self.mic_label
+            ]
+        )
 
         self.window_label = Label(
             name="notch-window-label",
@@ -240,6 +318,9 @@ class Notch(Window):
                 self.user_label,
                 self.active_window_box,
                 self.player_small,
+                # Add audio display widgets to compact stack
+                self.volume_box,
+                self.mic_box,
             ],
         )
         self.compact_stack.set_visible_child(self.active_window_box)
@@ -406,6 +487,9 @@ class Notch(Window):
             self.add(self.notch_wrap)
         self.show_all()
 
+        # Connect audio signals after a short delay
+        GLib.timeout_add(100, self._connect_audio_signals)
+
         self.add_keybinding("Escape", lambda *_: self.close_notch())
         self.add_keybinding("Ctrl Tab", lambda *_: self.dashboard.go_to_next_child())
         self.add_keybinding(
@@ -434,6 +518,270 @@ class Notch(Window):
             self.notch_revealer.set_reveal_child(False)
 
         self.connect("key-press-event", self.on_key_press)
+
+    # Audio-related methods
+    def _connect_audio_signals(self, retry_count=0):
+        max_retries = 5
+        
+        try:
+            if self.audio:
+                self.audio.connect("notify::speaker", self._on_speaker_changed)
+                self.audio.connect("notify::microphone", self._on_microphone_changed)
+                
+                if self.audio.speaker:
+                    self.audio.speaker.connect("changed", self._on_speaker_changed_signal)
+                    GLib.idle_add(self._update_volume_widgets_silently)
+                
+                if self.audio.microphone:
+                    self.audio.microphone.connect("changed", self._on_microphone_changed_signal)
+                    GLib.idle_add(self._update_mic_widgets_silently)
+                
+                GLib.timeout_add(500, self._enable_audio_display)
+                return False
+                    
+        except Exception as e:
+            print(f"Audio connection error (attempt {retry_count + 1}): {e}")
+        
+        if retry_count < max_retries - 1:
+            GLib.timeout_add(1000, lambda: self._connect_audio_signals(retry_count + 1))
+        
+        return False
+
+    def _on_speaker_changed(self, audio_service, speaker):
+        if self.audio.speaker:
+            try:
+                self.audio.speaker.disconnect_by_func(self._on_speaker_changed_signal)
+            except:
+                pass
+            self.audio.speaker.connect("changed", self._on_speaker_changed_signal)
+            self._update_volume_widgets_silently()
+
+    def _on_microphone_changed(self, audio_service, microphone):
+        if self.audio.microphone:
+            try:
+                self.audio.microphone.disconnect_by_func(self._on_microphone_changed_signal)
+            except:
+                pass
+            self.audio.microphone.connect("changed", self._on_microphone_changed_signal)
+            self._update_mic_widgets_silently()
+
+    def _on_speaker_changed_signal(self, speaker, *args):
+        self._handle_speaker_change()
+
+    def _on_microphone_changed_signal(self, microphone, *args):
+        self._handle_microphone_change()
+
+    def _handle_speaker_change(self):
+        if not self.audio or not self.audio.speaker:
+            return
+            
+        if self._suppress_first_audio_display:
+            self._update_volume_widgets_silently()
+            return
+            
+        speaker = self.audio.speaker
+        volume = speaker.volume
+        is_muted = speaker.muted
+        
+        volume_int = int(round(volume))
+        volume_percentage = volume_int / 100.0
+        self.volume_bar.set_fraction(volume_percentage)
+        
+        self._update_volume_appearance(volume_int, is_muted)
+        
+        if is_muted:
+            self.volume_icon.set_from_icon_name("audio-volume-muted-symbolic", 16)
+            self.volume_label.set_text("Muted")
+        elif volume_int == 0:
+            self.volume_icon.set_from_icon_name("audio-volume-muted-symbolic", 16)
+            self.volume_label.set_text("Muted")
+        else:
+            if volume_int <= 33:
+                icon_name = "audio-volume-low-symbolic"
+            elif volume_int <= 66:
+                icon_name = "audio-volume-medium-symbolic"
+            else:
+                icon_name = "audio-volume-high-symbolic"
+                
+            self.volume_icon.set_from_icon_name(icon_name, 16)
+            self.volume_label.set_text(f"{volume_int}%")
+        
+        if not self._is_notch_open:
+            self.show_volume_display()
+
+    def _handle_microphone_change(self):
+        if not self.audio or not self.audio.microphone:
+            return
+            
+        if self._suppress_first_audio_display:
+            self._update_mic_widgets_silently()
+            return
+            
+        microphone = self.audio.microphone
+        volume = microphone.volume
+        is_muted = microphone.muted
+        
+        volume_int = int(round(volume))
+        volume_percentage = volume_int / 100.0
+        self.mic_bar.set_fraction(volume_percentage)
+        
+        self._update_mic_appearance(volume_int, is_muted)
+        
+        if is_muted:
+            self.mic_icon.set_from_icon_name("microphone-disabled-symbolic", 16)
+            self.mic_label.set_text("Muted")
+        else:
+            self.mic_icon.set_from_icon_name("microphone-sensitivity-high-symbolic", 16)
+            self.mic_label.set_text(f"{volume_int}%")
+        
+        if not self._is_notch_open:
+            self.show_mic_display()
+
+    def _enable_audio_display(self):
+        self._suppress_first_audio_display = False
+        return False
+
+    def _update_volume_appearance(self, volume_int, is_muted):
+        volume_box_style = self.volume_box.get_style_context()
+        volume_icon_style = self.volume_icon.get_style_context()
+        volume_bar_style = self.volume_bar.get_style_context()
+        
+        for cls in ["volume-muted", "volume-low", "volume-medium", "volume-high"]:
+            volume_box_style.remove_class(cls)
+            volume_icon_style.remove_class(cls)
+            volume_bar_style.remove_class(cls)
+        
+        if is_muted or volume_int == 0:
+            volume_box_style.add_class("volume-muted")
+            volume_icon_style.add_class("volume-muted")
+            volume_bar_style.add_class("volume-muted")
+        elif volume_int <= 33:
+            volume_box_style.add_class("volume-low")
+            volume_icon_style.add_class("volume-low")
+            volume_bar_style.add_class("volume-low")
+        elif volume_int <= 66:
+            volume_box_style.add_class("volume-medium")
+            volume_icon_style.add_class("volume-medium")
+            volume_bar_style.add_class("volume-medium")
+        else:
+            volume_box_style.add_class("volume-high")
+            volume_icon_style.add_class("volume-high")
+            volume_bar_style.add_class("volume-high")
+
+    def _update_mic_appearance(self, volume_int, is_muted):
+        mic_box_style = self.mic_box.get_style_context()
+        mic_icon_style = self.mic_icon.get_style_context()
+        mic_bar_style = self.mic_bar.get_style_context()
+        
+        for cls in ["mic-muted", "mic-low", "mic-medium", "mic-high"]:
+            mic_box_style.remove_class(cls)
+            mic_icon_style.remove_class(cls)
+            mic_bar_style.remove_class(cls)
+        
+        if is_muted:
+            mic_box_style.add_class("mic-muted")
+            mic_icon_style.add_class("mic-muted")
+            mic_bar_style.add_class("mic-muted")
+        elif volume_int <= 33:
+            mic_box_style.add_class("mic-low")
+            mic_icon_style.add_class("mic-low")
+            mic_bar_style.add_class("mic-low")
+        elif volume_int <= 66:
+            mic_box_style.add_class("mic-medium")
+            mic_icon_style.add_class("mic-medium")
+            mic_bar_style.add_class("mic-medium")
+        else:
+            mic_box_style.add_class("mic-high")
+            mic_icon_style.add_class("mic-high")
+            mic_bar_style.add_class("mic-high")
+
+    def _update_volume_widgets_silently(self):
+        if not self.audio or not self.audio.speaker:
+            return
+            
+        speaker = self.audio.speaker
+        volume = speaker.volume
+        is_muted = speaker.muted
+        
+        volume_int = int(round(volume))
+        volume_percentage = volume_int / 100.0
+        self.volume_bar.set_fraction(volume_percentage)
+        
+        self._update_volume_appearance(volume_int, is_muted)
+        
+        if is_muted:
+            self.volume_icon.set_from_icon_name("audio-volume-muted-symbolic", 16)
+            self.volume_label.set_text("Muted")
+        elif volume_int == 0:
+            self.volume_icon.set_from_icon_name("audio-volume-muted-symbolic", 16)
+            self.volume_label.set_text("Muted")
+        else:
+            if volume_int <= 33:
+                icon_name = "audio-volume-low-symbolic"
+            elif volume_int <= 66:
+                icon_name = "audio-volume-medium-symbolic"
+            else:
+                icon_name = "audio-volume-high-symbolic"
+                
+            self.volume_icon.set_from_icon_name(icon_name, 16)
+            self.volume_label.set_text(f"{volume_int}%")
+
+    def _update_mic_widgets_silently(self):
+        if not self.audio or not self.audio.microphone:
+            return
+            
+        microphone = self.audio.microphone
+        volume = microphone.volume
+        is_muted = microphone.muted
+        
+        volume_int = int(round(volume))
+        volume_percentage = volume_int / 100.0
+        self.mic_bar.set_fraction(volume_percentage)
+        
+        self._update_mic_appearance(volume_int, is_muted)
+        
+        if is_muted:
+            self.mic_icon.set_from_icon_name("microphone-disabled-symbolic", 16)
+            self.mic_label.set_text(" Muted")
+        else:
+            self.mic_icon.set_from_icon_name("microphone-sensitivity-high-symbolic", 16)
+            self.mic_label.set_text(f" {volume_int}%")
+
+    def show_volume_display(self):
+        if self._is_notch_open:
+            return
+            
+        if self._current_display_timeout_id:
+            GLib.source_remove(self._current_display_timeout_id)
+        
+        self.compact_stack.set_visible_child(self.volume_box)
+        self._current_display_timeout_id = GLib.timeout_add(
+            self.VOLUME_DISPLAY_DURATION, 
+            self.return_to_normal_view
+        )
+
+    def show_mic_display(self):
+        if self._is_notch_open:
+            return
+            
+        if self._current_display_timeout_id:
+            GLib.source_remove(self._current_display_timeout_id)
+        
+        self.compact_stack.set_visible_child(self.mic_box)
+        self._current_display_timeout_id = GLib.timeout_add(
+            self.VOLUME_DISPLAY_DURATION, 
+            self.return_to_normal_view
+        )
+
+    def return_to_normal_view(self):
+        self._current_display_timeout_id = None
+        
+        if not self._is_notch_open:
+            current_child = self.compact_stack.get_visible_child()
+            if current_child in [self.volume_box, self.mic_box]:
+                self.compact_stack.set_visible_child(self.active_window_box)
+        
+        return False
 
     def on_button_enter(self, widget, event):
         self.is_hovered = True

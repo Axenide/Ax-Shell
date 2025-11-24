@@ -131,3 +131,121 @@
   color: var(--outline);
   font-weight: bold;
 }
+
+
+/* Volume & Mic Display CSS for Notch */
+
+#volume-progress-bar {
+    border-color: var(--magenta);
+    color: alpha(var(--magenta), 0.3);
+    background-color: transparent;
+}
+
+#volume-progress-bar label {
+    font-size: 12px;
+}
+
+
+#volume-progress-bar.volume-low,
+#volume-progress-bar.volume-low label { 
+    border-color: var(--cyan);
+    color: var(--cyan);
+}
+#volume-progress-bar.volume-low { 
+    color: alpha(var(--cyan), 0.3);
+}
+
+#volume-progress-bar.volume-medium,
+#volume-progress-bar.volume-medium label { 
+    border-color: var(--blue);
+    color: var(--blue);
+}
+#volume-progress-bar.volume-medium { 
+    color: alpha(var(--blue), 0.3);
+}
+
+#volume-progress-bar.volume-high,
+#volume-progress-bar.volume-high label { 
+    border-color: var(--magenta);
+    color: var(--magenta);
+}
+#volume-progress-bar.volume-high { 
+    color: alpha(var(--magenta), 0.3);
+}
+
+#volume-progress-bar.volume-muted,
+#volume-progress-bar.volume-muted label { 
+    border-color: var(--outline);
+    color: var(--outline);
+}
+#volume-progress-bar.volume-muted { 
+    color: alpha(var(--outline), 0.2);
+}
+
+
+progressbar,
+progressbar trough {
+    min-height: 2px;
+    background-color: alpha(var(--outline), 0.3);
+    border-radius: 2px;
+}
+
+progressbar progress {
+    min-height: 4px;
+    border-radius: 2px;
+    background-color: var(--magenta);
+}
+
+
+#volume-display-bar progress,
+#volume-display-box.volume-high progress {
+    background-color: var(--magenta);
+}
+
+#volume-display-box.volume-low progress {
+    background-color: var(--cyan);
+}
+
+#volume-display-box.volume-medium progress {
+    background-color: var(--blue);
+}
+
+#volume-display-box.volume-muted progress {
+    background-color: var(--outline);
+}
+
+
+#volume-icon-bar {
+    background-color: var(--shadow);
+    border-radius: 8px;
+    padding: 4px 8px;
+    margin: 0px 2px;
+}
+
+#volume-icon-bar label {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--foreground);
+}
+
+#volume-icon-bar.volume-low label { 
+    color: var(--cyan);
+}
+#volume-icon-bar.volume-medium label { 
+    color: var(--blue);
+}
+#volume-icon-bar.volume-high label { 
+    color: var(--magenta);
+}
+#volume-icon-bar.volume-muted label {
+    color: var(--outline);
+}
+
+/* ===== MIC PROGRESS BAR ===== */
+#mic-display-box.mic-active progress {
+    background-color: var(--secondary);
+}
+
+#mic-display-box.mic-muted progress {
+    background-color: var(--outline);
+}
