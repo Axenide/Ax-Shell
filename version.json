@@ -1,8 +1,7 @@
 {
-  "version": "0.0.60",
+  "version": "0.0.61",
   "pkg_update": false,
   "changelog": [
-    "<b>fix:</b> Brightness not appearing in brightnessctl devices",
-    "<b>fix:</b> Endless curls to wttr.in"
+    "<b>fix:</b> Notch behavior on multi-monitor (<a href='https://github.com/Axenide/Ax-Shell/pull/312'>#312</a>)"
   ]
 }
