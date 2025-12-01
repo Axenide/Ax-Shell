@@ -271,8 +271,8 @@ class MonitorManager:
                 # Get notch instance and close it
                 instances = self._monitor_instances.get(monitor_id, {})
                 notch = instances.get('notch')
-                if notch and hasattr(notch, 'close'):
-                    notch.close()
+                if notch and hasattr(notch, 'close_notch'):
+                    notch.close_notch()
     
     def register_monitor_instances(self, monitor_id: int, instances: Dict):
         """
