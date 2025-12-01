@@ -2,6 +2,7 @@
   "version": "0.0.61",
   "pkg_update": false,
   "changelog": [
+    "<b>feat:</b> Real-time volume/mic display in notch (<a href='https://github.com/Axenide/Ax-Shell/pull/311'>#311</a>)",
     "<b>fix:</b> Notch behavior on multi-monitor (<a href='https://github.com/Axenide/Ax-Shell/pull/312'>#312</a>)"
   ]
 }
