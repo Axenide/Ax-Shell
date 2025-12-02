@@ -23,7 +23,7 @@ class MyCorner(Box):
 
 
 class Corners(Window):
-    def __init__(self):
+    def __init__(self, monitor_id: int = 0):
         super().__init__(
             name="corners",
             layer="bottom",
@@ -32,6 +32,7 @@ class Corners(Window):
             # pass_through=True,
             visible=False,
             all_visible=False,
+            monitor=monitor_id,
         )
 
         self.all_corners = Box(
