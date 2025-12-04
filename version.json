@@ -1,8 +1,8 @@
 {
-  "version": "0.0.60",
+  "version": "0.0.62",
   "pkg_update": false,
   "changelog": [
-    "<b>fix:</b> Brightness not appearing in brightnessctl devices",
-    "<b>fix:</b> Endless curls to wttr.in"
+    "<b>feat:</b> Real-time volume/mic display in notch (<a href='https://github.com/Axenide/Ax-Shell/pull/311'>#311</a>)",
+    "<b>fix:</b> Notch behavior on multi-monitor (<a href='https://github.com/Axenide/Ax-Shell/pull/312'>#312</a>)"
   ]
 }
