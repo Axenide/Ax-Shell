@@ -101,3 +101,21 @@
 #upload-icon-label.urgent {
   color: var(--shadow);
 }
+
+#temps-bar {
+  background-color: var(--surface);
+  padding-left: 6px;
+  padding-right: 6px;
+}
+
+#cpu-temp-icon,
+#gpu-temp-icon {
+  font-size: 16px;
+  font-family: 'tabler-icons';
+  font-weight: bold;
+}
+
+#cpu-temp-label,
+#gpu-temp-label {
+  font-weight: bold;
+}

@@ -73,9 +73,7 @@ DOCK_ENABLED = _get_config_var("dock_enabled")
 DOCK_ALWAYS_SHOW = _get_config_var("dock_always_show")
 DOCK_ICON_SIZE = _get_config_var("dock_icon_size")
 BAR_WORKSPACE_SHOW_NUMBER = _get_config_var("bar_workspace_show_number")
-BAR_WORKSPACE_USE_CHINESE_NUMERALS = _get_config_var(
-    "bar_workspace_use_chinese_numerals"
-)
+BAR_WORKSPACE_USE_CHINESE_NUMERALS = _get_config_var("bar_workspace_use_chinese_numerals")
 BAR_HIDE_SPECIAL_WORKSPACE = _get_config_var("bar_hide_special_workspace")
 BAR_THEME = _get_config_var("bar_theme")
 DOCK_THEME = _get_config_var("dock_theme")
@@ -100,7 +98,9 @@ BAR_COMPONENTS_VISIBILITY = {
     "button_power": _get_config_var("bar_button_power_visible"),
 }
 
+# Metrics and monitoring settings
 BAR_METRICS_DISKS = _get_config_var("bar_metrics_disks")
 METRICS_VISIBLE = _get_config_var("metrics_visible")
 METRICS_SMALL_VISIBLE = _get_config_var("metrics_small_visible")
+TEMPERATURE_POLL_INTERVAL = _get_config_var("temperature_poll_interval")
 SELECTED_MONITORS = _get_config_var("selected_monitors")

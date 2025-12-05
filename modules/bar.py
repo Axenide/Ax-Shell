@@ -18,7 +18,8 @@ import config.data as data
 import modules.icons as icons
 from modules.controls import ControlSmall
 from modules.dock import Dock
-from modules.metrics import Battery, MetricsSmall, NetworkApplet
+from modules.metrics import (Battery, MetricsSmall, NetworkApplet,
+                             TemperaturesBar)
 from modules.systemprofiles import Systemprofiles
 from modules.systemtray import SystemTray
 from modules.weather import Weather
@@ -182,9 +183,9 @@ class Bar(Window):
         self.button_tools.connect("leave_notify_event", self.on_button_leave)
 
         self.systray = SystemTray()
-
         self.weather = Weather()
         self.sysprofiles = Systemprofiles()
+        self.temperatures_bar = TemperaturesBar()
 
         self.network = NetworkApplet()
 
@@ -249,8 +250,8 @@ class Bar(Window):
         self.battery = Battery()
 
         self.apply_component_props()
-
         self.rev_right = [
+            self.temperatures_bar,
             self.metrics,
             self.control,
         ]
@@ -496,21 +497,23 @@ class Bar(Window):
         self.chinese_numbers()
 
     def apply_component_props(self):
+        # Merged components dictionary
         components = {
-            "button_apps": self.button_apps,
-            "systray": self.systray,
-            "control": self.control,
-            "network": self.network,
-            "button_tools": self.button_tools,
-            "button_overview": self.button_overview,
-            "ws_container": self.ws_container,
-            "weather": self.weather,
-            "battery": self.battery,
-            "metrics": self.metrics,
-            "language": self.language,
-            "date_time": self.date_time,
-            "button_power": self.button_power,
-            "sysprofiles": self.sysprofiles,
+            'button_apps': self.button_apps,
+            'systray': self.systray,
+            'control': self.control,
+            'network': self.network,
+            'button_tools': self.button_tools,
+            'button_overview': self.button_overview,
+            'ws_container': self.ws_container,
+            'weather': self.weather,
+            'battery': self.battery,
+            'metrics': self.metrics,
+            'temperatures': self.temperatures_bar,
+            'language': self.language,
+            'date_time': self.date_time,
+            'button_power': self.button_power,
+            'sysprofiles': self.sysprofiles,
         }
 
         for component_name, widget in components.items():
@@ -518,21 +521,23 @@ class Bar(Window):
                 widget.set_visible(self.component_visibility[component_name])
 
     def toggle_component_visibility(self, component_name):
+        # Merged components dictionary
         components = {
-            "button_apps": self.button_apps,
-            "systray": self.systray,
-            "control": self.control,
-            "network": self.network,
-            "button_tools": self.button_tools,
-            "button_overview": self.button_overview,
-            "ws_container": self.ws_container,
-            "weather": self.weather,
-            "battery": self.battery,
-            "metrics": self.metrics,
-            "language": self.language,
-            "date_time": self.date_time,
-            "button_power": self.button_power,
-            "sysprofiles": self.sysprofiles,
+            'button_apps': self.button_apps,
+            'systray': self.systray,
+            'control': self.control,
+            'network': self.network,
+            'button_tools': self.button_tools,
+            'button_overview': self.button_overview,
+            'ws_container': self.ws_container,
+            'weather': self.weather,
+            'battery': self.battery,
+            'metrics': self.metrics,
+            'temperatures': self.temperatures_bar,
+            'language': self.language,
+            'date_time': self.date_time,
+            'button_power': self.button_power,
+            'sysprofiles': self.sysprofiles,
         }
 
         if component_name in components and component_name in self.component_visibility:
