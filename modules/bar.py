@@ -190,7 +190,11 @@ class Bar(Window):
 
         self.lang_label = Label(name="lang-label")
         self.language = Button(
-            name="language", h_align="center", v_align="center", child=self.lang_label
+            name="language",
+            h_align="center",
+            v_align="center",
+            child=self.lang_label,
+            on_clicked=lambda *_: exec_shell_command_async("hyprctl switchxkblayout all next"),
         )
         self.on_language_switch()
         self.connection.connect("event::activelayout", self.on_language_switch)
