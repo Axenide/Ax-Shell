@@ -406,15 +406,15 @@ class CaffeineButton(Button):
             exec_shell_command_async("pkill ax-inhibit")
             GLib.idle_add(self.caffeine_status.set_label, "Disabled")
             GLib.idle_add(self._add_disabled_style)
+            new_state = "Disabled"
         except subprocess.CalledProcessError:
             exec_shell_command_async(f"python {data.HOME_DIR}/.config/{data.APP_NAME_CAP}/scripts/inhibit.py")
             GLib.idle_add(self.caffeine_status.set_label, "Enabled")
             GLib.idle_add(self._remove_disabled_style)
+            new_state = "Enabled"
 
         if external:
-            # Different if enabled or disabled
-            status = "Disabled" if self.caffeine_status.get_label() == "Disabled" else "Enabled"
-            message = "Disabled 💤" if status == "Disabled" else "Enabled ☀️"
+            message = "Disabled 💤" if new_state == "Disabled" else "Enabled ☀️"
             exec_shell_command_async(f"notify-send '☕ Caffeine' '{message}' -a '{data.APP_NAME_CAP}' -e")
     
     def _add_disabled_style(self):
