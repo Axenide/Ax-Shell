@@ -433,6 +433,7 @@ class Notch(Window):
         )
 
         self._is_notch_open = False
+        self._current_widget = None
         self._scrolling = False
 
         if data.VERTICAL:
@@ -833,6 +834,7 @@ class Notch(Window):
         self.bar.revealer_left.set_reveal_child(True)
         self.applet_stack.set_visible_child(self.nhistory)
         self._is_notch_open = False
+        self._current_widget = None
         self.stack.set_visible_child(self.compact)
         if data.PANEL_THEME != "Notch":
             self.notch_revealer.set_reveal_child(False)
@@ -844,6 +846,20 @@ class Notch(Window):
                 self.set_margin("-46px 0px 0px 0px")
             else:
                 self.set_margin("-40px 8px 8px 8px")
+
+    def gesture_up(self):
+        """Four-finger swipe up: close dashboard if open, otherwise open overview."""
+        if self._is_notch_open and self._current_widget == "dashboard":
+            self.close_notch()
+        elif not self._is_notch_open:
+            self.show_notch("overview")
+
+    def gesture_down(self):
+        """Four-finger swipe down: close overview if open, otherwise open dashboard."""
+        if self._is_notch_open and self._current_widget == "overview":
+            self.close_notch()
+        elif not self._is_notch_open:
+            self.show_notch("dashboard")
 
     def open_notch(self, widget_name: str):
         # Debug info for troubleshooting
@@ -1059,8 +1075,15 @@ class Notch(Window):
 
         if self.bar and not self.bar.get_visible() and data.BAR_POSITION == "Top":
             self.set_margin("0px 8px 8px 8px")
-        
+
         self._is_notch_open = True
+        # Track current widget for gesture handlers
+        if target_widget_on_stack == self.overview:
+            self._current_widget = "overview"
+        elif target_widget_on_stack == self.dashboard:
+            self._current_widget = "dashboard"
+        else:
+            self._current_widget = widget_name
 
     def toggle_hidden(self):
         self.hidden = not self.hidden
