@@ -1,3 +1,10 @@
+> [!WARNING]
+> Ax-Shell has been deprecated in favor of [Ambxst](https://axeni.de/ambxst) and will not receive any more updates.
+>
+> Ambxst is more performant, customizable and feature-rich, and has feature parity with Ax-Shell. Go check it out!
+
+---
+
 <p align="center">
 <a href="https://github.com/Axenide/Ax-Shell">
   <img src="assets/cover.png">
