@@ -5,7 +5,7 @@ import time
 
 from fabric.core.service import Property, Service, Signal
 from fabric.utils import exec_shell_command_async, monitor_file
-from gi.repository import GLib
+from gi.repository import Gio, GLib
 from loguru import logger
 
 import utils.functions as helpers
@@ -46,6 +46,7 @@ class Brightness(Service):
         self._pending_raw = None
         self._timer_id = None
         self._poll_timer_id = None
+        self._file_monitor = None
         self._lock = GLib.Mutex()
         self._last_percent = -1
         self._last_raw = -1
@@ -66,11 +67,10 @@ class Brightness(Service):
                 self._setup_polling()
 
     def _setup_polling(self):
-        """Setup periodic polling of brightness file."""
+        """Setup file monitoring for brightness changes using inotify."""
         try:
             file_path = f"/sys/class/backlight/{self._get_screen_device()}/brightness"
             if os.path.exists(file_path):
-                # Initialize cache with current value
                 with open(file_path) as f:
                     self._last_raw = int(f.readline().strip())
                     self._last_percent = (
@@ -78,13 +78,37 @@ class Brightness(Service):
                         if self.max_screen > 0
                         else 0
                     )
-
-                self._last_file_mtime = os.path.getmtime(file_path)
-                self._poll_timer_id = GLib.timeout_add(
-                    self.POLL_INTERVAL, self._check_brightness_file
-                )
+                gfile = Gio.File.new_for_path(file_path)
+                self._file_monitor = gfile.monitor_file(Gio.FileMonitorFlags.NONE, None)
+                self._file_monitor.connect("changed", self._on_brightness_file_changed)
+                logger.info(f"Brightness file monitor set up for {file_path}")
         except Exception as e:
-            logger.error(f"Error setting up brightness polling: {e}")
+            logger.error(f"Error setting up brightness monitoring: {e}")
+            # Fall back to polling if inotify fails
+            self._last_file_mtime = os.path.getmtime(file_path) if os.path.exists(file_path) else 0
+            self._poll_timer_id = GLib.timeout_add(
+                self.POLL_INTERVAL, self._check_brightness_file
+            )
+
+    def _on_brightness_file_changed(self, monitor, file, other_file, event_type):
+        """Handle brightness file change events from inotify."""
+        if event_type == Gio.FileMonitorEvent.CHANGES_DONE_HINT:
+            try:
+                file_path = f"/sys/class/backlight/{self._get_screen_device()}/brightness"
+                with open(file_path) as f:
+                    raw = int(f.readline().strip())
+                if raw != self._last_raw:
+                    self._last_raw = raw
+                    percent = (
+                        int((raw / self.max_screen) * 100)
+                        if self.max_screen > 0
+                        else 0
+                    )
+                    if abs(percent - self._last_percent) >= self.MIN_CHANGE_THRESHOLD:
+                        self._last_percent = percent
+                        self.emit("screen", percent)
+            except Exception as e:
+                logger.error(f"Error handling brightness file change: {e}")
 
     def _check_brightness_file(self):
         """Periodically check brightness file for changes."""
@@ -355,3 +379,7 @@ class Brightness(Service):
         if self._poll_timer_id:
             GLib.source_remove(self._poll_timer_id)
             self._poll_timer_id = None
+
+        if self._file_monitor:
+            self._file_monitor.cancel()
+            self._file_monitor = None
