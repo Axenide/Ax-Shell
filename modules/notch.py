@@ -8,6 +8,7 @@ from fabric.widgets.revealer import Revealer
 from fabric.widgets.stack import Stack
 from fabric.audio.service import Audio
 from gi.repository import Gdk, GLib, Gtk, Pango
+from services.brightness import Brightness
 
 import config.data as data
 from modules.cliphist import ClipHistory
@@ -249,6 +250,44 @@ class Notch(Window):
             ]
         )
 
+        # Brightness service and display widgets
+        self.brightness_service = Brightness.get_initial()
+        self._suppress_first_brightness_display = True
+
+        self.brightness_icon = Image(
+            name="brightness-display-icon",
+            icon_name="display-brightness-symbolic",
+            icon_size=16
+        )
+        self.brightness_icon.set_valign(Gtk.Align.CENTER)
+
+        self.brightness_label = Label(
+            name="brightness-display-label",
+            label="..."
+        )
+        self.brightness_label.set_valign(Gtk.Align.CENTER)
+
+        self.brightness_bar = Gtk.ProgressBar(
+            name="brightness-display-bar"
+        )
+        self.brightness_bar.set_fraction(1.0)
+        self.brightness_bar.set_show_text(False)
+        self.brightness_bar.set_hexpand(False)
+        self.brightness_bar.set_valign(Gtk.Align.CENTER)
+
+        self.brightness_box = Box(
+            name="brightness-display-box",
+            orientation="h",
+            spacing=8,
+            h_align="center",
+            v_align="center",
+            children=[
+                self.brightness_icon,
+                self.brightness_bar,
+                self.brightness_label
+            ]
+        )
+
         self.window_label = Label(
             name="notch-window-label",
             h_expand=True,
@@ -321,6 +360,8 @@ class Notch(Window):
                 # Add audio display widgets to compact stack
                 self.volume_box,
                 self.mic_box,
+                # Add brightness display widget to compact stack
+                self.brightness_box,
             ],
         )
         self.compact_stack.set_visible_child(self.active_window_box)
@@ -535,7 +576,12 @@ class Notch(Window):
                 if self.audio.microphone:
                     self.audio.microphone.connect("changed", self._on_microphone_changed_signal)
                     GLib.idle_add(self._update_mic_widgets_silently)
-                
+
+                # Connect brightness signal
+                if self.brightness_service and self.brightness_service.screen_brightness != -1:
+                    self.brightness_service.connect("screen", self._on_brightness_changed_signal)
+                    GLib.idle_add(self._update_brightness_widgets_silently)
+
                 GLib.timeout_add(500, self._enable_audio_display)
                 return False
                     
@@ -769,18 +815,93 @@ class Notch(Window):
         
         self.compact_stack.set_visible_child(self.mic_box)
         self._current_display_timeout_id = GLib.timeout_add(
-            self.VOLUME_DISPLAY_DURATION, 
+            self.VOLUME_DISPLAY_DURATION,
+            self.return_to_normal_view
+        )
+
+    # Brightness display methods
+    def _on_brightness_changed_signal(self, service, percent):
+        """Handle brightness change signal."""
+        if self._suppress_first_brightness_display:
+            self._update_brightness_widgets_silently()
+            return
+
+        brightness_int = int(percent)
+        brightness_percentage = brightness_int / 100.0
+        self.brightness_bar.set_fraction(brightness_percentage)
+
+        self._update_brightness_appearance(brightness_int)
+
+        self.brightness_icon.set_from_icon_name("display-brightness-symbolic", 16)
+        self.brightness_label.set_text(f"{brightness_int}%")
+
+        self.show_brightness_display()
+
+    def _update_brightness_appearance(self, brightness_int):
+        """Update brightness box styling based on brightness level."""
+        brightness_box_style = self.brightness_box.get_style_context()
+        brightness_icon_style = self.brightness_icon.get_style_context()
+        brightness_bar_style = self.brightness_bar.get_style_context()
+
+        for cls in ["brightness-low", "brightness-medium", "brightness-high"]:
+            brightness_box_style.remove_class(cls)
+            brightness_icon_style.remove_class(cls)
+            brightness_bar_style.remove_class(cls)
+
+        if brightness_int <= 33:
+            brightness_box_style.add_class("brightness-low")
+            brightness_icon_style.add_class("brightness-low")
+            brightness_bar_style.add_class("brightness-low")
+        elif brightness_int <= 66:
+            brightness_box_style.add_class("brightness-medium")
+            brightness_icon_style.add_class("brightness-medium")
+            brightness_bar_style.add_class("brightness-medium")
+        else:
+            brightness_box_style.add_class("brightness-high")
+            brightness_icon_style.add_class("brightness-high")
+            brightness_bar_style.add_class("brightness-high")
+
+    def _update_brightness_widgets_silently(self):
+        """Update brightness widgets without showing OSD."""
+        if not self.brightness_service or self.brightness_service.screen_brightness == -1:
+            return
+
+        raw = self.brightness_service.screen_brightness
+        max_val = self.brightness_service.max_screen
+        brightness_int = int((raw / max_val) * 100) if max_val > 0 else 0
+        brightness_percentage = brightness_int / 100.0
+        self.brightness_bar.set_fraction(brightness_percentage)
+
+        self._update_brightness_appearance(brightness_int)
+
+        self.brightness_icon.set_from_icon_name("display-brightness-symbolic", 16)
+        self.brightness_label.set_text(f"{brightness_int}%")
+
+        # After first silent update, enable normal display behavior
+        self._suppress_first_brightness_display = False
+
+    def show_brightness_display(self):
+        """Show brightness OSD in the notch."""
+        if self._is_notch_open:
+            return
+
+        if self._current_display_timeout_id:
+            GLib.source_remove(self._current_display_timeout_id)
+
+        self.compact_stack.set_visible_child(self.brightness_box)
+        self._current_display_timeout_id = GLib.timeout_add(
+            self.VOLUME_DISPLAY_DURATION,
             self.return_to_normal_view
         )
 
     def return_to_normal_view(self):
         self._current_display_timeout_id = None
-        
+
         if not self._is_notch_open:
             current_child = self.compact_stack.get_visible_child()
-            if current_child in [self.volume_box, self.mic_box]:
+            if current_child in [self.volume_box, self.mic_box, self.brightness_box]:
                 self.compact_stack.set_visible_child(self.active_window_box)
-        
+
         return False
 
     def on_button_enter(self, widget, event):
