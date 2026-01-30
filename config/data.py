@@ -76,6 +76,9 @@ BAR_WORKSPACE_SHOW_NUMBER = _get_config_var("bar_workspace_show_number")
 BAR_WORKSPACE_USE_CHINESE_NUMERALS = _get_config_var(
     "bar_workspace_use_chinese_numerals"
 )
+BAR_WORKSPACE_ICONS = config.get("bar_workspace_icons", {})
+BAR_WORKSPACE_START = config.get("bar_workspace_start", DEFAULTS["bar_workspace_start"])
+BAR_WORKSPACE_END = config.get("bar_workspace_end", DEFAULTS["bar_workspace_end"])
 BAR_HIDE_SPECIAL_WORKSPACE = _get_config_var("bar_hide_special_workspace")
 BAR_THEME = _get_config_var("bar_theme")
 DOCK_THEME = _get_config_var("dock_theme")
