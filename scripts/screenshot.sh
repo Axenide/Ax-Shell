@@ -31,7 +31,7 @@ case $1 in
         hyprshot -z -s -m region -o "$save_dir" -f "$save_file"
         ;;
     w)
-        hyprshot -s -m window -o "$save_dir" -f "$save_file";
+        hyprshot -s -m window -o "$save_dir" -f "$save_file"
         ;;
     *)
         print_error
