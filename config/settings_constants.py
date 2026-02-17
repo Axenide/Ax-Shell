@@ -100,4 +100,5 @@ DEFAULTS = {
     "limited_apps_history": ["Spotify"],
     "history_ignored_apps": ["Hyprshot"],
     "selected_monitors": [],
+    "temperature_poll_interval": 5,
 }
